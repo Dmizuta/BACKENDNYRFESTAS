@@ -1,7 +1,7 @@
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
-const { Pool } = require('pg'); // Import PostgreSQL client for database connection
+const { Pool } = require('pg'); // PostgreSQL client for database connection
 
 const app = express();
 app.use(express.json());
@@ -47,23 +47,46 @@ app.get('/products', async (req, res) => {
     }
 });
 
-// New: Endpoint to insert customer data into the 'cadastro' table
+// Endpoint to handle customer registration (POST to 'cadastro' table)
 app.post('/api/customers', async (req, res) => {
-    const { name, email, phone } = req.body; // Expecting these fields in the request body
+    const {
+        representante,
+        razaoSocial,
+        cnpj,
+        inscricaoEstadual,
+        endereco,
+        cidade,
+        estado,
+        telefone,
+        email,
+    } = req.body;
+
     try {
+        // Insert the new customer into the 'cadastro' table
         const result = await pool.query(
-            'INSERT INTO cadastro (name, email, phone) VALUES ($1, $2, $3) RETURNING *',
-            [name, email, phone]
+            `INSERT INTO cadastro (
+                representante,
+                razao_social,
+                cnpj,
+                inscricao_estadual,
+                endereco,
+                cidade,
+                estado,
+                telefone,
+                email
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+            [representante, razaoSocial, cnpj, inscricaoEstadual, endereco, cidade, estado, telefone, email]
         );
+
         res.status(201).json({
             status: 'success',
-            message: 'Customer added successfully!',
-            data: result.rows[0], // Returning the inserted row
+            message: 'Customer registered successfully!',
+            data: result.rows[0],
         });
     } catch (error) {
         res.status(500).json({
             status: 'error',
-            message: 'Failed to insert customer data',
+            message: 'Failed to register the customer',
             error: error.message,
         });
     }
