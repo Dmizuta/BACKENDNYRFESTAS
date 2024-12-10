@@ -65,15 +65,15 @@ app.post('/api/customers', async (req, res) => {
         // Insert the new customer into the 'cadastro' table
         const result = await pool.query(
             `INSERT INTO cadastro (
-                representante,
-                razao_social,
-                cnpj,
-                inscricao_estadual,
-                endereco,
-                cidade,
-                estado,
-                telefone,
-                email
+                Representante,
+                Razao Social,
+                Cnpj,
+                Inscr Est,
+                Endereco,
+                Cidade,
+                Estado,
+                Telefone,
+                Email
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
             [representante, razaoSocial, cnpj, inscricaoEstadual, endereco, cidade, estado, telefone, email]
         );
