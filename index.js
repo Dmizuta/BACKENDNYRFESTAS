@@ -66,9 +66,9 @@ app.post('/api/customers', async (req, res) => {
         const result = await pool.query(
             `INSERT INTO cadastro (
                 Representante,
-                Razao Social,
+                RazaoSocial,
                 Cnpj,
-                Inscr Est,
+                InscrEst,
                 Endereco,
                 Cidade,
                 Estado,
