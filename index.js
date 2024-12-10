@@ -47,50 +47,40 @@ app.get('/products', async (req, res) => {
     }
 });
 
-// Endpoint to handle customer registration (POST to 'cadastro' table)
-app.post('/api/customers', async (req, res) => {
-    const {
-        representante,
-        razaoSocial,
-        cnpj,
-        inscricaoEstadual,
-        endereco,
-        cidade,
-        estado,
-        telefone,
-        email,
-    } = req.body;
 
-    try {
-        // Insert the new customer into the 'cadastro' table
-        const result = await pool.query(
-            `INSERT INTO cadastro (
-                Representante,
-                RazaoSocial,
-                Cnpj,
-                InscrEst,
-                Endereco,
-                Cidade,
-                Estado,
-                Telefone,
-                Email
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-            [representante, razaoSocial, cnpj, inscricaoEstadual, endereco, cidade, estado, telefone, email]
-        );
 
-        res.status(201).json({
-            status: 'success',
-            message: 'Customer registered successfully!',
-            data: result.rows[0],
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: 'Failed to register the customer',
-            error: error.message,
-        });
+
+
+app.post('/test', async (req, res) => {
+    const { A, B } = req.body; // Extract A and B from the request body
+  
+    // Validate that both fields are provided
+    if (!A || !B) {
+      return res.status(400).json({ error: 'Both fields A and B are required!' });
     }
-});
+  
+    try {
+      // Insert the data into the test table
+      const result = await pool.query(
+        'INSERT INTO test (A, B) VALUES ($1, $2) RETURNING *',
+        [A, B]
+      );
+      res.status(201).json(result.rows[0]); // Return the inserted row
+    } catch (err) {
+      console.error('Error during POST /test:', err); // Log errors for debugging
+      res.status(500).json({ error: 'Internal server error', details: err.message });
+    }
+  });
+  
+
+
+
+
+
+
+
+
+
 
 // Start the server on port 80
 app.listen(80, () => {
