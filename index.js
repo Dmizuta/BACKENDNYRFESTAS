@@ -48,7 +48,7 @@ app.get('/products', async (req, res) => {
 });
 
 // Endpoint to handle customer registration (POST to 'cadastro' table)
-app.post('/api/customers', async (req, res) => {
+app.post('https://backendnyrfestas.vercel.app/api/customers', async (req, res) => {
     const {
         representante,
         razaoSocial,
