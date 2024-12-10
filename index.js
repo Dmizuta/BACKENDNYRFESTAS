@@ -62,7 +62,7 @@ app.post('/test', async (req, res) => {
     try {
       // Insert the data into the test table
       const result = await pool.query(
-        'INSERT INTO test (A, B) VALUES ($1, $2) RETURNING *',
+        'INSERT INTO test ("A", "B") VALUES ($1, $2) RETURNING *',
         [A, B]
       );
       res.status(201).json(result.rows[0]); // Return the inserted row
