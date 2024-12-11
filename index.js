@@ -48,9 +48,6 @@ app.get('/products', async (req, res) => {
 });
 
 
-
-
-
 app.post('/cadastro', async (req, res) => {
     const { representante, razaosocial, cnpj, inscrest, endereco, cidade, estado, telefone, email } = req.body;
   
@@ -72,41 +69,6 @@ app.post('/cadastro', async (req, res) => {
     }
   });
   
-
-
-
-
-/*app.post('/test', async (req, res) => {
-    const { A, B } = req.body; // Extract A and B from the request body
-  
-    // Validate that both fields are provided
-    if (!A || !B) {
-      return res.status(400).json({ error: 'Both fields A and B are required!' });
-    }
-  
-    try {
-      // Insert the data into the test table
-      const result = await pool.query(
-        'INSERT INTO test ("A", "B") VALUES ($1, $2) RETURNING *',
-        [A, B]
-      );
-      res.status(201).json(result.rows[0]); // Return the inserted row
-    } catch (err) {
-      console.error('Error during POST /test:', err); // Log errors for debugging
-      res.status(500).json({ error: 'Internal server error', details: err.message });
-    }
-  });
-  */
-
-
-
-
-
-
-
-
-
-
 // Start the server on port 80
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
