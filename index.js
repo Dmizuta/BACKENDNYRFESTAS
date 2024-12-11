@@ -51,7 +51,32 @@ app.get('/products', async (req, res) => {
 
 
 
-app.post('/test', async (req, res) => {
+app.post('/cadastro', async (req, res) => {
+    const { representante, razaosocial, cnpj, inscrest, endereco, cidade, estado, telefone, email } = req.body;
+  
+    // Ensure all required fields are provided
+    if (!representante || !razaosocial || !cnpj || !inscrest || !endereco || !cidade || !estado || !telefone || !email) {
+      return res.status(400).json({ error: 'All fields are required!' });
+    }
+  
+    try {
+      const result = await pool.query(
+        `INSERT INTO cadastro (representante, razaosocial, cnpj, inscrest, endereco, cidade, estado, telefone, email) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [representante, razaosocial, cnpj, inscrest, endereco, cidade, estado, telefone, email]
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error('Error during POST /cadastro:', err);
+      res.status(500).json({ error: 'Internal server error', details: err.message });
+    }
+  });
+  
+
+
+
+
+/*app.post('/test', async (req, res) => {
     const { A, B } = req.body; // Extract A and B from the request body
   
     // Validate that both fields are provided
@@ -71,7 +96,7 @@ app.post('/test', async (req, res) => {
       res.status(500).json({ error: 'Internal server error', details: err.message });
     }
   });
-  
+  */
 
 
 
