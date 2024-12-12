@@ -96,7 +96,7 @@ app.post('/register', async (req, res) => {
       }
   
       // Insert new user
-      await db.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, password]);
+      await db.query('INSERT INTO usuarios (username, password) VALUES ($1, $2)', [username, password]);
       res.json({ success: true, message: 'User registered successfully.' });
     } catch (error) {
       console.error(error);
