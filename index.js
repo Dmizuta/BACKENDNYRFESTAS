@@ -73,3 +73,34 @@ app.post('/cadastro', async (req, res) => {
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
 });
+
+
+
+
+
+
+
+
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+  
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    }
+  
+    try {
+      // Check if user already exists
+      const existingUser = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ success: false, message: 'Username already exists.' });
+      }
+  
+      // Insert new user
+      await db.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, password]);
+      res.json({ success: true, message: 'User registered successfully.' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+    }
+  });
+  
