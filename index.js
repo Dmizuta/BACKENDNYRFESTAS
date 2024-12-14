@@ -201,36 +201,38 @@ app.post('/login', async (req, res) => {
 
 
 app.post('/add-to-order', async (req, res) => {
-  const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
-
-  try {
-      // Step 1: Check if there's an open order
-      const [existingOrder] = await db.query(
-          'SELECT id FROM pedidos WHERE username = $1 AND status = 0',
-          [username]
-      );
-
-      let orderId;
-      if (existingOrder) {
-          orderId = existingOrder.id;
-      } else {
-          // Step 2: Create a new order if none exists
-          const [newOrder] = await db.query(
-              'INSERT INTO pedidos (id, username, razaosocial, data, total, status) VALUES ($1, $2, NOW(), 0, 0) RETURNING id',
-              [username, razaosocial]
-          );
-          orderId = newOrder.id;
-      }
-
-      // Step 3: Add product to order items
-      await db.query(
-          'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
-          [orderId, codproduto, descricao, quantidade, preco]
-      );
-
-      res.status(200).send({ message: 'Product added to order', orderId });
-  } catch (error) {
-      console.error('Error adding to order:', error);
-      res.status(500).send({ error: 'Failed to add product to order' });
-  }
-});
+    const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
+  
+    try {
+        // Step 1: Check if there's an open order
+        const result = await pool.query(
+            'SELECT id FROM pedidos WHERE username = $1 AND status = 0',
+            [username]
+        );
+        const existingOrder = result.rows[0];
+  
+        let orderId;
+        if (existingOrder) {
+            orderId = existingOrder.id;
+        } else {
+            // Step 2: Create a new order if none exists
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial]
+            );
+            const newOrder = newOrderResult.rows[0];
+            orderId = newOrder.id;
+        }
+  
+        // Step 3: Add product to order items
+        await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, codproduto, descricao, quantidade, preco]
+        );
+  
+        res.status(200).send({ message: 'Product added to order', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'Failed to add product to order' });
+    }
+  });
