@@ -49,10 +49,10 @@ app.get('/products', async (req, res) => {
 
 
 app.post('/cadastro', async (req, res) => {
-    const { representante, razaosocial, cnpj, inscrest, endereco, cidade, estado, telefone, email } = req.body;
+    const { representante, razaosocial, cnpj,, telefone, email } = req.body;
   
     // Ensure all required fields are provided
-    if (!representante || !razaosocial || !cnpj || !inscrest || !endereco || !cidade || !estado || !telefone || !email) {
+    if (!representante || !razaosocial || !cnpj || !telefone || !email) {
       return res.status(400).json({ error: 'All fields are required!' });
     }
   
