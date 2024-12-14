@@ -216,7 +216,7 @@ app.post('/add-to-order', async (req, res) => {
       } else {
           // Step 2: Create a new order if none exists
           const [newOrder] = await db.query(
-              'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, NOW(), 0, 0) RETURNING id',
+              'INSERT INTO pedidos (id, username, razaosocial, data, total, status) VALUES ($1, $2, NOW(), 0, 0) RETURNING id',
               [username, razaosocial]
           );
           orderId = newOrder.id;
