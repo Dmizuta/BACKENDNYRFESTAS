@@ -49,7 +49,7 @@ app.get('/products', async (req, res) => {
 
 
 app.post('/cadastro', async (req, res) => {
-    const { representante, razaosocial, cnpj,, telefone, email } = req.body;
+    const { representante, razaosocial, cnpj, telefone, email } = req.body;
   
     // Ensure all required fields are provided
     if (!representante || !razaosocial || !cnpj || !telefone || !email) {
