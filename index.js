@@ -73,3 +73,116 @@ app.post('/cadastro', async (req, res) => {
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
 });
+
+
+
+
+
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    }
+
+    try {
+        // Check if user already exists
+        const existingUser = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ success: false, message: 'Username already exists.' });
+        }
+
+        // Insert new user
+        await pool.query('INSERT INTO registro (username, password) VALUES ($1, $2)', [username, password]);
+        res.json({ success: true, message: 'User registered successfully.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+  
+    // Validate if both username and password are provided
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    }
+  
+    try {
+      // Query the database for the user by username
+      const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
+  
+      // Check if user exists
+      if (result.rows.length === 0) {
+        return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+      }
+  
+      // Compare the input password with the stored password
+      const user = result.rows[0];
+      if (user.password !== password) {
+        return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+      }
+  
+      // If authentication is successful
+      res.json({ success: true, message: 'Login successful.' });
+  
+    } catch (error) {
+      console.error('Error during login:', error);
+      res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+    }
+  });
+
+*/
+
+
+
+
+
+
+
+  app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    // Validate if both username and password are provided
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    }
+
+    try {
+      // Query the database for the user by username
+      const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
+
+      // Check if user exists
+      if (result.rows.length === 0) {
+        return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+      }
+
+      // Compare the input password with the stored password
+      const user = result.rows[0];
+      if (user.password !== password) {
+        return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+      }
+
+      // If authentication is successful, return user data (e.g., username)
+      res.json({ success: true, message: 'Login successful.', user: { username: user.username } });
+
+    } catch (error) {
+      console.error('Error during login:', error);
+      res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+    }
+});
+
+  
