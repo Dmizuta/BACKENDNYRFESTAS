@@ -185,4 +185,46 @@ app.post('/login', async (req, res) => {
     }
 });
 
-  
+  // Assuming you're using a Postgres client like `pg`
+const { Client } = require('pg');
+
+// Endpoint for adding a product to the order
+app.post('/add-to-order', async (req, res) => {
+    const { username, product, quantity } = req.body;
+    const client = new Client();
+    await client.connect();
+
+    try {
+        // Check if the user has a draft order
+        let orderResult = await client.query(
+            'SELECT id FROM pedidos WHERE username = $1 AND status = 0',
+            [username]
+        );
+
+        let orderId;
+        if (orderResult.rows.length > 0) {
+            // If a draft order exists, use the existing order id
+            orderId = orderResult.rows[0].id;
+        } else {
+            // If no draft order exists, create a new order and get its id
+            let newOrderResult = await client.query(
+                'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, CURRENT_DATE, 0, 0) RETURNING id',
+                [username, 'Some Company'] // Adjust according to your logic
+            );
+            orderId = newOrderResult.rows[0].id;
+        }
+
+        // Insert the product into the order items table
+        await client.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descrição, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, product.codproduto, product.descrição, quantity, product.preco]
+        );
+
+        res.status(200).send({ message: 'Product added to order', orderId: orderId });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: 'Error adding product to order' });
+    } finally {
+        await client.end();
+    }
+});
