@@ -36,7 +36,7 @@ app.get('/test-db-connection', async (req, res) => {
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM products');
+        const result = await pool.query('SELECT * FROM produtos');
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({
