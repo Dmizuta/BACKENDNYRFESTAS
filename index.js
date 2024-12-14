@@ -59,7 +59,7 @@ app.post('/cadastro', async (req, res) => {
     try {
       const result = await pool.query(
         `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
         [representante, razaosocial, cnpj, telefone, email]
       );
       res.status(201).json(result.rows[0]);
