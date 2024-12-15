@@ -245,6 +245,29 @@ app.post('/register', async (req, res) => {
 
 
 
+// Assuming you have a connection to your database and a pool object to execute queries
+
+app.get('/get-user-info', async (req, res) => {
+  const { username } = req.query;  // Get the username from query parameter
+
+  try {
+      // Query the cadastro table to get user data
+      const result = await pool.query(
+          'SELECT username, razaosocial FROM cadastro WHERE username = $1',
+          [username]
+      );
+
+      if (result.rows.length > 0) {
+          const userData = result.rows[0];  // Get user data from result
+          res.json(userData);  // Send back the user data as JSON
+      } else {
+          res.status(404).json({ error: 'User not found' });
+      }
+  } catch (error) {
+      console.error('Error fetching user info:', error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 
 
