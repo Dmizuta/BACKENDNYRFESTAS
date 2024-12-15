@@ -205,7 +205,7 @@ app.post('/register', async (req, res) => {
 
 
 
-app.get('/api/get-user-info', async (req, res) => {
+app.get('/get-user-info', async (req, res) => {
   const { username } = req.query;  // Get the username from query parameter
 
   try {
