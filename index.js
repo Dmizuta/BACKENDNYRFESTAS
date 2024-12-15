@@ -53,9 +53,9 @@ app.post('/cadastro', async (req, res) => {
   const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
 
   // Make sure that username is provided
-  if (!username) {
-      return res.status(400).json({ error: 'Username is required.' });
-  }
+ //  if (!username) {
+ //      return res.status(400).json({ error: 'Username is required.' });
+ //  }
 
   try {
       const newCadastro = await addCadastro({
