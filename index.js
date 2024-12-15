@@ -49,22 +49,58 @@ app.get('/products', async (req, res) => {
 
 
 
+app.post('/cadastro', async (req, res) => {
+  const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
+
+  // Make sure that username is provided
+  if (!username) {
+      return res.status(400).json({ error: 'Username is required.' });
+  }
+
+  try {
+      const newCadastro = await addCadastro({
+          representante,
+          razaosocial,
+          cnpj,
+          telefone,
+          email,
+          username
+      });
+
+      res.status(201).json(newCadastro); // Return success response
+  } catch (error) {
+      res.status(500).json({ error: error.message }); // Handle errors
+  }
+});
+
+async function addCadastro(data) {
+  const { representante, razaosocial, cnpj, telefone, email, username } = data;
+
+  const result = await pool.query(
+      `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [representante, razaosocial, cnpj, telefone, email, username]
+  );
+
+  return result.rows[0];
+}
 
 
 /*
 app.post('/cadastro', async (req, res) => {
-    const { representante, razaosocial, cnpj, telefone, email } = req.body;
+    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
   
     // Ensure all required fields are provided
-    if (!representante || !razaosocial || !cnpj || !telefone || !email) {
-      return res.status(400).json({ error: 'All fields are required!' });
-    }
+     //if (!representante || !razaosocial || !cnpj || !telefone || !email) {
+      // return res.status(400).json({ error: 'All fields are required!' });
+     //}
   
     try {
       const result = await pool.query(
-        `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email) 
+        `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username) 
         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [representante, razaosocial, cnpj, telefone, email]
+        [representante, razaosocial, cnpj, telefone, email, username]
       );
       res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -73,7 +109,7 @@ app.post('/cadastro', async (req, res) => {
     }
   });
   
-*/
+
 
 
 
@@ -112,7 +148,7 @@ async function addCadastro(data) {
 }
 
 
-
+*/
 
 
 
@@ -164,44 +200,6 @@ app.post('/register', async (req, res) => {
 
 
 
-
-
-
-/*
-
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-  
-    // Validate if both username and password are provided
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Username and password are required.' });
-    }
-  
-    try {
-      // Query the database for the user by username
-      const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
-  
-      // Check if user exists
-      if (result.rows.length === 0) {
-        return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-      }
-  
-      // Compare the input password with the stored password
-      const user = result.rows[0];
-      if (user.password !== password) {
-        return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-      }
-  
-      // If authentication is successful
-      res.json({ success: true, message: 'Login successful.' });
-  
-    } catch (error) {
-      console.error('Error during login:', error);
-      res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
-    }
-  });
-
-*/
 
 
 
