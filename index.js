@@ -112,48 +112,6 @@ async function upsertCadastro(data) {
 
 
 
-/*
-app.post('/cadastro', async (req, res) => {
-  const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
-
-  // Make sure that username is provided
- //  if (!username) {
- //      return res.status(400).json({ error: 'Username is required.' });
- //  }
-
-  try {
-      const newCadastro = await addCadastro({
-          representante,
-          razaosocial,
-          cnpj,
-          telefone,
-          email,
-          username
-      });
-
-      res.status(201).json(newCadastro); // Return success response
-  } catch (error) {
-      res.status(500).json({ error: error.message }); // Handle errors
-  }
-});
-
-async function addCadastro(data) {
-  const { representante, razaosocial, cnpj, telefone, email, username } = data;
-
-  const result = await pool.query(
-      `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [representante, razaosocial, cnpj, telefone, email, username]
-  );
-
-  return result.rows[0];
-}
-
-
-*/
-
-
 
 
 
@@ -268,6 +226,47 @@ app.get('/api/get-user-info', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+
+
+
+
+
+
+
+app.post('/check-cadastro', async (req, res) => {
+    const { username } = req.body;
+
+    try {
+        // Query the cadastro table to check if the necessary fields are filled
+        const result = await pool.query(
+            'SELECT razaosocial FROM cadastro WHERE username = $1',
+            [username]
+        );
+
+        if (result.rows.length > 0) {
+            const cadastro = result.rows[0];
+            
+            // Check if 'razaosocial' is filled (you can add more conditions here as needed)
+            if (cadastro.razaosocial) {
+                return res.status(200).send({ cadastroFilled: true });
+            } else {
+                return res.status(400).send({ error: 'Cadastro is incomplete. Please complete your cadastro.' });
+            }
+        } else {
+            return res.status(404).send({ error: 'Cadastro not found. Please complete your cadastro.' });
+        }
+    } catch (error) {
+        console.error('Error checking cadastro:', error);
+        return res.status(500).send({ error: 'Failed to check cadastro.' });
+    }
+});
+
+
+
+
+
+
 
 
 
