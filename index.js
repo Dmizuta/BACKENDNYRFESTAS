@@ -48,6 +48,10 @@ app.get('/products', async (req, res) => {
 });
 
 
+
+
+
+/*
 app.post('/cadastro', async (req, res) => {
     const { representante, razaosocial, cnpj, telefone, email } = req.body;
   
@@ -69,6 +73,58 @@ app.post('/cadastro', async (req, res) => {
     }
   });
   
+*/
+
+
+
+
+
+app.post('/cadastro', async (req, res) => {
+  const { representante, razaosocial, cnpj, telefone, email } = req.body;
+  const loggedInUsername = req.user.username; // Assuming username comes from session or token
+
+  try {
+      const newCadastro = await addCadastro({
+          representante,
+          razaosocial,
+          cnpj,
+          telefone,
+          email,
+          username: loggedInUsername
+      });
+      res.status(201).json(newCadastro); // Return success response
+  } catch (error) {
+      res.status(500).json({ error: error.message }); // Handle errors
+  }
+});
+
+async function addCadastro(data) {
+  const { representante, razaosocial, cnpj, telefone, email, username } = data;
+
+  const result = await pool.query(
+      `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [representante, razaosocial, cnpj, telefone, email, username]
+  );
+
+  return result.rows[0];
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Start the server on port 80
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
