@@ -320,7 +320,7 @@ app.post('/add-to-order', async (req, res) => {
 
 // GET route: Fetch user data
 app.get('/cadastropage', async (req, res) => {
-  const userId = req.session.userId; // If you're using a session to store user info
+  const userId = req.query.loggedInUsername; // If you're using a session to store user info
 ; // Replace with actual user identification mechanism
   try {
       const result = await pool.query(
