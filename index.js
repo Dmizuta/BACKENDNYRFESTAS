@@ -315,10 +315,15 @@ app.post('/add-to-order', async (req, res) => {
 
 
 
-// GET route: Fetch user data by hardcoded username 'dani'
+/// GET route: Fetch user data by username
 app.get('/cadastropage', async (req, res) => {
-  const username = 'dani';  // Hardcoded username for testing
-  console.log('Using hardcoded username:', username); // Log the hardcoded username
+  const username = req.query.username;  // Fetch username from the query string
+  console.log('Received username from query:', username); // Log the received username
+
+  if (!username) {
+    console.log('No username provided in the query'); // Log if the username is missing
+    return res.status(400).json({ success: false, message: 'Username is required' });
+  }
 
   try {
     // Query the database using the 'username' field
@@ -340,3 +345,4 @@ app.get('/cadastropage', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error fetching data.' });
   }
 });
+
