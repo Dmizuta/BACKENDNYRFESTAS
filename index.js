@@ -318,23 +318,28 @@ app.post('/add-to-order', async (req, res) => {
 
 
 
-// GET route: Fetch user data
+// GET route: Fetch user data by username
 app.get('/cadastropage', async (req, res) => {
-  const userId = req.query.loggedInUsername; // If you're using a session to store user info
-; // Replace with actual user identification mechanism
+  const username = req.query.username;  // Fetch username from the query string
+
+  if (!username) {
+    return res.status(400).json({ success: false, message: 'Username is required' });
+  }
+
   try {
-      const result = await pool.query(
-          'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE username = dani',
-          [userId]
-      );
+    // Query the database using the 'username' field
+    const result = await pool.query(
+      'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE username = $1',
+      [username]
+    );
 
-      if (result.rows.length === 0) {
-          return res.json({ success: false, message: 'No data found for this user.' });
-      }
+    if (result.rows.length === 0) {
+      return res.json({ success: false, message: 'No data found for this username.' });
+    }
 
-      res.json({ success: true, data: result.rows[0] });
+    res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, message: 'Error fetching data.' });
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error fetching data.' });
   }
 });
