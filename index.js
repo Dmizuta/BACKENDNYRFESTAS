@@ -321,25 +321,30 @@ app.post('/add-to-order', async (req, res) => {
 // GET route: Fetch user data by username
 app.get('/cadastropage', async (req, res) => {
   const username = req.query.username;  // Fetch username from the query string
+  console.log('Received username from query:', username); // Log the received username
 
   if (!username) {
+    console.log('No username provided in the query'); // Log if the username is missing
     return res.status(400).json({ success: false, message: 'Username is required' });
   }
 
   try {
     // Query the database using the 'username' field
+    console.log('Executing database query for username:', username); // Log the query execution
     const result = await pool.query(
       'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE username = $1',
       [username]
     );
 
     if (result.rows.length === 0) {
+      console.log('No data found for username:', username); // Log if no data is found
       return res.json({ success: false, message: 'No data found for this username.' });
     }
 
+    console.log('Data retrieved from the database:', result.rows[0]); // Log the data retrieved from the database
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error(error);
+    console.error('Error during database query:', error); // Log any errors during the query
     res.status(500).json({ success: false, message: 'Error fetching data.' });
   }
 });
