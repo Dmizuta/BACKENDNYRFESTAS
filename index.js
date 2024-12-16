@@ -324,7 +324,7 @@ app.get('/cadastropage', async (req, res) => {
 ; // Replace with actual user identification mechanism
   try {
       const result = await pool.query(
-          'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE id = $1',
+          'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE username = $1',
           [userId]
       );
 
