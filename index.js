@@ -307,3 +307,33 @@ app.post('/add-to-order', async (req, res) => {
       res.status(500).send({ error: 'Failed to add product to order' });
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+// GET route: Fetch user data
+app.get('/cadastropage', async (req, res) => {
+  const userId = req.query.userId; // Replace with actual user identification mechanism
+  try {
+      const result = await pool.query(
+          'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE id = $1',
+          [userId]
+      );
+
+      if (result.rows.length === 0) {
+          return res.json({ success: false, message: 'No data found for this user.' });
+      }
+
+      res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Error fetching data.' });
+  }
+});
