@@ -350,29 +350,34 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
-
+// Endpoint to fetch orders for a specific username
 app.get('/orders', async (req, res) => {
-    // Retrieve the username from the query parameters
     const { username } = req.query;
 
     if (!username) {
-        return res.status(400).json({ success: false, message: 'Username is required' });
+        return res.status(400).json({ message: 'Username is required' });
     }
 
     try {
-        // Use the username directly to fetch orders from the 'pedidos' table
         const result = await pool.query(
             'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
             [username]
         );
 
         if (result.rows.length === 0) {
-            return res.json({ success: false, message: 'No orders found for this username.' });
+            return res.json([]);  // Return an empty array if no orders found
         }
 
-        res.json({ success: true, orders: result.rows });
+        // Send the orders directly as an array
+        res.json(result.rows);
     } catch (error) {
         console.error('Error fetching orders:', error);
-        res.status(500).json({ success: false, message: 'Error fetching orders.' });
+        res.status(500).json({ message: 'Error fetching orders' });
     }
+});
+
+// Start the server
+const port = process.env.PORT || 5000;
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
