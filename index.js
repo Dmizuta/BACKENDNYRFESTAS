@@ -350,7 +350,7 @@ app.get('/orders', async (req, res) => {
     const userId = req.user.id; // Assuming req.user contains authenticated user info
     try {
         const result = await pool.query(
-            'SELECT id, razaosocial, data, total, status FROM orders WHERE user_id = $1',
+            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE user_id = $1',
             [userId]
         );
         res.json(result.rows);
