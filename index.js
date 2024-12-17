@@ -352,35 +352,29 @@ app.get('/cadastropage', async (req, res) => {
 
 
 app.get('/orders', async (req, res) => {
-    const { username } = req.query;  // Retrieve the username from the query parameters
-    console.log('Received username:', username); // Log the received username
+    const { username } = req.query;  // Retrieve the username from query parameters
+    
+    console.log('Received username:', username);
 
     if (!username) {
-        console.error('No username provided in request');
-        return res.status(401).json({ error: 'User not authenticated' });
+        return res.status(401).json({ error: 'Username not provided' });
     }
 
     try {
-        // Step 1: Get userId from the registro table using the username
-        const userResult = await pool.query('SELECT id FROM registro WHERE username = $1', [username]);
-        console.log('User query result:', userResult.rows); // Log the result from the query
+        // Retrieve userId based on username
+        const result = await pool.query('SELECT id FROM registro WHERE username = $1', [username]);
 
-        if (userResult.rows.length === 0) {
-            console.error('User not found with username:', username);
+        if (result.rows.length === 0) {
             return res.status(401).json({ error: 'User not found' });
         }
 
-        const userId = userResult.rows[0].id;  // Get the userId from the result
-        console.log('User ID:', userId); // Log the userId for verification
+        const userId = result.rows[0].id;  // Get the userId from the result
+        console.log('Fetched userId:', userId);
 
-        // Step 2: Retrieve orders for the user from the orders table using userId
-        const orderResult = await pool.query(
-            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
-            [userId]
-        );
-        console.log('Order query result:', orderResult.rows); // Log the fetched orders
+        // Retrieve orders based on userId
+        const orders = await pool.query('SELECT * FROM pedidos WHERE username = $1', [userId]);
 
-        res.json(orderResult.rows);  // Return the orders for the authenticated user
+        res.json(orders.rows);  // Return the orders
     } catch (err) {
         console.error('Error fetching orders:', err);
         res.status(500).json({ error: 'Failed to fetch orders' });
