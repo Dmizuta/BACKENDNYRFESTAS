@@ -352,31 +352,27 @@ app.get('/cadastropage', async (req, res) => {
 
 
 app.get('/orders', async (req, res) => {
-    const { username } = req.query;  // Retrieve the username from query parameters
-    
-    console.log('Received username:', username);
+    // Retrieve the username from the query parameters
+    const { username } = req.query;
 
     if (!username) {
-        return res.status(401).json({ error: 'Username not provided' });
+        return res.status(400).json({ success: false, message: 'Username is required' });
     }
 
     try {
-        // Retrieve userId based on username
-        const result = await pool.query('SELECT id FROM registro WHERE username = $1', [username]);
+        // Use the username directly to fetch orders from the 'pedidos' table
+        const result = await pool.query(
+            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
+            [username]
+        );
 
         if (result.rows.length === 0) {
-            return res.status(401).json({ error: 'User not found' });
+            return res.json({ success: false, message: 'No orders found for this username.' });
         }
 
-        const userId = result.rows[0].id;  // Get the userId from the result
-        console.log('Fetched userId:', userId);
-
-        // Retrieve orders based on userId
-        const orders = await pool.query('SELECT * FROM pedidos WHERE username = $1', [userId]);
-
-        res.json(orders.rows);  // Return the orders
-    } catch (err) {
-        console.error('Error fetching orders:', err);
-        res.status(500).json({ error: 'Failed to fetch orders' });
+        res.json({ success: true, orders: result.rows });
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ success: false, message: 'Error fetching orders.' });
     }
 });
