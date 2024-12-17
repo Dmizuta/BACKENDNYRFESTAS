@@ -317,7 +317,7 @@ app.post('/add-to-order', async (req, res) => {
 
 /// GET route: Fetch user data by username
 app.get('/cadastropage', async (req, res) => {
-  const username = req.query.username;  // Fetch username from the query string
+  const username = z;  // Fetch username from the query string
   console.log('Received username from query:', username); // Log the received username
 
   if (!username) {
@@ -345,6 +345,13 @@ app.get('/cadastropage', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error fetching data.' });
   }
 });
+
+
+
+
+
+
+
 
 app.get('/orders', async (req, res) => {
     const username = req.user.id; // Assuming req.user contains authenticated user info
