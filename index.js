@@ -347,11 +347,11 @@ app.get('/cadastropage', async (req, res) => {
 });
 
 app.get('/orders', async (req, res) => {
-    const userId = req.user.id; // Assuming req.user contains authenticated user info
+    const username = req.user.id; // Assuming req.user contains authenticated user info
     try {
         const result = await pool.query(
-            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE user_id = $1',
-            [userId]
+            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
+            [username]
         );
         res.json(result.rows);
     } catch (err) {
