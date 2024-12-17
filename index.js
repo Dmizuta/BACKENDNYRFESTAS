@@ -353,26 +353,32 @@ app.get('/cadastropage', async (req, res) => {
 
 app.get('/orders', async (req, res) => {
     const { username } = req.query;  // Retrieve the username from the query parameters
-    
+    console.log('Received username:', username); // Log the received username
+
     if (!username) {
+        console.error('No username provided in request');
         return res.status(401).json({ error: 'User not authenticated' });
     }
 
     try {
         // Step 1: Get userId from the registro table using the username
         const userResult = await pool.query('SELECT id FROM registro WHERE username = $1', [username]);
+        console.log('User query result:', userResult.rows); // Log the result from the query
 
         if (userResult.rows.length === 0) {
+            console.error('User not found with username:', username);
             return res.status(401).json({ error: 'User not found' });
         }
 
         const userId = userResult.rows[0].id;  // Get the userId from the result
+        console.log('User ID:', userId); // Log the userId for verification
 
         // Step 2: Retrieve orders for the user from the orders table using userId
         const orderResult = await pool.query(
             'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
             [userId]
         );
+        console.log('Order query result:', orderResult.rows); // Log the fetched orders
 
         res.json(orderResult.rows);  // Return the orders for the authenticated user
     } catch (err) {
