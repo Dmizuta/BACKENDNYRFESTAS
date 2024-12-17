@@ -353,30 +353,30 @@ app.get('/cadastropage', async (req, res) => {
 
 app.get('/orders', async (req, res) => {
     const { username } = req.query;  // Retrieve the username from the query parameters
+    
     if (!username) {
         return res.status(401).json({ error: 'User not authenticated' });
     }
 
     try {
-        // Query to get the userId based on the username
+        // Step 1: Get userId from the registro table using the username
         const userResult = await pool.query('SELECT id FROM registro WHERE username = $1', [username]);
 
         if (userResult.rows.length === 0) {
             return res.status(401).json({ error: 'User not found' });
         }
 
-        const userId = userResult.rows[0].id; // Assuming the `id` column exists in `registro`
+        const userId = userResult.rows[0].id;  // Get the userId from the result
 
-        // Now, retrieve the orders for the user
+        // Step 2: Retrieve orders for the user from the orders table using userId
         const orderResult = await pool.query(
             'SELECT id, razaosocial, data, total, status FROM orders WHERE user_id = $1',
             [userId]
         );
 
-        res.json(orderResult.rows); // Return the orders in the response
+        res.json(orderResult.rows);  // Return the orders for the authenticated user
     } catch (err) {
         console.error('Error fetching orders:', err);
         res.status(500).json({ error: 'Failed to fetch orders' });
     }
 });
-
