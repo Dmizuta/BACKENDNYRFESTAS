@@ -317,7 +317,7 @@ app.post('/add-to-order', async (req, res) => {
 
 /// GET route: Fetch user data by username
 app.get('/cadastropage', async (req, res) => {
-  const username = z;  // Fetch username from the query string
+  const username = req.query.username;  // Fetch username from the query string
   console.log('Received username from query:', username); // Log the received username
 
   if (!username) {
