@@ -350,39 +350,6 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
-app.get('/orders', async (req, res) => {
-    const { username } = req.query;  // Retrieve the username from the query parameters
-
-    if (!username) {
-        return res.status(400).json({ error: 'Username is required.' });
-    }
-
-    try {
-        // Query the database to find the user by username
-        const userResult = await db.query('SELECT id FROM registro WHERE username = $1', [username]);
-
-        // Check if user exists
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ error: 'User not found.' });
-        }
-
-        const userId = userResult.rows[0].id;
-
-        // Now fetch the orders for that user
-        const ordersResult = await db.query(
-            'SELECT id, razaosocial, data, total, status FROM orders WHERE user_id = $1',
-            [userId]
-        );
-
-        res.json(ordersResult.rows);  // Return the orders to the frontend
-
-    } catch (err) {
-        console.error('Error fetching orders:', err);
-        res.status(500).json({ error: 'Failed to fetch orders' });
-    }
-});
-
-
 
 
     app.get('/orders', async (req, res) => {
