@@ -370,7 +370,7 @@ app.get('/orders', async (req, res) => {
 
         // Step 2: Retrieve orders for the user from the orders table using userId
         const orderResult = await pool.query(
-            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE user_id = $1',
+            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
             [userId]
         );
 
