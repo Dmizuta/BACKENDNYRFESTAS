@@ -257,7 +257,7 @@ app.post('/check-cadastro', async (req, res) => {
             return res.status(404).send({ error: 'Cadastro not found. Please complete your cadastro.' });
         }
     } catch (error) {
-        console.error('Error checking cadastro:', error);
+        console.error('Por favor, preencha seu cadastro.', error);
         return res.status(500).send({ error: 'Failed to check cadastro.' });
     }
 });
