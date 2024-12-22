@@ -121,13 +121,6 @@ async function upsertCadastro(data) {
 
 
 
-// Start the server on port 80
-app.listen(80, () => {
-    console.log('Servidor rodando na porta 80');
-});
-
-
-
 
 
 app.post('/register', async (req, res) => {
@@ -376,8 +369,13 @@ app.get('/orders', async (req, res) => {
     }
 });
 
-// Start the server
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+
+
+
+// Start the server on port 80
+app.listen(80, () => {
+    console.log('Servidor rodando na porta 80');
 });
+
+
+
