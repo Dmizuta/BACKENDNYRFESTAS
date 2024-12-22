@@ -183,22 +183,22 @@ app.post('/register', async (req, res) => {
 
       // Compare the input password with the stored password
       const user = result.rows[0];
-      if (user.password !== password) {
+      if (user.password !== password || user.role !== role) { 
         return res.status(401).json({ success: false, message: 'Invalid username or password.' });
       }
 
       // If authentication is successful, return user data (e.g., username)
-      res.json({ success: true, message: 'Login successful.', user: { username: user.username } });
+      const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+      res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role }, token });
 
 
 
-      const token = jwt.sign({ username }, SECRET, { expiresIn: EXPIRES_IN });
-      localStorage.setItem('token', token);
-      return res.json({ token });
 
     } catch (error) {
       console.error('Error during login:', error);
-      res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+      }
     }
 });
 
