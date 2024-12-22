@@ -2,10 +2,14 @@ const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
 const { Pool } = require('pg'); // PostgreSQL client for database connection
+const jwt = require('jsonwebtoken'); // JWT for user authentication
 
 const app = express();
 app.use(express.json());
 app.use(cors()); // Allows any origin to access the API
+
+const JWT_SECRET = process.env.JWT_SECRET; // Secret key for JWT
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN; // Expiration time for JWT
 
 // Set up PostgreSQL connection using environment variables
 const pool = new Pool({
@@ -161,11 +165,11 @@ app.post('/register', async (req, res) => {
 
 
   app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, role } = req.body;
 
     // Validate if both username and password are provided
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    if (!username || !password || !role) {
+      return res.status(400).json({ success: false, message: 'Username, password and role are required.' });
     }
 
     try {
@@ -185,6 +189,12 @@ app.post('/register', async (req, res) => {
 
       // If authentication is successful, return user data (e.g., username)
       res.json({ success: true, message: 'Login successful.', user: { username: user.username } });
+
+
+
+      const token = jwt.sign({ username }, SECRET, { expiresIn: EXPIRES_IN });
+      localStorage.setItem('token', token);
+      return res.json({ token });
 
     } catch (error) {
       console.error('Error during login:', error);
