@@ -2,10 +2,14 @@ const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
 const { Pool } = require('pg'); // PostgreSQL client for database connection
+const jwt = require('jsonwebtoken'); // JWT for user authentication
 
 const app = express();
 app.use(express.json());
 app.use(cors()); // Allows any origin to access the API
+
+const JWT_SECRET = process.env.JWT_SECRET; // Secret key for JWT
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN; // Expiration time for JWT
 
 // Set up PostgreSQL connection using environment variables
 const pool = new Pool({
@@ -121,17 +125,10 @@ async function upsertCadastro(data) {
 
 
 
-// Start the server on port 80
-app.listen(80, () => {
-    console.log('Servidor rodando na porta 80');
-});
-
-
-
 
 
 app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, role } = req.body;
 
     if (!username || !password) {
         return res.status(400).json({ success: false, message: 'Username and password are required.' });
@@ -145,7 +142,7 @@ app.post('/register', async (req, res) => {
         }
 
         // Insert new user
-        await pool.query('INSERT INTO registro (username, password) VALUES ($1, $2)', [username, password]);
+        await pool.query('INSERT INTO registro (username, password, role) VALUES ($1, $2, $3)', [username, password, role]);
         res.json({ success: true, message: 'User registered successfully.' });
     } catch (error) {
         console.error(error);
@@ -167,35 +164,40 @@ app.post('/register', async (req, res) => {
 
 
 
-  app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+app.post('/login', async (req, res) => {
+    const { username, password, role } = req.body;
 
     // Validate if both username and password are provided
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    if (!username || !password || !role) {
+        return res.status(400).json({ success: false, message: 'Username, password and role are required.' });
     }
 
     try {
-      // Query the database for the user by username
-      const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
+        // Query the database for the user by username
+        const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
 
-      // Check if user exists
-      if (result.rows.length === 0) {
-        return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-      }
+        // Check if user exists
+        if (result.rows.length === 0) {
+            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+        }
 
-      // Compare the input password with the stored password
-      const user = result.rows[0];
-      if (user.password !== password) {
-        return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-      }
+        // Compare the input password with the stored password
+        const user = result.rows[0];
+        if (user.password !== password || user.role !== role) {
+            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+        }
 
-      // If authentication is successful, return user data (e.g., username)
-      res.json({ success: true, message: 'Login successful.', user: { username: user.username } });
+        // If authentication is successful, return user data (e.g., username)
+        const token = jwt.sign({ username: user.username, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role }, token });
+
+
 
     } catch (error) {
-      console.error('Error during login:', error);
-      res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+        console.error('Error during login:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+        }
     }
 });
 
@@ -206,25 +208,25 @@ app.post('/register', async (req, res) => {
 
 
 app.get('/get-user-info', async (req, res) => {
-  const { username } = req.query;  // Get the username from query parameter
+    const { username } = req.query;  // Get the username from query parameter
 
-  try {
-      // Query the cadastro table to get user data based on username
-      const result = await pool.query(
-          'SELECT username, razaosocial FROM cadastro WHERE username = $1',
-          [username]
-      );
+    try {
+        // Query the cadastro table to get user data based on username
+        const result = await pool.query(
+            'SELECT username, razaosocial FROM cadastro WHERE username = $1',
+            [username]
+        );
 
-      if (result.rows.length > 0) {
-          const userData = result.rows[0];  // Get user data from result
-          res.json(userData);  // Send back the user data as JSON
-      } else {
-          res.status(404).json({ error: 'User not found' });
-      }
-  } catch (error) {
-      console.error('Error fetching user info:', error);
-      res.status(500).json({ error: 'Internal server error' });
-  }
+        if (result.rows.length > 0) {
+            const userData = result.rows[0];  // Get user data from result
+            res.json(userData);  // Send back the user data as JSON
+        } else {
+            res.status(404).json({ error: 'User not found' });
+        }
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 
@@ -246,7 +248,7 @@ app.post('/check-cadastro', async (req, res) => {
 
         if (result.rows.length > 0) {
             const cadastro = result.rows[0];
-            
+
             // Check if 'razaosocial' is filled (you can add more conditions here as needed)
             if (cadastro.razaosocial) {
                 return res.status(200).send({ cadastroFilled: true });
@@ -272,40 +274,40 @@ app.post('/check-cadastro', async (req, res) => {
 
 
 app.post('/add-to-order', async (req, res) => {
-  const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
+    const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
 
-  try {
-      // Step 1: Check if there's an open order
-      const result = await pool.query(
-          'SELECT id FROM pedidos WHERE username = $1 AND status = 0',
-          [username]
-      );
-      const existingOrder = result.rows[0];
+    try {
+        // Step 1: Check if there's an open order
+        const result = await pool.query(
+            'SELECT id FROM pedidos WHERE username = $1 AND status = 0',
+            [username]
+        );
+        const existingOrder = result.rows[0];
 
-      let orderId;
-      if (existingOrder) {
-          orderId = existingOrder.id;
-      } else {
-          // Step 2: Create a new order if none exists
-          const newOrderResult = await pool.query(
-              'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
-              [username, razaosocial]
-          );
-          const newOrder = newOrderResult.rows[0];
-          orderId = newOrder.id;
-      }
+        let orderId;
+        if (existingOrder) {
+            orderId = existingOrder.id;
+        } else {
+            // Step 2: Create a new order if none exists
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial]
+            );
+            const newOrder = newOrderResult.rows[0];
+            orderId = newOrder.id;
+        }
 
-      // Step 3: Add product to order items
-      await pool.query(
-          'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
-          [orderId, codproduto, descricao, quantidade, preco]
-      );
+        // Step 3: Add product to order items
+        await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, codproduto, descricao, quantidade, preco]
+        );
 
-      res.status(200).send({ message: 'Product added to order', orderId });
-  } catch (error) {
-      console.error('Error adding to order:', error);
-      res.status(500).send({ error: 'Failed to add product to order' });
-  }
+        res.status(200).send({ message: 'Product added to order', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'Failed to add product to order' });
+    }
 });
 
 
@@ -317,33 +319,33 @@ app.post('/add-to-order', async (req, res) => {
 
 /// GET route: Fetch user data by username
 app.get('/cadastropage', async (req, res) => {
-  const username = req.query.username;  // Fetch username from the query string
-  console.log('Received username from query:', username); // Log the received username
+    const username = req.query.username;  // Fetch username from the query string
+    console.log('Received username from query:', username); // Log the received username
 
-  if (!username) {
-    console.log('No username provided in the query'); // Log if the username is missing
-    return res.status(400).json({ success: false, message: 'Username is required' });
-  }
-
-  try {
-    // Query the database using the 'username' field
-    console.log('Executing database query for username:', username); // Log the query execution
-    const result = await pool.query(
-      'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE username = $1',
-      [username]
-    );
-
-    if (result.rows.length === 0) {
-      console.log('No data found for username:', username); // Log if no data is found
-      return res.json({ success: false, message: 'No data found for this username.' });
+    if (!username) {
+        console.log('No username provided in the query'); // Log if the username is missing
+        return res.status(400).json({ success: false, message: 'Username is required' });
     }
 
-    console.log('Data retrieved from the database:', result.rows[0]); // Log the data retrieved from the database
-    res.json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    console.error('Error during database query:', error); // Log any errors during the query
-    res.status(500).json({ success: false, message: 'Error fetching data.' });
-  }
+    try {
+        // Query the database using the 'username' field
+        console.log('Executing database query for username:', username); // Log the query execution
+        const result = await pool.query(
+            'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE username = $1',
+            [username]
+        );
+
+        if (result.rows.length === 0) {
+            console.log('No data found for username:', username); // Log if no data is found
+            return res.json({ success: false, message: 'No data found for this username.' });
+        }
+
+        console.log('Data retrieved from the database:', result.rows[0]); // Log the data retrieved from the database
+        res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+        console.error('Error during database query:', error); // Log any errors during the query
+        res.status(500).json({ success: false, message: 'Error fetching data.' });
+    }
 });
 
 
@@ -376,8 +378,13 @@ app.get('/orders', async (req, res) => {
     }
 });
 
-// Start the server
-const port = process.env.PORT || 5000;
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+
+
+
+// Start the server on port 80
+app.listen(80, () => {
+    console.log('Servidor rodando na porta 80');
 });
+
+
+
