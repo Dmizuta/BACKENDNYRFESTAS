@@ -128,7 +128,7 @@ async function upsertCadastro(data) {
 
 
 app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, role } = req.body;
 
     if (!username || !password) {
         return res.status(400).json({ success: false, message: 'Username and password are required.' });
@@ -142,7 +142,7 @@ app.post('/register', async (req, res) => {
         }
 
         // Insert new user
-        await pool.query('INSERT INTO registro (username, password) VALUES ($1, $2)', [username, password]);
+        await pool.query('INSERT INTO registro (username, password, role) VALUES ($1, $2, $3)', [username, password, role]);
         res.json({ success: true, message: 'User registered successfully.' });
     } catch (error) {
         console.error(error);
