@@ -392,21 +392,12 @@ app.listen(80, () => {
 
 
 
-app.get('/customers', async (req, res) => {
-    const username = req.query.username;
-    try {
-        // Query the database for customers linked to the username
-        const customers = await db.query('SELECT * FROM customers WHERE username = $1', [username]);
-        res.json({ success: true, data: customers.rows });
-    } catch (error) {
-        res.status(500).json({ success: false, error: 'Database query failed' });
-    }
-});
 
 
 
 
-app.post('/cadastro', async (req, res) => {
+
+app.post('/cadastrorep', async (req, res) => {
     const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
 
     try {
@@ -439,3 +430,5 @@ app.get('/customers', async (req, res) => {
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
+
+
