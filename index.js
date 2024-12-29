@@ -388,3 +388,19 @@ app.listen(80, () => {
 
 
 
+app.get('/customers', async (req, res) => {
+    const cnpj = req.query.cnpj;
+
+    try {
+        const customer = await db.query('SELECT * FROM customers WHERE cnpj = $1', [cnpj]);
+        
+        if (customer.rows.length > 0) {
+            return res.json({ data: customer.rows });
+        } else {
+            return res.json({ data: [] });
+        }
+    } catch (error) {
+        console.error('Erro ao verificar CNPJ:', error);
+        return res.status(500).json({ error: 'Erro ao verificar CNPJ' });
+    }
+});
