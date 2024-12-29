@@ -388,19 +388,54 @@ app.listen(80, () => {
 
 
 
+
+
+
+
 app.get('/customers', async (req, res) => {
-    const cnpj = req.query.cnpj;
+    const username = req.query.username;
+    try {
+        // Query the database for customers linked to the username
+        const customers = await db.query('SELECT * FROM customers WHERE username = $1', [username]);
+        res.json({ success: true, data: customers.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Database query failed' });
+    }
+});
+
+
+
+
+app.post('/cadastro', async (req, res) => {
+    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
 
     try {
-        const customer = await db.query('SELECT * FROM customers WHERE cnpj = $1', [cnpj]);
-        
-        if (customer.rows.length > 0) {
-            return res.json({ data: customer.rows });
-        } else {
-            return res.json({ data: [] });
-        }
+        // Validate the data (e.g., check if CNPJ is valid)
+        const result = await db.query(
+            'INSERT INTO customers (representante, razaosocial, cnpj, telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [representante, razaosocial, cnpj, telefone, email, username]
+        );
+
+        res.json({ success: true, message: 'Cadastro created successfully.' });
     } catch (error) {
-        console.error('Erro ao verificar CNPJ:', error);
-        return res.status(500).json({ error: 'Erro ao verificar CNPJ' });
+        res.status(500).json({ success: false, error: 'Failed to create cadastro.' });
+    }
+});
+
+
+
+
+app.get('/customers', async (req, res) => {
+    const username = req.query.username;
+    const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
+
+    try {
+        const customers = await db.query(
+            `SELECT * FROM customers WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
+            [username, `%${searchTerm}%`]
+        );
+        res.json({ success: true, data: customers.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
