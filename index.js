@@ -421,8 +421,8 @@ app.get('/customers', async (req, res) => {
     const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
 
     try {
-        const customers = await db.query(
-            `SELECT * FROM customers WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
+        const customers = await pool.query(
+            `SELECT * FROM cadastro WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
             [username, `%${searchTerm}%`]
         );
         res.json({ success: true, data: customers.rows });
