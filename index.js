@@ -165,11 +165,11 @@ app.post('/register', async (req, res) => {
 
 
 app.post('/login', async (req, res) => {
-    const { username, password, role } = req.body;
+    const { username, password } = req.body;
 
     // Validate if both username and password are provided
-    if (!username || !password || !role) {
-        return res.status(400).json({ success: false, message: 'Username, password and role are required.' });
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'Username and password are required.' });
     }
 
     try {
@@ -183,7 +183,7 @@ app.post('/login', async (req, res) => {
 
         // Compare the input password with the stored password
         const user = result.rows[0];
-        if (user.password !== password || user.role !== role) {
+        if (user.username !== username || user.password !== password) {
             return res.status(401).json({ success: false, message: 'Invalid username or password.' });
         }
 
