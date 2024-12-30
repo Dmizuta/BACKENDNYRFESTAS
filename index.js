@@ -180,7 +180,7 @@ app.post('/check-cadastro', async (req, res) => {
 app.post('/add-to-order', async (req, res) => {
     const { razaosocial, codproduto, descricao, quantidade, preco } = req.body;
 const customerId = localStorage.getItem("customerId")
-
+console.log(customerId)
 
     try {
         // Step 1: Check if there's an open order for the given customerId
