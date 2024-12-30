@@ -57,57 +57,7 @@ app.get('/products', async (req, res) => {
 
 
 
-app.post('/cadastro', async (req, res) => {
-    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
 
-    try {
-        // Directly attempt to update the cadastro; if no rows are affected, insert a new one
-        const cadastro = await upsertCadastro({
-            representante,
-            razaosocial,
-            cnpj,
-            telefone,
-            email,
-            username
-        });
-
-        res.status(200).json(cadastro); // Send the successful response
-    } catch (error) {
-        console.error('Error in /cadastro:', error);
-        res.status(500).json({ error: 'Failed to process cadastro.' });
-    }
-});
-
-
-
-
-async function upsertCadastro(data) {
-    const { representante, razaosocial, cnpj, telefone, email, username } = data;
-
-    // Attempt to update the existing cadastro
-    const result = await pool.query(
-        `UPDATE cadastro 
-         SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5 
-         WHERE username = $6 
-         RETURNING *`,
-        [representante, razaosocial, cnpj, telefone, email, username]
-    );
-
-    if (result.rows.length > 0) {
-        // If the update was successful, return the updated row
-        return { message: 'Cadastro updated successfully.', cadastro: result.rows[0] };
-    }
-
-    // If no rows were updated, insert a new cadastro
-    const insertResult = await pool.query(
-        `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING *`,
-        [representante, razaosocial, cnpj, telefone, email, username]
-    );
-
-    return { message: 'Cadastro created successfully.', cadastro: insertResult.rows[0] };
-}
 
 
 
@@ -391,7 +341,57 @@ app.listen(80, () => {
 
 
 
+app.post('/cadastro', async (req, res) => {
+    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
 
+    try {
+        // Directly attempt to update the cadastro; if no rows are affected, insert a new one
+        const cadastro = await upsertCadastro({
+            representante,
+            razaosocial,
+            cnpj,
+            telefone,
+            email,
+            username
+        });
+
+        res.status(200).json(cadastro); // Send the successful response
+    } catch (error) {
+        console.error('Error in /cadastro:', error);
+        res.status(500).json({ error: 'Failed to process cadastro.' });
+    }
+});
+
+
+
+
+async function upsertCadastro(data) {
+    const { representante, razaosocial, cnpj, telefone, email, username } = data;
+
+    // Attempt to update the existing cadastro
+    const result = await pool.query(
+        `UPDATE cadastro 
+         SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5 
+         WHERE username = $6 
+         RETURNING *`,
+        [representante, razaosocial, cnpj, telefone, email, username]
+    );
+
+    if (result.rows.length > 0) {
+        // If the update was successful, return the updated row
+        return { message: 'Cadastro updated successfully.', cadastro: result.rows[0] };
+    }
+
+    // If no rows were updated, insert a new cadastro
+    const insertResult = await pool.query(
+        `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [representante, razaosocial, cnpj, telefone, email, username]
+    );
+
+    return { message: 'Cadastro created successfully.', cadastro: insertResult.rows[0] };
+}
 
 
 
