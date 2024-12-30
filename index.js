@@ -208,7 +208,7 @@ app.post('/add-to-order', async (req, res) => {
             [orderId, codproduto, descricao, quantidade, preco]
         );
 
-        res.status(200).send({ message: 'Product added to order', orderId });
+        res.status(200).send({ message: 'Product added 11111111111to order', orderId });
     } catch (error) {
         console.error('Error adding to order:', error);
         res.status(500).send({ error: 'Failed to add product to order' });
