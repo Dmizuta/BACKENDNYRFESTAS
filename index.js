@@ -178,7 +178,9 @@ app.post('/check-cadastro', async (req, res) => {
 
 // Add product to an order or create a new order
 app.post('/add-to-order', async (req, res) => {
-    const { customerId, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
+    const { razaosocial, codproduto, descricao, quantidade, preco } = req.body;
+const customerId = localStorage.getItem("customerId")
+
 
     try {
         // Step 1: Check if there's an open order for the given customerId
