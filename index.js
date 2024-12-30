@@ -428,7 +428,7 @@ app.put('/customers', async (req, res) => {
 });
 
 
-app.put('/updatecadastro', async (req, res) => {
+app.get('/updatecadastro', async (req, res) => {
     const { username, razaosocial, cnpj, representante } = req.body;  // Destructure the fields from the body
     if (!username || !razaosocial || !cnpj || !representante) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
