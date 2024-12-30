@@ -428,31 +428,30 @@ app.get('/customers', async (req, res) => {
 });
 
 
-app.put('/updatecadastro', async (req, res) => {
-    const { username, razaosocial, cnpj, representante } = req.body;  // Destructure the fields from the body
-    if (!username || !razaosocial || !cnpj || !representante) {
-        return res.status(400).json({ success: false, error: 'Missing required fields' });
-    }
+app.put('/updatecadastro/:customerId', async (req, res) => {
+    const customerId = req.params.customerId;  // Extract customerId from the URL
+    const { razaosocial, cnpj, representante } = req.body;  // Extract the data to update from the request body
 
     try {
-        // Update the cadastro info for the user
+        // SQL query to update the customer data
         const result = await pool.query(
-            `UPDATE cadastro
-             SET razaosocial = $1, cnpj = $2, representante = $3
-             WHERE username = $4 RETURNING *`,  // Ensure to return the updated row
-            [razaosocial, cnpj, representante, username]
+            `UPDATE cadastro SET razaosocial = $1, cnpj = $2, representante = $3 WHERE id = $4`,
+            [razaosocial, cnpj, representante, customerId]  // Use the values from the form data
         );
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'User not found' });
+        if (result.rowCount === 0) {
+            // If no rows are updated, it means the customer wasn't found
+            return res.status(404).json({ success: false, error: 'Customer not found' });
         }
 
-        res.json({ success: true, data: result.rows[0] });  // Return the updated data
+        // Successfully updated the customer data
+        res.json({ success: true, message: 'Customer updated successfully' });
     } catch (error) {
-        console.error('Error updating cadastro:', error);
+        console.error('Error updating customer:', error);
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
+
 
 
 
