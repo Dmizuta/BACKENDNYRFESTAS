@@ -53,30 +53,6 @@ app.get('/products', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 app.post('/register', async (req, res) => {
     const { username, password, role } = req.body;
 
@@ -99,19 +75,6 @@ app.post('/register', async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
     }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 app.post('/login', async (req, res) => {
@@ -150,11 +113,6 @@ app.post('/login', async (req, res) => {
         }
     }
 });
-
-
-
-
-
 
 
 app.get('/get-user-info', async (req, res) => {
@@ -216,13 +174,7 @@ app.post('/check-cadastro', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
+// add product to an order or create a new order
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
 
@@ -336,7 +288,7 @@ app.get('/orders', async (req, res) => {
 
 
 
-
+//create or update cadastro (user)
 app.post('/cadastro', async (req, res) => {
     const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
 
@@ -357,9 +309,6 @@ app.post('/cadastro', async (req, res) => {
         res.status(500).json({ error: 'Failed to process cadastro.' });
     }
 });
-
-
-
 
 async function upsertCadastro(data) {
     const { representante, razaosocial, cnpj, telefone, email, username } = data;
@@ -393,6 +342,8 @@ async function upsertCadastro(data) {
 
 
 
+
+//create cadastro (representante)
 app.post('/cadastrorep', async (req, res) => {
     const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
 
@@ -412,22 +363,7 @@ app.post('/cadastrorep', async (req, res) => {
 
 
 
-app.get('/customers', async (req, res) => {
-    const username = req.query.username;
-    const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
-
-    try {
-        const customers = await pool.query(
-            `SELECT * FROM cadastro WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
-            [username, `%${searchTerm}%`]
-        );
-        res.json({ success: true, data: customers.rows });
-    } catch (error) {
-        res.status(500).json({ success: false, error: 'Database query failed' });
-    }
-});
-
-
+//update cadastro (representante)
 app.put('/updatecadastro/:id', async (req, res) => {
     const customerId = req.params.id;  // Extract the customer id from the URL
     const { razaosocial, cnpj, representante, telefone, email, username } = req.body;  // Extract data from request body
@@ -456,7 +392,21 @@ app.put('/updatecadastro/:id', async (req, res) => {
 
 
 
+// cadastro list
+app.get('/customers', async (req, res) => {
+    const username = req.query.username;
+    const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
 
+    try {
+        const customers = await pool.query(
+            `SELECT * FROM cadastro WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
+            [username, `%${searchTerm}%`]
+        );
+        res.json({ success: true, data: customers.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Database query failed' });
+    }
+});
 
 
 
