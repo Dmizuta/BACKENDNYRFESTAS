@@ -412,9 +412,23 @@ app.post('/cadastrorep', async (req, res) => {
 
 
 
+app.put('/customers', async (req, res) => {
+    const username = req.query.username;
+    const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
+
+    try {
+        const customers = await pool.query(
+            `SELECT * FROM cadastro WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
+            [username, `%${searchTerm}%`]
+        );
+        res.json({ success: true, data: customers.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Database query failed' });
+    }
+});
 
 
-app.put('/cadastro', async (req, res) => {
+app.put('/updatecadastro', async (req, res) => {
     const { username, razaosocial, cnpj, representante } = req.body;  // Destructure the fields from the body
     if (!username || !razaosocial || !cnpj || !representante) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
