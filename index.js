@@ -206,6 +206,8 @@ app.post('/add-to-order', async (req, res) => {
         await pool.query(
             'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
             [orderId, codproduto, descricao, quantidade, preco]
+            
+        
         );
 
         res.status(200).send({ message: 'Product added 11111111111to order', orderId });
@@ -357,7 +359,7 @@ app.post('/cadastrorep', async (req, res) => {
 
         res.json({ success: true, message: 'Cadastro created successfully.' });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Failed to create cadastro.' });
+        res.status(500).json({ success: false, error: 'Verifique os campos e tente novamente' });
     }
 });
 
