@@ -145,13 +145,13 @@ app.get('/get-user-info', async (req, res) => {
 
 
 app.post('/check-cadastro', async (req, res) => {
-    const { username } = req.body;
+    const {customerId} = req.body;
 
     try {
         // Query the cadastro table to check if the necessary fields are filled
         const result = await pool.query(
-            'SELECT razaosocial FROM cadastro WHERE username = $1',
-            [username]
+            'SELECT razaosocial FROM cadastro WHERE id = $1',
+            [customerId]
         );
 
         if (result.rows.length > 0) {
