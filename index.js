@@ -412,7 +412,7 @@ app.post('/cadastrorep', async (req, res) => {
 
 
 
-app.put('/customers', async (req, res) => {
+app.get('/customers', async (req, res) => {
     const username = req.query.username;
     const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
 
@@ -428,7 +428,7 @@ app.put('/customers', async (req, res) => {
 });
 
 
-app.get('/updatecadastro', async (req, res) => {
+app.put('/updatecadastro', async (req, res) => {
     const { username, razaosocial, cnpj, representante } = req.body;  // Destructure the fields from the body
     if (!username || !razaosocial || !cnpj || !representante) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
