@@ -195,8 +195,8 @@ app.post('/add-to-order', async (req, res) => {
         } else {
             // Step 2: Create a new order if none exists
             const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, id, razaosocial, data, total, status) VALUES ($1, $2, $3, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
-                [username, customerId, razaosocial] // Change to customer_id
+                'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial] // Change to customer_id
             );
             const newOrder = newOrderResult.rows[0];
             orderId = newOrder.id;
