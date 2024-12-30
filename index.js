@@ -416,7 +416,7 @@ app.post('/cadastrorep', async (req, res) => {
 
 
 
-app.get('/customers', async (req, res) => {
+app.put('/customers', async (req, res) => {
     const username = req.query.username;
     const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
 
