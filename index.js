@@ -435,7 +435,7 @@ app.put('/updatecadastro/:customerId', async (req, res) => {
     try {
         // SQL query to update the customer data
         const result = await pool.query(
-            `UPDATE cadastro SET razaosocial = $1, cnpj = $2, representante = $3 WHERE cnpj = $4;`,
+            `UPDATE cadastro SET representante = $1, razaosocial = $2, cnpj = $3 telefone = $4, email = $5, sername = $6 WHERE cnpj = $3;`,
             [razaosocial, cnpj, representante, customerId]  // Use the values from the form data
         );
 
