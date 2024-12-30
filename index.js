@@ -403,7 +403,7 @@ app.post('/cadastrorep', async (req, res) => {
     try {
         // Validate the data (e.g., check if CNPJ is valid)
         const result = await pool.query(
-            'INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            'INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6)',
             [representante, razaosocial, cnpj, telefone, email, username]
         );
 
