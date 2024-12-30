@@ -53,80 +53,6 @@ app.get('/products', async (req, res) => {
 
 
 
-
-
-
-
-app.post('/cadastro', async (req, res) => {
-    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
-
-    try {
-        // Directly attempt to update the cadastro; if no rows are affected, insert a new one
-        const cadastro = await upsertCadastro({
-            representante,
-            razaosocial,
-            cnpj,
-            telefone,
-            email,
-            username
-        });
-
-        res.status(200).json(cadastro); // Send the successful response
-    } catch (error) {
-        console.error('Error in /cadastro:', error);
-        res.status(500).json({ error: 'Failed to process cadastro.' });
-    }
-});
-
-
-
-
-async function upsertCadastro(data) {
-    const { representante, razaosocial, cnpj, telefone, email, username } = data;
-
-    // Attempt to update the existing cadastro
-    const result = await pool.query(
-        `UPDATE cadastro 
-         SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5 
-         WHERE username = $6 
-         RETURNING *`,
-        [representante, razaosocial, cnpj, telefone, email, username]
-    );
-
-    if (result.rows.length > 0) {
-        // If the update was successful, return the updated row
-        return { message: 'Cadastro updated successfully.', cadastro: result.rows[0] };
-    }
-
-    // If no rows were updated, insert a new cadastro
-    const insertResult = await pool.query(
-        `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING *`,
-        [representante, razaosocial, cnpj, telefone, email, username]
-    );
-
-    return { message: 'Cadastro created successfully.', cadastro: insertResult.rows[0] };
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 app.post('/register', async (req, res) => {
     const { username, password, role } = req.body;
 
@@ -151,25 +77,12 @@ app.post('/register', async (req, res) => {
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 app.post('/login', async (req, res) => {
-    const { username, password, role } = req.body;
+    const { username, password } = req.body;
 
     // Validate if both username and password are provided
-    if (!username || !password || !role) {
-        return res.status(400).json({ success: false, message: 'Username, password and role are required.' });
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'Username and password are required.' });
     }
 
     try {
@@ -183,7 +96,7 @@ app.post('/login', async (req, res) => {
 
         // Compare the input password with the stored password
         const user = result.rows[0];
-        if (user.password !== password || user.role !== role) {
+        if (user.username !== username || user.password !== password) {
             return res.status(401).json({ success: false, message: 'Invalid username or password.' });
         }
 
@@ -200,11 +113,6 @@ app.post('/login', async (req, res) => {
         }
     }
 });
-
-
-
-
-
 
 
 app.get('/get-user-info', async (req, res) => {
@@ -266,13 +174,7 @@ app.post('/check-cadastro', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
+// add product to an order or create a new order
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
 
@@ -381,10 +283,147 @@ app.get('/orders', async (req, res) => {
 
 
 
-// Start the server on port 80
-app.listen(80, () => {
-    console.log('Servidor rodando na porta 80');
+
+
+
+
+
+//create or update cadastro (user)
+app.post('/cadastro', async (req, res) => {
+    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
+
+    try {
+        // Directly attempt to update the cadastro; if no rows are affected, insert a new one
+        const cadastro = await upsertCadastro({
+            representante,
+            razaosocial,
+            cnpj,
+            telefone,
+            email,
+            username
+        });
+
+        res.status(200).json(cadastro); // Send the successful response
+    } catch (error) {
+        console.error('Error in /cadastro:', error);
+        res.status(500).json({ error: 'Failed to process cadastro.' });
+    }
+});
+
+async function upsertCadastro(data) {
+    const { representante, razaosocial, cnpj, telefone, email, username } = data;
+
+    // Attempt to update the existing cadastro
+    const result = await pool.query(
+        `UPDATE cadastro 
+         SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5 
+         WHERE username = $6 
+         RETURNING *`,
+        [representante, razaosocial, cnpj, telefone, email, username]
+    );
+
+    if (result.rows.length > 0) {
+        // If the update was successful, return the updated row
+        return { message: 'Cadastro updated successfully.', cadastro: result.rows[0] };
+    }
+
+    // If no rows were updated, insert a new cadastro
+    const insertResult = await pool.query(
+        `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [representante, razaosocial, cnpj, telefone, email, username]
+    );
+
+    return { message: 'Cadastro created successfully.', cadastro: insertResult.rows[0] };
+}
+
+
+
+
+
+
+//create cadastro (representante)
+app.post('/cadastrorep', async (req, res) => {
+    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
+
+    try {
+        // Validate the data (e.g., check if CNPJ is valid)
+        const result = await pool.query(
+            'INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6)',
+            [representante, razaosocial, cnpj, telefone, email, username]
+        );
+
+        res.json({ success: true, message: 'Cadastro created successfully.' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to create cadastro.' });
+    }
 });
 
 
 
+
+//update cadastro (representante)
+app.put('/updatecadastro/:id', async (req, res) => {
+    const customerId = req.params.id;  // Extract the customer id from the URL
+    const { razaosocial, cnpj, representante, telefone, email, username } = req.body;  // Extract data from request body
+
+    try {
+        // SQL query to update customer data using the primary key (id)
+        const result = await pool.query(
+            `UPDATE cadastro 
+             SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5, username = $6 
+             WHERE id = $7;`,
+            [representante, razaosocial, cnpj, telefone, email, username, customerId]  // Use the values from the form and the customer id
+        );
+
+        if (result.rowCount === 0) {
+            // If no rows are updated, it means the customer wasn't found
+            return res.status(404).json({ success: false, error: 'Customer not found' });
+        }
+
+        // Successfully updated the customer data
+        res.json({ success: true, message: 'Customer updated successfully' });
+    } catch (error) {
+        console.error('Error updating customer:', error);
+        res.status(500).json({ success: false, error: 'Database query failed' });
+    }
+});
+
+
+
+// cadastro list
+app.get('/customers', async (req, res) => {
+    const username = req.query.username;
+    const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
+
+    try {
+        const customers = await pool.query(
+            `SELECT * FROM cadastro WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
+            [username, `%${searchTerm}%`]
+        );
+        res.json({ success: true, data: customers.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Database query failed' });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Start the server on port 80
+app.listen(80, () => {
+    console.log('Servidor rodando na porta 80');
+});
