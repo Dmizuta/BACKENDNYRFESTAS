@@ -116,13 +116,13 @@ app.post('/login', async (req, res) => {
 
 
 app.get('/get-user-info', async (req, res) => {
-    const { username } = req.query;  // Get the username from query parameter
+    const { customerId } = req.query;  // Get the username from query parameter
 
     try {
         // Query the cadastro table to get user data based on username
         const result = await pool.query(
-            'SELECT username, razaosocial FROM cadastro WHERE username = $1',
-            [username]
+            'SELECT username, razaosocial FROM cadastro WHERE id = $1',
+            [customerId]
         );
 
         if (result.rows.length > 0) {
