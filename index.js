@@ -331,10 +331,6 @@ app.get('/orders', async (req, res) => {
 
 
 
-// Start the server on port 80
-app.listen(80, () => {
-    console.log('Servidor rodando na porta 80');
-});
 
 
 
@@ -416,19 +412,50 @@ app.post('/cadastrorep', async (req, res) => {
 
 
 
-app.put('/customers', async (req, res) => {
-    const username = req.query.username;
-    const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
+
+
+app.put('/cadastro', async (req, res) => {
+    const { username, razaosocial, cnpj, representante } = req.body;  // Destructure the fields from the body
+    if (!username || !razaosocial || !cnpj || !representante) {
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
 
     try {
-        const customers = await pool.query(
-            `SELECT * FROM cadastro WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
-            [username, `%${searchTerm}%`]
+        // Update the cadastro info for the user
+        const result = await pool.query(
+            `UPDATE cadastro
+             SET razaosocial = $1, cnpj = $2, representante = $3
+             WHERE username = $4 RETURNING *`,  // Ensure to return the updated row
+            [razaosocial, cnpj, representante, username]
         );
-        res.json({ success: true, data: customers.rows });
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        res.json({ success: true, data: result.rows[0] });  // Return the updated data
     } catch (error) {
+        console.error('Error updating cadastro:', error);
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Start the server on port 80
+app.listen(80, () => {
+    console.log('Servidor rodando na porta 80');
+});
