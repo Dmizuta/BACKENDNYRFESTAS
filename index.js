@@ -145,13 +145,13 @@ app.get('/get-user-info', async (req, res) => {
 
 
 app.post('/check-cadastro', async (req, res) => {
-    const {customerId} = req.body;
+    const {username} = req.body;
 
     try {
         // Query the cadastro table to check if the necessary fields are filled
         const result = await pool.query(
-            'SELECT razaosocial FROM cadastro WHERE id = $1',
-            [customerId]
+            'SELECT razaosocial FROM cadastro WHERE username = $1',
+            [username]
         );
 
         if (result.rows.length > 0) {
@@ -184,7 +184,7 @@ app.post('/add-to-order', async (req, res) => {
     try {
         // Step 1: Check if there's an open order for the given customerId
         const result = await pool.query(
-            'SELECT id FROM pedidos WHERE razaosocial = $1 AND status = 0', // Change to customer_id
+            'SELECT id FROM pedidos WHERE razaosocial = $1 AND status = 0', 
             [razaosocial]
         );
         const existingOrder = result.rows[0];
@@ -210,7 +210,7 @@ app.post('/add-to-order', async (req, res) => {
         
         );
 
-        res.status(200).send({ message: 'Product added 11111111111to order', orderId });
+        res.status(200).send({ message: 'Product added to order', orderId });
     } catch (error) {
         console.error('Error adding to order:', error);
         res.status(500).send({ error: 'Failed to add product to order' });
