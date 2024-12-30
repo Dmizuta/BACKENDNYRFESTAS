@@ -428,17 +428,17 @@ app.get('/customers', async (req, res) => {
 });
 
 
-app.put('/updatecadastro/:cnpj', async (req, res) => {
-    const cnpj = req.params.cnpj;  // Extract cnpj from the URL
-    const { razaosocial, representante, telefone, email, username } = req.body;  // Extract the data to update from the request body
+app.put('/updatecadastro/:id', async (req, res) => {
+    const customerId = req.params.id;  // Extract the customer id from the URL
+    const { razaosocial, cnpj, representante, telefone, email, username } = req.body;  // Extract data from request body
 
     try {
-        // SQL query to update the customer data
+        // SQL query to update customer data using the primary key (id)
         const result = await pool.query(
             `UPDATE cadastro 
-             SET representante = $1, razaosocial = $2, telefone = $3, email = $4, username = $5 
-             WHERE cnpj = $6;`,
-            [representante, razaosocial, telefone, email, username, cnpj]  // Use the values from the form data
+             SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5, username = $6 
+             WHERE id = $7;`,
+            [representante, razaosocial, cnpj, telefone, email, username, customerId]  // Use the values from the form and the customer id
         );
 
         if (result.rowCount === 0) {
@@ -453,6 +453,7 @@ app.put('/updatecadastro/:cnpj', async (req, res) => {
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
+
 
 
 
