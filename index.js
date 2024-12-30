@@ -174,6 +174,54 @@ app.post('/check-cadastro', async (req, res) => {
 
 
 
+
+
+// Add product to an order or create a new order
+app.post('/add-to-order', async (req, res) => {
+    const { customerId, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
+
+    try {
+        // Step 1: Check if there's an open order for the given customerId
+        const result = await pool.query(
+            'SELECT id FROM pedidos WHERE customer_id = $1 AND status = 0', // Change to customer_id
+            [customerId]
+        );
+        const existingOrder = result.rows[0];
+
+        let orderId;
+        if (existingOrder) {
+            orderId = existingOrder.id;
+        } else {
+            // Step 2: Create a new order if none exists
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (customer_id, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [customerId, razaosocial] // Change to customer_id
+            );
+            const newOrder = newOrderResult.rows[0];
+            orderId = newOrder.id;
+        }
+
+        // Step 3: Add product to order items
+        await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, codproduto, descricao, quantidade, preco]
+        );
+
+        res.status(200).send({ message: 'Product added to order', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'Failed to add product to order' });
+    }
+});
+
+
+
+
+
+
+
+
+/*
 // add product to an order or create a new order
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
@@ -212,7 +260,7 @@ app.post('/add-to-order', async (req, res) => {
     }
 });
 
-
+*/
 
 
 
