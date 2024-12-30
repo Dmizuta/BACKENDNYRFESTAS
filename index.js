@@ -359,7 +359,7 @@ app.post('/cadastrorep', async (req, res) => {
 
         res.json({ success: true, message: 'Cadastro created successfully.' });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Verifique os campos e tente novamente' });
+        res.status(500).json({ success: false, error: 'Verifique os campos e tente novamente.' });
     }
 });
 
