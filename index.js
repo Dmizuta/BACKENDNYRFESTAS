@@ -180,6 +180,60 @@ app.post('/check-cadastro', async (req, res) => {
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId } = req.body;
 
+    try {
+        // Step 1: Check if there's an open draft order for the given razaosocial
+        const result = await pool.query(
+            'SELECT id, customerid FROM pedidos WHERE razaosocial = $1 AND status = 0', 
+            [razaosocial]
+        );
+        const existingOrder = result.rows[0];
+
+        if (!existingOrder) {
+            // Step 2: If no draft order exists, create a new order
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, data, total, status, customerid) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0, $3) RETURNING id',
+                [username, razaosocial, customerId] // Include customerId
+            );
+            const newOrder = newOrderResult.rows[0];
+            const orderId = newOrder.id;
+
+            // Step 3: Add the product to the newly created order
+            await pool.query(
+                'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+                [orderId, codproduto, descricao, quantidade, preco]
+            );
+
+            return res.status(200).send({ message: 'Product added to new order', orderId });
+        } else {
+            // Step 4: If a draft order exists, compare customerId from localStorage with the existing order's customerId
+            if (existingOrder.customerid === customerId) {
+                // If customerIds match, add the product to the existing draft order
+                await pool.query(
+                    'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+                    [existingOrder.id, codproduto, descricao, quantidade, preco]
+                );
+
+                return res.status(200).send({ message: 'Product added to existing draft order', orderId: existingOrder.id });
+            } else {
+                // If customerIds don't match, send the appropriate message
+                return res.status(400).send({
+                    error: `Salve o pedido do usuario ${existingOrder.razaosocial} antes de abrir um novo pedido.`
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'Failed to add product to order' });
+    }
+});
+
+
+
+/*
+// Add product to an order or create a new order
+app.post('/add-to-order', async (req, res) => {
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId } = req.body;
+
 
     try {
         // Step 1: Check if there's an open order for the given customerId
@@ -218,7 +272,7 @@ app.post('/add-to-order', async (req, res) => {
 });
 
 
-
+*/
 
 
 
