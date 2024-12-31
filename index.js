@@ -111,22 +111,20 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'Customer ID not found.' });
         }
 
-        const customerId = cadastroResult.rows[0].customerId;
+        const customerId = cadastroResult.rows[0].id;  // Corrected to 'id' for consistency
 
         // If authentication is successful, return user data and generate JWT token
-        //const token = jwt.sign({ username: user.username, role: user.role, customerId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
         const token = jwt.sign({
             username: user.username,
             role: user.role,
-            id: customerId
-          }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
+            customerId  // Ensure the key name here is 'customerId' for consistency
+        }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         // Send the response with the token
         res.json({
             success: true,
             message: 'Login successful.',
-            user: { username: user.username, role: user.role, customerId },
+            user: { username: user.username, role: user.role, customerId }, // Returning 'customerId' here
             token
         });
 
