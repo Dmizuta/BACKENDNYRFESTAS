@@ -107,9 +107,9 @@ app.post('/login', async (req, res) => {
         const cadastroResult = await pool.query('SELECT id FROM cadastro WHERE username = $1', [username]);
 
         // Check if the customerId exists
-        if (cadastroResult.rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Customer ID not found.' });
-        }
+        //if (cadastroResult.rows.length === 0) {
+          //  return res.status(401).json({ success: false, message: 'Customer ID not found.' });
+        //}
 
         const customerId = cadastroResult.rows[0].id;  // Corrected to 'id' for consistency
 
