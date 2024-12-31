@@ -106,12 +106,16 @@ app.post('/login', async (req, res) => {
         // Query the "cadastro" table to get the customerId associated with this user
         const cadastroResult = await pool.query('SELECT id FROM cadastro WHERE username = $1', [username]);
 
-        // Check if the customerId exists
-        //if (cadastroResult.rows.length === 0) {
-          //  return res.status(401).json({ success: false, message: 'Customer ID not found.' });
-        //}
+        let customerId;
 
-        const customerId = cadastroResult.rows[0].id;  // Corrected to 'id' for consistency
+if (cadastroResult.rows.length > 0) {
+    customerId = cadastroResult.rows[0].id;  // Set the customerId if found
+} else {
+    customerId = null;  // Explicitly set to null if no customerId is found
+}
+
+
+       
 
         // If authentication is successful, return user data and generate JWT token
         const token = jwt.sign({
