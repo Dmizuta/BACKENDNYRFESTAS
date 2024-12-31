@@ -111,7 +111,7 @@ app.post('/login', async (req, res) => {
         }
 
         // Get the cadastro ID
-        const cadastroId = cadastroResult.rows[0].id;
+        const id = cadastroResult.rows[0].id;
 
         // If authentication is successful, return user data (including cadastro id) and generate JWT token
         const token = jwt.sign({ username: user.username, role: user.role, id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
