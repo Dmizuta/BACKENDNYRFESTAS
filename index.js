@@ -292,7 +292,9 @@ app.post('/add-to-order', async (req, res) => {
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
         const result = await pool.query(
-            'SELECT id, razaosocial FROM pedidos WHERE status = 0 LIMIT 1' // Fetch only one draft order
+            'SELECT id, razaosocial FROM pedidos WHERE razaosocial = $1 AND status = 0 LIMIT 1' // Fetch only one draft order
+            [razaosocial]
+        
         );
         const existingOrder = result.rows[0];
 
