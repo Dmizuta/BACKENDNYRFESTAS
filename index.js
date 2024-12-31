@@ -88,7 +88,7 @@ app.post('/login', async (req, res) => {
     }
 
     try {
-        // Query the database for the user by username from the "registro" table
+        // Query the "registro" table for the user by username
         const result = await pool.query('SELECT username, password, role FROM registro WHERE username = $1', [username]);
 
         // Check if user exists in the "registro" table
@@ -96,30 +96,33 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid username or password.' });
         }
 
-        // Compare the input password with the stored password in the "registro" table
         const user = result.rows[0];
+
+        // Compare the input password with the stored password in the "registro" table
         if (user.username !== username || user.password !== password) {
             return res.status(401).json({ success: false, message: 'Invalid username or password.' });
         }
 
-        // Query the "cadastro" table to get the ID associated with this user (you may use a different field if necessary)
-        const cadastroResult = await pool.query('SELECT id FROM cadastro WHERE username = $1', [username]);
+        // Query the "cadastro" table to get the customerId associated with this user
+        const cadastroResult = await pool.query('SELECT id AS customerId FROM cadastro WHERE username = $1', [username]);
 
-        // Check if the cadastro ID exists
+        // Check if the customerId exists
         if (cadastroResult.rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Cadastro ID not found.' });
+            return res.status(401).json({ success: false, message: 'Customer ID not found.' });
         }
 
-        // Get the cadastro ID
-        const id = cadastroResult.rows[0].id;
+        const customerId = cadastroResult.rows[0].customerId;
 
-        // If authentication is successful, return user data (including cadastro id) and generate JWT token
-        //const token = jwt.sign({ username: user.username, role: user.role, id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
-        const token = jwt.sign({ username: user.username, role: user.role, id: id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        // If authentication is successful, return user data and generate JWT token
+        const token = jwt.sign({ username: user.username, role: user.role, customerId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         // Send the response with the token
-        res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role, id: id }, token });
+        res.json({
+            success: true,
+            message: 'Login successful.',
+            user: { username: user.username, role: user.role, customerId },
+            token
+        });
 
     } catch (error) {
         console.error('Error during login:', error);
@@ -208,33 +211,6 @@ app.post('/login', async (req, res) => {
 });
 */
 
-app.get('/get-user-info', async (req, res) => {
-    const { customerId } = req.query;  // Get the username from query parameter
-
-    try {
-        // Query the cadastro table to get user data based on username
-        const result = await pool.query(
-            'SELECT username, razaosocial FROM cadastro WHERE id = $1',
-            [customerId]
-        );
-
-        if (result.rows.length > 0) {
-            const userData = result.rows[0];  // Get user data from result
-            res.json(userData);  // Send back the user data as JSON
-        } else {
-            res.status(404).json({ error: 'User not found' });
-        }
-    } catch (error) {
-        console.error('Error fetching user info:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-
-
-
-
-
 
 
 app.post('/check-cadastro', async (req, res) => {
@@ -264,6 +240,40 @@ app.post('/check-cadastro', async (req, res) => {
         return res.status(500).send({ error: 'Failed to check cadastro.' });
     }
 });
+
+
+
+
+app.get('/get-user-info', async (req, res) => {
+    const { customerId } = req.query;  // Get the username from query parameter
+
+    try {
+        // Query the cadastro table to get user data based on username
+        const result = await pool.query(
+            'SELECT username, razaosocial FROM cadastro WHERE id = $1',
+            [customerId]
+        );
+
+        if (result.rows.length > 0) {
+            const userData = result.rows[0];  // Get user data from result
+            res.json(userData);  // Send back the user data as JSON
+        } else {
+            res.status(404).json({ error: 'User not found' });
+        }
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
+
+
+
+
+
+
 
 
 
