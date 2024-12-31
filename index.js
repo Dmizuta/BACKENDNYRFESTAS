@@ -315,14 +315,12 @@ app.post('/add-to-order', async (req, res) => {
 
 
                 return res.status(400).send({ 
-                    error: `Salve o pedido do usuario <b>${existingOrder.razaosocial}</b> antes de abrir um novo pedido.`
+                    error: `Salve o pedido do usuario "${existingOrder.razaosocial}" antes de abrir um novo pedido.`
                 });
                 
 
 
-                //return res.status(400).send({ 
-                //    error: `Salve o pedido do usuario ${existingOrder.razaosocial} antes de abrir um novo pedido.` 
-               // });
+               
             }
         } else {
             // Step 2: If no draft order exists, create a new one
