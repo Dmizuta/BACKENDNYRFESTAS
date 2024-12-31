@@ -119,7 +119,7 @@ app.post('/login', async (req, res) => {
         const token = jwt.sign({ username: user.username, role: user.role, customerIdid: customerIdid }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         // Send the response with the token
-        res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role, customerId: user.customerId }, token });
+        res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role, id: id }, token });
 
     } catch (error) {
         console.error('Error during login:', error);
