@@ -282,7 +282,7 @@ app.post('/add-to-order', async (req, res) => {
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
         const result = await pool.query(
-            'SELECT id, status FROM pedidos WHERE razaosocial = $1', 
+            'SELECT id, razaosocial, status FROM pedidos WHERE razaosocial = $1', 
             [razaosocial]
         );
         const existingOrder = result.rows[0];
@@ -291,10 +291,17 @@ app.post('/add-to-order', async (req, res) => {
 
         if (existingOrder) {
             if (existingOrder.status === 0) {
-                // If an existing draft order is found, add the product to it
-                orderId = existingOrder.id;
+                // If an existing draft order is found, check if razaosocial matches
+                if (existingOrder.razaosocial.trim().toLowerCase() === razaosocial.trim().toLowerCase()) {
+                    orderId = existingOrder.id;  // Match, add the product to the existing order
+                } else {
+                    // If razaosocial doesn't match, show an error message asking to save the order
+                    return res.status(204).send({ 
+                        error: `Salve o pedido do usuario ${existingOrder.razaosocial} antes de abrir um novo pedido.` 
+                    });
+                }
             } else if (existingOrder.status === 1) {
-                // If the order is already submitted, create a new order
+                // If the order is already submitted (status 1), create a new order
                 const newOrderResult = await pool.query(
                     'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
                     [username, razaosocial]
@@ -324,6 +331,7 @@ app.post('/add-to-order', async (req, res) => {
         res.status(500).send({ error: 'Failed to add product to order' });
     }
 });
+
 
 
 
