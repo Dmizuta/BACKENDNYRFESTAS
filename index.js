@@ -297,6 +297,7 @@ app.post('/add-to-order', async (req, res) => {
                     
         );
         const existingOrder = result.rows[0];
+        console.log(existingOrder);
 
         let orderId;
 
