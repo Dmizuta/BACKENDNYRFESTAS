@@ -88,6 +88,57 @@ app.post('/login', async (req, res) => {
     }
 
     try {
+        // Query the database for the user by username from the "registro" table
+        const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
+
+        // Check if user exists in the "registro" table
+        if (result.rows.length === 0) {
+            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+        }
+
+        // Compare the input password with the stored password in the "registro" table
+        const user = result.rows[0];
+        if (user.username !== username || user.password !== password) {
+            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+        }
+
+        // Query the "cadastro" table to get the ID associated with this user (you may use a different field if necessary)
+        const cadastroResult = await pool.query('SELECT id FROM cadastro WHERE username = $1', [username]);
+
+        // Check if the cadastro ID exists
+        if (cadastroResult.rows.length === 0) {
+            return res.status(401).json({ success: false, message: 'Cadastro ID not found.' });
+        }
+
+        // Get the cadastro ID
+        const cadastroId = cadastroResult.rows[0].id;
+
+        // If authentication is successful, return user data (including cadastro id) and generate JWT token
+        const token = jwt.sign({ username: user.username, role: user.role, id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+        // Send the response with the token
+        res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role, id: user.id }, token });
+
+    } catch (error) {
+        console.error('Error during login:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+        }
+    }
+});
+
+
+
+/*
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    // Validate if both username and password are provided
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    }
+
+    try {
         // Query the database for the user by username
         const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
 
@@ -116,7 +167,7 @@ app.post('/login', async (req, res) => {
 
 
 
-/*
+
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
