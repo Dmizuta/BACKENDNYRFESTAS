@@ -513,50 +513,70 @@ app.get('/orders', async (req, res) => {
 
 
 
-// Handle form submission
-const form = document.getElementById('cadastroForm');
-form.addEventListener('submit', async (e) => {
-    e.preventDefault();
 
-    // Get the logged-in username from localStorage
-    const loggedInUsername = localStorage.getItem('username');  // assuming the username is saved here
 
-    // Get form data
-    const formData = {
-        representante: document.getElementById('representante').value,
-        razaosocial: document.getElementById('razaosocial').value,
-        cnpj: document.getElementById('cnpj').value,
-        telefone: document.getElementById('telefone').value,
-        email: document.getElementById('email').value,
-        username: loggedInUsername,  // Add username to the form data
-    };
+
+
+
+
+// Create or update cadastro (user)
+app.post('/cadastro', async (req, res) => {
+    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
 
     try {
-        const response = await fetch('https://backendnyrfestas.vercel.app/cadastro', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
+        // Directly attempt to update the cadastro; if no rows are affected, insert a new one
+        const cadastro = await upsertCadastro({
+            representante,
+            razaosocial,
+            cnpj,
+            telefone,
+            email,
+            username
         });
 
-        const result = await response.json();
-        if (response.ok) {
-            alert(result.message); // Shows the dynamic message like "Cadastro created successfully."
-
-            // After successful cadastro, store customerId in localStorage
-            if (result.customerId) {
-                localStorage.setItem('customerId', result.customerId);
-                console.log('Customer ID saved to localStorage:', result.customerId);
-            }
-
-            form.reset();
-        } else {
-            alert('Erro: ' + (result.error || 'Falha no cadastro.'));
-        }
+        // Send the successful response with the customerId
+        res.status(200).json({
+            message: cadastro.message,    // Success message
+            customerId: cadastro.cadastro.id // Send the customerId back to frontend
+        });
     } catch (error) {
-        console.error('Erro ao enviar o formulário:', error);
-        alert('Erro ao realizar o cadastro. Por favor, tente novamente mais tarde.');
+        console.error('Error in /cadastro:', error);
+        res.status(500).json({ error: 'Failed to process cadastro.' });
     }
 });
+
+async function upsertCadastro(data) {
+    const { representante, razaosocial, cnpj, telefone, email, username } = data;
+
+    // Attempt to update the existing cadastro
+    const result = await pool.query(
+        `UPDATE cadastro 
+         SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5 
+         WHERE username = $6 
+         RETURNING *`,
+        [representante, razaosocial, cnpj, telefone, email, username]
+    );
+
+    if (result.rows.length > 0) {
+        // If the update was successful, return the updated row
+        return { message: 'Cadastro updated successfully.', cadastro: result.rows[0] };
+    }
+
+    // If no rows were updated, insert a new cadastro
+    const insertResult = await pool.query(
+        `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [representante, razaosocial, cnpj, telefone, email, username]
+    );
+
+    return { message: 'Cadastro created successfully.', cadastro: insertResult.rows[0] };
+}
+
+
+
+
+
 
 
 /*
