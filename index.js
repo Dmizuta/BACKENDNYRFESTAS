@@ -104,7 +104,7 @@ app.post('/login', async (req, res) => {
         }
 
         // Query the "cadastro" table to get the customerId associated with this user
-        const cadastroResult = await pool.query('SELECT id AS customerId FROM cadastro WHERE username = $1', [username]);
+        const cadastroResult = await pool.query('SELECT id FROM cadastro WHERE username = $1', [username]);
 
         // Check if the customerId exists
         if (cadastroResult.rows.length === 0) {
@@ -118,10 +118,10 @@ app.post('/login', async (req, res) => {
         const token = jwt.sign({
             username: user.username,
             role: user.role,
-            customerId: customerId
+            id: customerId
           }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-          
+
         // Send the response with the token
         res.json({
             success: true,
