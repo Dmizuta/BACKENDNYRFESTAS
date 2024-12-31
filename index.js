@@ -312,15 +312,9 @@ app.post('/add-to-order', async (req, res) => {
                 orderId = existingOrder.id;
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
-
-
                 return res.status(400).send({ 
-                    error: `Salve o pedido do usuario "${existingOrder.razaosocial}" antes de abrir um novo pedido.`
+                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.` 
                 });
-                
-
-
-               
             }
         } else {
             // Step 2: If no draft order exists, create a new one
