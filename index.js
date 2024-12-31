@@ -89,7 +89,7 @@ app.post('/login', async (req, res) => {
 
     try {
         // Query the database for the user by username from the "registro" table
-        const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
+        const result = await pool.query('SELECT username, password, role FROM registro WHERE username = $1', [username]);
 
         // Check if user exists in the "registro" table
         if (result.rows.length === 0) {
