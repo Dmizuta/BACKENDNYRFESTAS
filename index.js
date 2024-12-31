@@ -116,7 +116,7 @@ app.post('/login', async (req, res) => {
         // If authentication is successful, return user data (including cadastro id) and generate JWT token
         //const token = jwt.sign({ username: user.username, role: user.role, id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-        const token = jwt.sign({ username: user.username, role: user.role, id: id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        const token = jwt.sign({ username: user.username, role: user.role, customerIdid: customerIdid }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         // Send the response with the token
         res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role, customerId: user.customerId }, token });
