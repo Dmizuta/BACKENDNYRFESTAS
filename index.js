@@ -302,7 +302,8 @@ app.post('/add-to-order', async (req, res) => {
         let orderId;
 
         if (existingOrder) {
-            if (existingOrder.razaosocial === razaosocial()) {
+            
+            if (existingOrder.razaosocial === razaosocial) {
                 // If razaosocial matches, add the product to the existing order
                 orderId = existingOrder.id;
             } else {
