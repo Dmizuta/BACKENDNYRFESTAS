@@ -513,9 +513,53 @@ app.get('/orders', async (req, res) => {
 
 
 
+// Handle form submission
+const form = document.getElementById('cadastroForm');
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Get the logged-in username from localStorage
+    const loggedInUsername = localStorage.getItem('username');  // assuming the username is saved here
+
+    // Get form data
+    const formData = {
+        representante: document.getElementById('representante').value,
+        razaosocial: document.getElementById('razaosocial').value,
+        cnpj: document.getElementById('cnpj').value,
+        telefone: document.getElementById('telefone').value,
+        email: document.getElementById('email').value,
+        username: loggedInUsername,  // Add username to the form data
+    };
+
+    try {
+        const response = await fetch('https://backendnyrfestas.vercel.app/cadastro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert(result.message); // Shows the dynamic message like "Cadastro created successfully."
+
+            // After successful cadastro, store customerId in localStorage
+            if (result.customerId) {
+                localStorage.setItem('customerId', result.customerId);
+                console.log('Customer ID saved to localStorage:', result.customerId);
+            }
+
+            form.reset();
+        } else {
+            alert('Erro: ' + (result.error || 'Falha no cadastro.'));
+        }
+    } catch (error) {
+        console.error('Erro ao enviar o formulário:', error);
+        alert('Erro ao realizar o cadastro. Por favor, tente novamente mais tarde.');
+    }
+});
 
 
-
+/*
 //create or update cadastro (user)
 app.post('/cadastro', async (req, res) => {
     const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
@@ -568,7 +612,7 @@ async function upsertCadastro(data) {
 
 
 
-
+*/
 
 
 //create cadastro (representante)
