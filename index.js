@@ -703,13 +703,13 @@ app.get('/customers', async (req, res) => {
 
 // cadastro list
 app.get('/allcustomers', async (req, res) => {
-    const username = req.query.username;
+    //const username = req.query.username;
     const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
 
     try {
         const customers = await pool.query(
             `SELECT * FROM cadastro `,
-            [username, `%${searchTerm}%`]
+            [`%${searchTerm}%`]
         );
         res.json({ success: true, data: customers.rows });
     } catch (error) {
