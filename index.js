@@ -684,6 +684,36 @@ app.put('/updatecadastro/:id', async (req, res) => {
 
 
 
+//update cadastro (admin)
+app.put('/updatecadastroadmin/:id', async (req, res) => {
+    const customerId = req.params.id;  // Extract the customer id from the URL
+    const { razaosocial, cnpj, representante, telefone, email, username } = req.body;  // Extract data from request body
+
+    try {
+        // SQL query to update customer data using the primary key (id)
+        const result = await pool.query(
+            `UPDATE cadastro 
+             SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5, username = $6 
+             WHERE id = $7;`,
+            [representante, razaosocial, cnpj, telefone, email, username, customerId]  // Use the values from the form and the customer id
+        );
+
+        if (result.rowCount === 0) {
+            // If no rows are updated, it means the customer wasn't found
+            return res.status(404).json({ success: false, error: 'Customer not found' });
+        }
+
+        // Successfully updated the customer data
+        res.json({ success: true, message: 'Customer updated successfully' });
+    } catch (error) {
+        console.error('Error updating customer:', error);
+        res.status(500).json({ success: false, error: 'Database query failed' });
+    }
+});
+
+
+
+
 // cadastro list
 app.get('/customers', async (req, res) => {
     const username = req.query.username;
