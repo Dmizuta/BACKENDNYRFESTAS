@@ -702,15 +702,8 @@ app.get('/customers', async (req, res) => {
 
 
 app.get('/allcustomers', async (req, res) => {
-    const searchTerm = req.query.searchTerm || '';
     try {
-        let query = `SELECT * FROM cadastro`;
-        let values = [];
-        if (searchTerm) {
-            query += ` WHERE razaosocial ILIKE $1 OR cnpj ILIKE $1`;
-            values = [`%${searchTerm}%`];
-        }
-        const customers = await pool.query(query, values);
+        const customers = await pool.query('SELECT * FROM cadastro');
         res.json({ success: true, data: customers.rows });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Database query failed' });
