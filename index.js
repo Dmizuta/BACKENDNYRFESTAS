@@ -702,9 +702,13 @@ app.get('/customers', async (req, res) => {
 
 
 app.get('/allcustomers', async (req, res) => {
+    const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
+
     try {
-        const customers = await pool.query('SELECT * FROM cadastro');
+        const customers = await pool.query('SELECT * FROM cadastro WHERE (razaosocial ILIKE $2 OR cnpj ILIKE $2)'
+        [username, `%${searchTerm}%`]);
         res.json({ success: true, data: customers.rows });
+        
     } catch (error) {
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
