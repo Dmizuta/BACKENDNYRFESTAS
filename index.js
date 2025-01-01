@@ -701,21 +701,22 @@ app.get('/customers', async (req, res) => {
 });
 
 
-// cadastro list
 app.get('/allcustomers', async (req, res) => {
-    //const username = req.query.username;
-    const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
-
+    const searchTerm = req.query.searchTerm || '';
     try {
-        const customers = await pool.query(
-            `SELECT * FROM cadastro `,
-            [`%${searchTerm}%`]
-        );
+        let query = `SELECT * FROM cadastro`;
+        let values = [];
+        if (searchTerm) {
+            query += ` WHERE razaosocial ILIKE $1 OR cnpj ILIKE $1`;
+            values = [`%${searchTerm}%`];
+        }
+        const customers = await pool.query(query, values);
         res.json({ success: true, data: customers.rows });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
+
 
 
 
