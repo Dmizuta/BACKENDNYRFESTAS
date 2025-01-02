@@ -291,7 +291,7 @@ app.get('/get-user-info', async (req, res) => {
 
 
 app.post('/add-to-order', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId } = req.body;
+    const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
 
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
@@ -355,7 +355,7 @@ app.post('/add-to-order', async (req, res) => {
 
 
 app.post('/add-to-order-admin', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId } = req.body;
+    const { username, razaosocial, codproduto, descricao, quantidade, preco } = req.body;
 
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
