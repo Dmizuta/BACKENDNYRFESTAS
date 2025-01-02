@@ -623,6 +623,30 @@ app.get('/orders', async (req, res) => {
     }
 });
 
+// Endpoint to fetch orders for a specific username
+app.get('/orders-admin', async (req, res) => {
+    
+    if (!username) {
+        return res.status(400).json({ message: 'Username is required' });
+    }
+
+    try {
+        const result = await pool.query(
+            'SELECT id, razaosocial, data, total, status FROM pedidos',
+            [username]
+        );
+
+        if (result.rows.length === 0) {
+            return res.json([]);  // Return an empty array if no orders found
+        }
+
+        // Send the orders directly as an array
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: 'Error fetching orders' });
+    }
+});
 
 
 
