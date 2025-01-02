@@ -633,7 +633,7 @@ app.get('/orders-admin', async (req, res) => {
 
     try {
         const result = await pool.query(
-            'SELECT id, razaosocial, data, total, status FROM pedidos',
+            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
             
         );
 
