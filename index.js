@@ -344,6 +344,67 @@ app.post('/add-to-order', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+app.post('/add-to-order-admin', async (req, res) => {
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId } = req.body;
+
+    try {
+        // Step 1: Check if there's an open draft order for the given razaosocial
+        const result = await pool.query(
+            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
+            [username]
+                    
+        );
+        const existingOrder = result.rows[0];
+       
+
+        let orderId;
+
+        if (existingOrder) {
+            
+            if (existingOrder.razaosocial === razaosocial) {
+                // If razaosocial matches, add the product to the existing order
+                orderId = existingOrder.id;
+            } else {
+                // If razaosocial doesn't match, show an error message asking to save the order
+                return res.status(400).send({ 
+                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.` 
+                });
+            }
+        } else {
+            // Step 2: If no draft order exists, create a new one
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial]
+            );
+            const newOrder = newOrderResult.rows[0];
+            orderId = newOrder.id;
+        }
+
+        // Step 3: Add product to order items
+        await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, codproduto, descricao, quantidade, preco]
+        );
+
+        res.status(200).send({ message: 'Product added to order', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'Failed to add product to order' });
+    }
+});
+
+
+/*
 app.post('/add-to-order-admin', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId } = req.body;
 
@@ -393,7 +454,7 @@ app.post('/add-to-order-admin', async (req, res) => {
     }
 });
 
-
+*/
 
 
 
