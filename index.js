@@ -632,10 +632,28 @@ app.get('/orders-admin', async (req, res) => {
     }*/
 
     try {
-        const result = await pool.query(
+
+        const result = await pool.query(`
+            SELECT 
+                pedidos.id, 
+                pedidos.username,          -- Original username field
+                cadastro.representante,    -- Added representante field from cadastro
+                pedidos.razaosocial, 
+                pedidos.data, 
+                pedidos.total, 
+                pedidos.status
+            FROM 
+                pedidos
+            LEFT JOIN 
+                cadastro 
+            ON 
+                pedidos.username = cadastro.username;
+        `);
+
+        /*const result = await pool.query(
             'SELECT id, razaosocial, data, total, status FROM pedidos',
             
-        );
+        );*/
 
         if (result.rows.length === 0) {
             return res.json([]);  // Return an empty array if no orders found
