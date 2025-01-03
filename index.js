@@ -948,3 +948,39 @@ app.get('/allcustomers', async (req, res) => {
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
 });
+
+
+
+
+
+
+// Endpoint to fetch order details with products
+app.get('/order-details/:id', async (req, res) => {
+    const orderId = req.params.id;
+    try {
+        // Fetch order details
+        const orderQuery = 'SELECT * FROM pedidos WHERE id = $1';
+        const orderResult = await pool.query(orderQuery, [orderId]);
+
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        const order = orderResult.rows[0];
+
+        // Fetch products associated with the order
+        const productsQuery = 'SELECT * FROM pedidoitens WHERE idpedido = $1';
+        const productsResult = await pool.query(productsQuery, [orderId]);
+
+        // Combine order details with products
+        const orderDetails = {
+            ...order,
+            products: productsResult.rows
+        };
+
+        res.json(orderDetails);
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        res.status(500).json({ message: 'Error fetching order details' });
+    }
+});
