@@ -623,6 +623,10 @@ app.get('/orders', async (req, res) => {
     }
 });
 
+
+
+
+
 // Endpoint to fetch orders for a specific username
 app.get('/orders-admin', async (req, res) => {
     /*const { username } = req.query;
@@ -633,7 +637,30 @@ app.get('/orders-admin', async (req, res) => {
 
     try {
 
-        const result = await pool.query(`
+
+const result = await pool.query(`
+    SELECT DISTINCT ON (pedidos.id)
+    pedidos.id, 
+    pedidos.username,          
+    cadastro.representante,    
+    pedidos.razaosocial, 
+    pedidos.data, 
+    pedidos.total, 
+    pedidos.status
+FROM 
+    pedidos
+LEFT JOIN 
+    cadastro 
+ON 
+    pedidos.username = cadastro.username;
+
+ `);
+
+        
+        /*const result = await pool.query(`
+
+
+            
             SELECT 
                 pedidos.id, 
                 pedidos.username,          -- Original username field
@@ -648,7 +675,7 @@ app.get('/orders-admin', async (req, res) => {
                 cadastro 
             ON 
                 pedidos.username = cadastro.username;
-        `);
+        `);*/
 
         /*const result = await pool.query(
             'SELECT id, razaosocial, data, total, status FROM pedidos',
