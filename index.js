@@ -55,6 +55,25 @@ app.get('/products', async (req, res) => {
 
 
 
+
+app.get('/product-buy/:id', async (req, res) => {
+    const productCode = req.params.id;
+    try {
+        const result = await pool.query('SELECT descricao, cxfechada, precofechada, precofrac, cxfracionada FROM produtos WHERE codproduto = $1', [productCode]);
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to fetch products from the database',
+            error: error.message,
+        });
+    }
+});
+
+
+
+
+
 app.post('/register', async (req, res) => {
     const { username, password, role } = req.body;
 
