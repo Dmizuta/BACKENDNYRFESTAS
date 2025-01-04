@@ -55,7 +55,37 @@ app.get('/products', async (req, res) => {
 
 
 
+app.get('/product-buy/:id', async (req, res) => {
+    const productCode = req.params.id;
+    try {
+        const result = await pool.query(
+            'SELECT descricao, cxfechada, precofechada, precofrac, cxfracionada FROM produtos WHERE codproduto = $1',
+            [productCode]
+        );
 
+        if (result.rows.length === 1) {
+            // If only one product is found, return it as an object
+            res.json(result.rows[0]);
+        } else if (result.rows.length === 0) {
+            // If no products are found, send a 404 status with a message
+            res.status(404).json({
+                status: 'error',
+                message: `No product found with code: ${productCode}`,
+            });
+        } else {
+            // If multiple products are found (unexpected scenario), return the full array
+            res.json(result.rows);
+        }
+    } catch (error) {
+        console.error('Error fetching product:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to fetch products from the database',
+            error: error.message,
+        });
+    }
+});
+/*
 app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
     try {
@@ -72,7 +102,7 @@ app.get('/product-buy/:id', async (req, res) => {
         });
     }
 });
-
+*/
 
 
 
