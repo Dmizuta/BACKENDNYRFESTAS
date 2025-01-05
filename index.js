@@ -310,7 +310,7 @@ app.get('/get-user-info', async (req, res) => {
     try {
         // Query the cadastro table to get user data based on username
         const result = await pool.query(
-            'SELECT username, razaosocial FROM cadastro WHERE id = $1',
+            'SELECT username, razaosocial, representante, cnpj FROM cadastro WHERE id = $1',
             [customerId]
         );
 
@@ -343,7 +343,7 @@ app.get('/get-user-info', async (req, res) => {
 
 
 app.post('/add-to-order', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId } = req.body;
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
 
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
@@ -371,8 +371,8 @@ app.post('/add-to-order', async (req, res) => {
         } else {
             // Step 2: If no draft order exists, create a new one
             const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
-                [username, razaosocial]
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $4, 4%, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj]
             );
             const newOrder = newOrderResult.rows[0];
             orderId = newOrder.id;
@@ -435,8 +435,8 @@ app.post('/add-to-order-admin', async (req, res) => {
         } else {
             // Step 2: If no draft order exists, create a new one
             const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, data, total, status) VALUES ($1, $2, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
-                [username, razaosocial]
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $4, 4%, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj]
             );
             const newOrder = newOrderResult.rows[0];
             orderId = newOrder.id;
