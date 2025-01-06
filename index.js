@@ -371,7 +371,7 @@ app.post('/add-to-order', async (req, res) => {
         } else {
             // Step 2: If no draft order exists, create a new one
             const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, 4$, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
                 [username, razaosocial, representante, cnpj]
             );
             const newOrder = newOrderResult.rows[0];
