@@ -275,14 +275,17 @@ app.post('/add-to-order', async (req, res) => {
             'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
             [orderId]
         );
-/*
+
         const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
+        console.log('Calculated total:', total); // Log do total calculado
 
         // Step 5: Update the total in the pedidos table
-        await pool.query(
+        const updateResult = await pool.query(
             'UPDATE pedidos SET total = $1 WHERE id = $2',
             [total, orderId]
-        );*/
+        );
+
+        console.log('Update result:', updateResult); // Log do resultado da atualização
 
         res.status(200).send({ message: 'Product added to order and total updated', orderId });
     } catch (error) {
@@ -290,6 +293,7 @@ app.post('/add-to-order', async (req, res) => {
         res.status(500).send({ error: 'Failed to add product to order' });
     }
 });
+
 
 
 
