@@ -226,6 +226,76 @@ app.get('/get-user-info', async (req, res) => {
 });
 
 
+
+
+
+
+
+app.post('/add-to-order', async (req, res) => {
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
+
+    try {
+        // Step 1: Check if there's an open draft order for the given razaosocial
+        const result = await pool.query(
+            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
+            [username]
+        );
+        const existingOrder = result.rows[0];
+
+        let orderId;
+
+        if (existingOrder) {
+            if (existingOrder.razaosocial === razaosocial) {
+                // If razaosocial matches, add the product to the existing order
+                orderId = existingOrder.id;
+            } else {
+                // If razaosocial doesn't match, show an error message asking to save the order
+                return res.status(400).send({ 
+                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.` 
+                });
+            }
+        } else {
+            // Step 2: If no draft order exists, create a new one
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj]
+            );
+            const newOrder = newOrderResult.rows[0];
+            orderId = newOrder.id;
+        }
+
+        // Step 3: Add product to order items
+        await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, codproduto, descricao, quantidade, preco]
+        );
+
+        // Step 4: Calculate the total price for the order
+        const totalResult = await pool.query(
+            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
+            [orderId]
+        );
+
+        const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
+
+        // Step 5: Update the total in the pedidos table
+        await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, orderId]
+        );
+
+        res.status(200).send({ message: 'Product added to order and total updated', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'Failed to add product to order' });
+    }
+});
+
+
+
+
+
+/*
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
 
@@ -275,7 +345,7 @@ app.post('/add-to-order', async (req, res) => {
     }
 });
 
-
+*/
 app.post('/add-to-order-admin', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
 
