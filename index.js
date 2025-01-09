@@ -270,7 +270,7 @@ app.post('/add-to-order', async (req, res) => {
             [orderId, codproduto, descricao, quantidade, preco]
         );
 
-        // Step 4: Calculate the total price for the order
+        /*// Step 4: Calculate the total price for the order
         const totalResult = await pool.query(
             'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
             [orderId]
@@ -282,7 +282,7 @@ app.post('/add-to-order', async (req, res) => {
         await pool.query(
             'UPDATE pedidos SET total = $1 WHERE id = $2',
             [total, orderId]
-        );
+        );*/
 
         res.status(200).send({ message: 'Product added to order and total updated', orderId });
     } catch (error) {
