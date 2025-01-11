@@ -228,7 +228,7 @@ app.get('/get-user-info', async (req, res) => {
 
 
 
-
+/*
 
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
@@ -290,8 +290,8 @@ app.post('/add-to-order', async (req, res) => {
         console.error('Error adding to order:', error);
         res.status(500).json({ success: false, error: 'FALHA AO ADICIONAR O PRODUTO.' });
     }
-});
-/*
+});*/
+
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
 
@@ -355,7 +355,7 @@ app.post('/add-to-order', async (req, res) => {
     }
 });
 
-*/
+
 app.post('/add-to-order-admin', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
 
