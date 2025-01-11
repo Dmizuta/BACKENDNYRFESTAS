@@ -85,26 +85,6 @@ app.get('/product-buy/:id', async (req, res) => {
         });
     }
 });
-/*
-app.get('/product-buy/:id', async (req, res) => {
-    const productCode = req.params.id;
-    try {
-        const result = await pool.query('SELECT descricao, cxfechada, precofechada, precofrac, cxfracionada FROM produtos WHERE codproduto = $1', [productCode]);
-        res.json(result.rows);
-        console.log(result.rows);
-
-
-    } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: 'Failed to fetch products from the database',
-            error: error.message,
-        });
-    }
-});
-*/
-
-
 
 
 app.post('/register', async (req, res) => {
@@ -167,8 +147,6 @@ if (cadastroResult.rows.length > 0) {
 }
 
 
-       
-
         // If authentication is successful, return user data and generate JWT token
         const token = jwt.sign({
             username: user.username,
@@ -191,85 +169,6 @@ if (cadastroResult.rows.length > 0) {
         }
     }
 });
-
-
-
-/*
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-
-    // Validate if both username and password are provided
-    if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'Username and password are required.' });
-    }
-
-    try {
-        // Query the database for the user by username
-        const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
-
-        // Check if user exists
-        if (result.rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-        }
-
-        // Compare the input password with the stored password
-        const user = result.rows[0];
-        if (user.username !== username || user.password !== password) {
-            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-        }
-
-        // If authentication is successful, return user data (including id)
-        const token = jwt.sign({ username: user.username, role: user.role, id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role, id: user.id }, token });
-
-    } catch (error) {
-        console.error('Error during login:', error);
-        if (!res.headersSent) {
-            res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
-        }
-    }
-});
-
-
-
-
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-
-    // Validate if both username and password are provided
-    if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'Username and password are required.' });
-    }
-
-    try {
-        // Query the database for the user by username
-        const result = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
-
-        // Check if user exists
-        if (result.rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-        }
-
-        // Compare the input password with the stored password
-        const user = result.rows[0];
-        if (user.username !== username || user.password !== password) {
-            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
-        }
-
-        // If authentication is successful, return user data (e.g., username)
-        const token = jwt.sign({ username: user.username, role: user.role }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        res.json({ success: true, message: 'Login successful.', user: { username: user.username, role: user.role }, token });
-
-
-
-    } catch (error) {
-        console.error('Error during login:', error);
-        if (!res.headersSent) {
-            res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
-        }
-    }
-});
-*/
 
 
 
@@ -332,16 +231,75 @@ app.get('/get-user-info', async (req, res) => {
 
 
 
+app.post('/add-to-order', async (req, res) => {
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
+
+    try {
+        // Step 1: Check if there's an open draft order for the given razaosocial
+        const result = await pool.query(
+            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
+            [username]
+        );
+        const existingOrder = result.rows[0];
+
+        let orderId;
+
+        if (existingOrder) {
+            if (existingOrder.razaosocial === razaosocial) {
+                // If razaosocial matches, add the product to the existing order
+                orderId = existingOrder.id;
+            } else {
+                // If razaosocial doesn't match, show an error message asking to save the order
+                return res.status(400).send({ 
+                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.` 
+                });
+            }
+        } else {
+            // Step 2: If no draft order exists, create a new one
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj]
+            );
+            const newOrder = newOrderResult.rows[0];
+            orderId = newOrder.id;
+        }
+
+        // Step 3: Add product to order items
+        await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, codproduto, descricao, quantidade, preco]
+        );
+
+        // Step 4: Calculate the total price for the order
+        const totalResult = await pool.query(
+            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
+            [orderId]
+        );
+
+        const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
+        console.log('Calculated total:', total); // Log do total calculado
+
+        // Step 5: Update the total in the pedidos table
+        const updateResult = await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, orderId]
+        );
+
+        console.log('Update result:', updateResult); // Log do resultado da atualização
+
+        res.status(200).send({ message: 'Product added to order and total updated', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'Failed to add product to order' });
+    }
+});
 
 
 
 
 
 
-
-
-
-
+/*
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
 
@@ -391,21 +349,7 @@ app.post('/add-to-order', async (req, res) => {
     }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+*/
 app.post('/add-to-order-admin', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
 
@@ -447,6 +391,22 @@ app.post('/add-to-order-admin', async (req, res) => {
             'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
             [orderId, codproduto, descricao, quantidade, preco]
         );
+
+
+// Step 4: Calculate the total price for the order
+const totalResult = await pool.query(
+    'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
+    [orderId]
+);
+
+const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
+console.log('Calculated total:', total); // Log do total calculado
+
+// Step 5: Update the total in the pedidos table
+const updateResult = await pool.query(
+    'UPDATE pedidos SET total = $1 WHERE id = $2',
+    [total, orderId]
+);
 
         res.status(200).send({ message: 'Product added to order', orderId });
     } catch (error) {
@@ -492,8 +452,6 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
-
-
 // Endpoint to fetch orders for a specific username
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
@@ -519,8 +477,6 @@ app.get('/orders', async (req, res) => {
         res.status(500).json({ message: 'Error fetching orders' });
     }
 });
-
-
 
 
 
@@ -554,8 +510,6 @@ ON
  `);
 
         
-      
-
         if (result.rows.length === 0) {
             return res.json([]);  // Return an empty array if no orders found
         }
@@ -567,14 +521,6 @@ ON
         res.status(500).json({ message: 'Error fetching orders' });
     }
 });
-
-
-
-
-
-
-
-
 
 
 
@@ -634,12 +580,6 @@ async function upsertCadastro(data) {
 
 
 
-
-
-
-
-
-
 //create cadastro (representante)
 app.post('/cadastrorep', async (req, res) => {
     const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
@@ -656,7 +596,6 @@ app.post('/cadastrorep', async (req, res) => {
         res.status(500).json({ success: false, error: 'Verifique os campos e tente novamente.' });
     }
 });
-
 
 
 
@@ -751,25 +690,10 @@ app.get('/allcustomers', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Start the server on port 80
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
 });
-
-
 
 
 
