@@ -482,11 +482,11 @@ app.get('/orders', async (req, res) => {
 
 // Endpoint to fetch orders for a specific username
 app.get('/orders-admin', async (req, res) => {
-    /*const { username } = req.query;
+    const { username } = req.query;
 
     if (!username) {
         return res.status(400).json({ message: 'Username is required' });
-    }*/
+    }
 
     try {
 
