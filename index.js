@@ -419,7 +419,7 @@ app.get('/orders', async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching orders:', error);
-        res.status(500).json({ message: 'FALHA AP BUSCAR DADOS.' });
+        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
 
