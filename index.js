@@ -287,7 +287,7 @@ app.post('/add-to-order', async (req, res) => {
 
         console.log('Update result:', updateResult); // Log do resultado da atualização
 
-        res.status(200).send({ message: 'PRODUTO ADICIONADO AO PEDIDO!', orderId });
+        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
     } catch (error) {
         console.error('Error adding to order:', error);
         res.status(500).send({ error: 'Failed to add product to order' });
