@@ -757,7 +757,7 @@ app.post("/submit-order", async (req, res) => {
       // Directly update the status and observation
       const updateQuery = `
         UPDATE pedidos
-        SET status = 1, observation = $1
+        SET status = 1, observacoes = $1
         WHERE id = $2;
       `;
       const result = await pool.query(updateQuery, [observation, order_id]);
