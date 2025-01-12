@@ -25,13 +25,13 @@ app.get('/test-db-connection', async (req, res) => {
         const result = await pool.query('SELECT * FROM products LIMIT 5');
         res.json({
             status: 'success',
-            message: 'Database connection successful!',
+            message: 'CONEXÃO COM DATABASE ESTABELECIDA!',
             data: result.rows,
         });
     } catch (error) {
         res.status(500).json({
             status: 'error',
-            message: 'Failed to connect to the database or fetch data',
+            message: 'FALHA NA COMEXÃO COM A DATABASE.',
             error: error.message,
         });
     }
@@ -47,7 +47,7 @@ app.get('/products', async (req, res) => {
     } catch (error) {
         res.status(500).json({
             status: 'error',
-            message: 'Failed to fetch products from the database',
+            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
             error: error.message,
         });
     }
@@ -70,7 +70,7 @@ app.get('/product-buy/:id', async (req, res) => {
             // If no products are found, send a 404 status with a message
             res.status(404).json({
                 status: 'error',
-                message: `No product found with code: ${productCode}`,
+                message: `NENHUM PRODUTO ENCONTRADO COM ESTE CÓDIGO: ${productCode}`,
             });
         } else {
             // If multiple products are found (unexpected scenario), return the full array
@@ -80,7 +80,7 @@ app.get('/product-buy/:id', async (req, res) => {
         console.error('Error fetching product:', error.message);
         res.status(500).json({
             status: 'error',
-            message: 'Failed to fetch products from the database',
+            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
             error: error.message,
         });
     }
@@ -91,22 +91,22 @@ app.post('/register', async (req, res) => {
     const { username, password, role } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'Username and password are required.' });
+        return res.status(400).json({ success: false, message: 'NECESSÁRIO USUÁRIO E SENHA.' });
     }
 
     try {
         // Check if user already exists
         const existingUser = await pool.query('SELECT * FROM registro WHERE username = $1', [username]);
         if (existingUser.rows.length > 0) {
-            return res.status(400).json({ success: false, message: 'Username already exists.' });
+            return res.status(400).json({ success: false, message: 'USUÁRIO JÁ EXISTE.' });
         }
 
         // Insert new user
         await pool.query('INSERT INTO registro (username, password, role) VALUES ($1, $2, $3)', [username, password, role]);
-        res.json({ success: true, message: 'User registered successfully.' });
+        res.json({ success: true, message: 'USUÁRIO REGISTRADO COM SUCESSO!' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+        res.status(500).json({ success: false, message: 'FALHA NO SERVIDOR, TENTE MAIS TARDE.' });
     }
 });
 
@@ -116,7 +116,7 @@ app.post('/login', async (req, res) => {
 
     // Validate if both username and password are provided
     if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'Username and password are required.' });
+        return res.status(400).json({ success: false, message: 'NECESSÁRIO USUÁRIO E SENHA.' });
     }
 
     try {
@@ -125,14 +125,14 @@ app.post('/login', async (req, res) => {
 
         // Check if user exists in the "registro" table
         if (result.rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+            return res.status(401).json({ success: false, message: 'USUÁRIO OU SENHA INVÁLIDOS.' });
         }
 
         const user = result.rows[0];
 
         // Compare the input password with the stored password in the "registro" table
         if (user.username !== username || user.password !== password) {
-            return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+            return res.status(401).json({ success: false, message: 'USUÁRIO OU SENHA INVÁLIDOS.' });
         }
 
         // Query the "cadastro" table to get the customerId associated with this user
@@ -165,7 +165,7 @@ if (cadastroResult.rows.length > 0) {
     } catch (error) {
         console.error('Error during login:', error);
         if (!res.headersSent) {
-            res.status(500).json({ success: false, message: 'Server error. Please try again later.' });
+            res.status(500).json({ success: false, message: 'FALHA NO SERVIDOR, TENTE MAIS TARDE.' });
         }
     }
 });
@@ -189,13 +189,13 @@ app.post('/check-cadastro', async (req, res) => {
             if (cadastro.razaosocial) {
                 return res.status(200).send({ cadastroFilled: true });
             } else {
-                return res.status(400).send({ error: 'Cadastro is incomplete. Please complete your cadastro.' });
+                return res.status(400).send({ error: 'CADASTRO INCOMPLETO.' });
             }
         } else {
-            return res.status(404).send({ error: 'Cadastro not found. Please complete your cadastro.' });
+            return res.status(404).send({ error: 'CADASTRO NÃO ENCONTRADO.' });
         }
     } catch (error) {
-        console.error('Por favor, preencha seu cadastro.', error);
+        console.error('PREENCHA SEU CADASTRO.', error);
         return res.status(500).send({ error: 'Failed to check cadastro.' });
     }
 });
@@ -228,8 +228,69 @@ app.get('/get-user-info', async (req, res) => {
 
 
 
+/*
 
+app.post('/add-to-order', async (req, res) => {
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
 
+    console.log('Received request:', req.body);
+
+    try {
+        // Step 1: Check if there's an open draft order
+        const result = await pool.query(
+            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0',
+            [username]
+        );
+        const existingOrder = result.rows[0];
+        let orderId;
+
+        if (existingOrder) {
+            console.log('Existing draft order:', existingOrder);
+            if (existingOrder.razaosocial === razaosocial) {
+                orderId = existingOrder.id;
+            } else {
+                return res.status(400).json({
+                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.`,
+                });
+            }
+        } else {
+            // Step 2: Create a new draft order
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, NOW(), 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj]
+            );
+            orderId = newOrderResult.rows[0].id;
+            console.log('Created new draft order with ID:', orderId);
+        }
+
+        // Step 3: Add product to order items
+        await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, codproduto, descricao, quantidade, preco]
+        );
+        console.log('Added product to order items');
+
+        // Step 4: Calculate the total price
+        const totalResult = await pool.query(
+            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
+            [orderId]
+        );
+        const total = totalResult.rows[0]?.total || 0;
+        console.log('Calculated total:', total);
+
+        // Step 5: Update the order total
+        await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, orderId]
+        );
+        console.log('Updated order total');
+
+        res.status(200).json({ success: true, message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).json({ success: false, error: 'FALHA AO ADICIONAR O PRODUTO.' });
+    }
+});*/
 
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
@@ -287,69 +348,14 @@ app.post('/add-to-order', async (req, res) => {
 
         console.log('Update result:', updateResult); // Log do resultado da atualização
 
-        res.status(200).send({ message: 'Product added to order and total updated', orderId });
+        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
     } catch (error) {
         console.error('Error adding to order:', error);
-        res.status(500).send({ error: 'Failed to add product to order' });
+        res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
     }
 });
 
 
-
-
-
-
-/*
-app.post('/add-to-order', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
-
-    try {
-        // Step 1: Check if there's an open draft order for the given razaosocial
-        const result = await pool.query(
-            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
-            [username]
-                    
-        );
-        const existingOrder = result.rows[0];
-       
-
-        let orderId;
-
-        if (existingOrder) {
-            
-            if (existingOrder.razaosocial === razaosocial) {
-                // If razaosocial matches, add the product to the existing order
-                orderId = existingOrder.id;
-            } else {
-                // If razaosocial doesn't match, show an error message asking to save the order
-                return res.status(400).send({ 
-                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.` 
-                });
-            }
-        } else {
-            // Step 2: If no draft order exists, create a new one
-            const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
-                [username, razaosocial, representante, cnpj]
-            );
-            const newOrder = newOrderResult.rows[0];
-            orderId = newOrder.id;
-        }
-
-        // Step 3: Add product to order items
-        await pool.query(
-            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
-            [orderId, codproduto, descricao, quantidade, preco]
-        );
-
-        res.status(200).send({ message: 'Product added to order', orderId });
-    } catch (error) {
-        console.error('Error adding to order:', error);
-        res.status(500).send({ error: 'Failed to add product to order' });
-    }
-});
-
-*/
 app.post('/add-to-order-admin', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
 
@@ -408,7 +414,7 @@ const updateResult = await pool.query(
     [total, orderId]
 );
 
-        res.status(200).send({ message: 'Product added to order', orderId });
+        res.status(200).send({ message: 'PRODUTO ADICIONADO AO PEDIDO!', orderId });
     } catch (error) {
         console.error('Error adding to order:', error);
         res.status(500).send({ error: 'Failed to add product to order' });
@@ -426,7 +432,7 @@ app.get('/cadastropage', async (req, res) => {
 
     if (!username) {
         console.log('No username provided in the query'); // Log if the username is missing
-        return res.status(400).json({ success: false, message: 'Username is required' });
+        return res.status(400).json({ success: false, message: 'NECESSÁRIO USUÁRIO.' });
     }
 
     try {
@@ -439,14 +445,14 @@ app.get('/cadastropage', async (req, res) => {
 
         if (result.rows.length === 0) {
             console.log('No data found for username:', username); // Log if no data is found
-            return res.json({ success: false, message: 'No data found for this username.' });
+            return res.json({ success: false, message: 'USUÁRIO NÃO ENCONTRADO.' });
         }
 
         console.log('Data retrieved from the database:', result.rows[0]); // Log the data retrieved from the database
         res.json({ success: true, data: result.rows[0] });
     } catch (error) {
         console.error('Error during database query:', error); // Log any errors during the query
-        res.status(500).json({ success: false, message: 'Error fetching data.' });
+        res.status(500).json({ success: false, message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
 
@@ -457,7 +463,7 @@ app.get('/orders', async (req, res) => {
     const { username } = req.query;
 
     if (!username) {
-        return res.status(400).json({ message: 'Username is required' });
+        return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
     }
 
     try {
@@ -474,7 +480,7 @@ app.get('/orders', async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching orders:', error);
-        res.status(500).json({ message: 'Error fetching orders' });
+        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
 
@@ -482,11 +488,17 @@ app.get('/orders', async (req, res) => {
 
 // Endpoint to fetch orders for a specific username
 app.get('/orders-admin', async (req, res) => {
-    /*const { username } = req.query;
+
+
+
+  /*  const { username } = req.query;
 
     if (!username) {
-        return res.status(400).json({ message: 'Username is required' });
-    }*/
+        return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
+    }
+*/
+
+
 
     try {
 
@@ -518,7 +530,7 @@ ON
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching orders:', error);
-        res.status(500).json({ message: 'Error fetching orders' });
+        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS DOS PEDIDOS.' });
     }
 });
 
@@ -564,7 +576,7 @@ async function upsertCadastro(data) {
 
     if (result.rows.length > 0) {
         // If the update was successful, return the updated row
-        return { message: 'Cadastro updated successfully.', cadastro: result.rows[0] };
+        return { message: 'CADASTRO ATUALIZADO COM SUCESSO!', cadastro: result.rows[0] };
     }
 
     // If no rows were updated, insert a new cadastro
@@ -575,7 +587,7 @@ async function upsertCadastro(data) {
         [representante, razaosocial, cnpj, telefone, email, username]
     );
 
-    return { message: 'Cadastro created successfully.', cadastro: insertResult.rows[0] };
+    return { message: 'CADASTRO CRIADO COM SUCESSO!', cadastro: insertResult.rows[0] };
 }
 
 
@@ -591,9 +603,9 @@ app.post('/cadastrorep', async (req, res) => {
             [representante, razaosocial, cnpj, telefone, email, username]
         );
 
-        res.json({ success: true, message: 'Cadastro created successfully.' });
+        res.json({ success: true, message: 'CADASTRO CRIADO COM SUCESSO!' });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Verifique os campos e tente novamente.' });
+        res.status(500).json({ success: false, error: 'VERIFIQUE OS CAMPOS E TENTE NOVAMENTE.' });
     }
 });
 
@@ -619,7 +631,7 @@ app.put('/updatecadastro/:id', async (req, res) => {
         }
 
         // Successfully updated the customer data
-        res.json({ success: true, message: 'Customer updated successfully' });
+        res.json({ success: true, message: 'CLIENTE ATUALIZADO COM SUCESSO!' });
     } catch (error) {
         console.error('Error updating customer:', error);
         res.status(500).json({ success: false, error: 'Database query failed' });
@@ -648,7 +660,7 @@ app.put('/updatecadastroadmin/:id', async (req, res) => {
         }
 
         // Successfully updated the customer data
-        res.json({ success: true, message: 'Customer updated successfully' });
+        res.json({ success: true, message: 'CLIENTE ATUALIZADO COM SUCESSO!' });
     } catch (error) {
         console.error('Error updating customer:', error);
         res.status(500).json({ success: false, error: 'Database query failed' });
@@ -707,7 +719,7 @@ app.get('/order-details/:id', async (req, res) => {
         const orderResult = await pool.query(orderQuery, [orderId]);
 
         if (orderResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Order not found' });
+            return res.status(404).json({ message: 'PEDIDO NÃO ENCONTRADO.' });
         }
 
         const order = orderResult.rows[0];
@@ -725,6 +737,37 @@ app.get('/order-details/:id', async (req, res) => {
         res.json(orderDetails);
     } catch (error) {
         console.error('Error fetching order details:', error);
-        res.status(500).json({ message: 'Error fetching order details' });
+        res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
     }
 });
+
+
+
+
+
+
+
+app.post("/submit-order", async (req, res) => {
+    const { orderId, observation } = req.body;
+  console.log(orderId, observation);
+    try {
+      
+      const updateQuery = `
+        UPDATE pedidos 
+        SET status = 1, observacoes = $1
+        WHERE id = $2;
+      `;
+      const result = await pool.query(updateQuery, [observation, orderId]);
+  
+      /* Check if the order was updated*/
+      if (result.rowCount === 0) {
+        return res.status(404).send({ error: "Order not found." });
+      }
+  
+      res.status(200).send({ message: "Order updated successfully!" });
+    } catch (error) {
+      console.error("Error updating order:", error);
+      res.status(500).send({ error: "Failed to update the order." });
+    }
+  });
+  
