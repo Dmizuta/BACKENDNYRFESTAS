@@ -751,7 +751,7 @@ app.get('/order-details/:id', async (req, res) => {
 
 
 app.post("/submit-order", async (req, res) => {
-    const { order_id, observation } = req.body;
+    const { orderId, observation } = req.body;
   
     try {
       // Directly update the status and observation
@@ -760,7 +760,7 @@ app.post("/submit-order", async (req, res) => {
         SET status = 1, observacoes = $1
         WHERE id = $2;
       `;
-      const result = await pool.query(updateQuery, [observation, order_id]);
+      const result = await pool.query(updateQuery, [observation, orderId]);
   
       // Check if the order was updated
       if (result.rowCount === 0) {
