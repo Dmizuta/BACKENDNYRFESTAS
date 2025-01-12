@@ -759,7 +759,7 @@ app.post("/submit-order", async (req, res) => {
       `;
       const result = await pool.query(updateQuery, [observation, orderId]);
   
-      Check if the order was updated
+      /* Check if the order was updated*/
       if (result.rowCount === 0) {
         return res.status(404).send({ error: "Order not found." });
       }
