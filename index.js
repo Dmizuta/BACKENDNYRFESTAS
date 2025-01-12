@@ -773,10 +773,9 @@ app.post("/submit-order", async (req, res) => {
   
 
 
-
 // Endpoint para deletar um item do pedido
-app.delete('/delete-product/:orderId/:productId', async (req, res) => {
-    const { orderId, productId } = req.params;
+app.delete('/delete-product', async (req, res) => {
+    const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
 
     try {
         // Query para deletar o item da tabela pedidoitens
@@ -797,8 +796,3 @@ app.delete('/delete-product/:orderId/:productId', async (req, res) => {
     }
 });
 
-// Iniciar o servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
-});
