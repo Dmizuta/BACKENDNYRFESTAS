@@ -747,16 +747,13 @@ app.get('/order-details/:id', async (req, res) => {
 
 
 
-
-
-
 app.post("/submit-order", async (req, res) => {
     const { orderId, observation } = req.body;
   
     try {
-      // Directly update the status and observation
+      
       const updateQuery = `
-        UPDATE pedidos
+        UPDATE pedidos 
         SET status = 1, observacoes = $1
         WHERE id = $2;
       `;
