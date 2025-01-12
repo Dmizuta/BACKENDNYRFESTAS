@@ -740,3 +740,37 @@ app.get('/order-details/:id', async (req, res) => {
         res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
     }
 });
+
+
+
+
+
+
+
+
+
+
+app.post("/submit-order", async (req, res) => {
+    const { order_id, observation } = req.body;
+  
+    try {
+      // Directly update the status and observation
+      const updateQuery = `
+        UPDATE pedidos
+        SET status = 1, observation = $1
+        WHERE id = $2;
+      `;
+      const result = await pool.query(updateQuery, [observation, order_id]);
+  
+      // Check if the order was updated
+      if (result.rowCount === 0) {
+        return res.status(404).send({ error: "Order not found." });
+      }
+  
+      res.status(200).send({ message: "Order updated successfully!" });
+    } catch (error) {
+      console.error("Error updating order:", error);
+      res.status(500).send({ error: "Failed to update the order." });
+    }
+  });
+  
