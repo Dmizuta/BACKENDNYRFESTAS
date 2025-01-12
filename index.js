@@ -749,7 +749,7 @@ app.get('/order-details/:id', async (req, res) => {
 
 app.post("/submit-order", async (req, res) => {
     const { orderId, observation } = req.body;
-  
+  console.log(orderId, observation);
     try {
       
       const updateQuery = `
