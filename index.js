@@ -447,7 +447,24 @@ app.get('/orders-admin', async (req, res) => {
 
     try {
 
-
+        const result = await pool.query(`
+            SELECT DISTINCT ON (pedidos.id)
+                pedidos.id, 
+                pedidos.username,          
+                cadastro.representante,    
+                pedidos.razaosocial, 
+                pedidos.data, 
+                pedidos.total, 
+                pedidos.status
+            FROM 
+                pedidos
+            LEFT JOIN 
+                cadastro 
+            ON 
+                pedidos.username = cadastro.username
+            ORDER BY pedidos.id DESC; -- Add the ORDER BY clause here
+        `);
+/*
 const result = await pool.query(`
     SELECT DISTINCT ON (pedidos.id)
     pedidos.id, 
@@ -465,7 +482,7 @@ ON
     pedidos.username = cadastro.username;
 
  `);
-
+*/
         
         if (result.rows.length === 0) {
             return res.json([]);  // Return an empty array if no orders found
