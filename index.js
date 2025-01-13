@@ -771,3 +771,28 @@ app.post("/submit-order", async (req, res) => {
     }
   });
   
+
+
+// Endpoint para deletar um item do pedido
+app.delete('/delete-product', async (req, res) => {
+    const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
+
+    try {
+        // Query para deletar o item da tabela pedidoitens
+        const result = await pool.query(
+            'DELETE FROM pedidoitens WHERE idpedido = $1 AND id = $2',
+            [orderId, productId]
+        );
+
+        // Verifica se alguma linha foi afetada
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Item não encontrado' });
+        }
+
+        return res.status(200).json({ message: 'Item deletado com sucesso' });
+    } catch (error) {
+        console.error('Erro ao deletar item:', error);
+        return res.status(500).json({ message: 'Erro ao deletar item' });
+    }
+});
+
