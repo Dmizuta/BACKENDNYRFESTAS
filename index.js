@@ -554,7 +554,41 @@ async function upsertCadastro(data) {
 }
 
 
+app.post('/cadastrorep', async (req, res) => {
+    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
 
+    // Validate required fields
+    if (!representante || !razaosocial || !cnpj || !endereco || !telefone || !email || !username) {
+        return res.status(400).json({ success: false, error: 'Todos os campos são obrigatórios.' });
+    }
+
+    // Basic CNPJ validation (14 numeric digits)
+    if (!/^\d{14}$/.test(cnpj)) {
+        return res.status(400).json({ success: false, error: 'CNPJ inválido.' });
+    }
+
+    try {
+        // Insert data into the database
+        const result = await pool.query(
+            'INSERT INTO cadastro (representante, razaosocial, cnpj, endereco, telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [representante, razaosocial, cnpj, endereco, telefone, email, username]
+        );
+
+        res.json({
+            success: true,
+            message: 'Cadastro criado com sucesso!',
+            data: { representante, razaosocial, cnpj, endereco, telefone, email, username }
+        });
+    } catch (error) {
+        // Handle database errors (e.g., unique constraints)
+        if (error.code === '23505') {
+            return res.status(409).json({ success: false, error: 'CNPJ ou username já cadastrado.' });
+        }
+
+        res.status(500).json({ success: false, error: 'Erro interno do servidor. Tente novamente mais tarde.' });
+    }
+});
+/*
 //create cadastro (representante)
 app.post('/cadastrorep', async (req, res) => {
     const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
@@ -600,6 +634,12 @@ app.put('/updatecadastro/:id', async (req, res) => {
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
+
+
+*/
+
+
+
 
 
 
