@@ -561,12 +561,12 @@ app.post('/cadastrorep', async (req, res) => {
     if (!representante || !razaosocial || !cnpj || !endereco || !telefone || !email || !username) {
         return res.status(400).json({ success: false, error: 'Todos os campos são obrigatórios.' });
     }
-
+/*
     // Basic CNPJ validation (14 numeric digits)
     if (!/^\d{14}$/.test(cnpj)) {
         return res.status(400).json({ success: false, error: 'CNPJ inválido.' });
     }
-
+*/
     try {
         // Insert data into the database
         const result = await pool.query(
