@@ -209,7 +209,7 @@ app.get('/get-user-info', async (req, res) => {
     try {
         // Query the cadastro table to get user data based on username
         const result = await pool.query(
-            'SELECT username, razaosocial, representante, cnpj FROM cadastro WHERE id = $1',
+            'SELECT username, razaosocial, representante, cnpj, endereco FROM cadastro WHERE id = $1',
             [customerId]
         );
 
@@ -228,69 +228,6 @@ app.get('/get-user-info', async (req, res) => {
 
 
 
-/*
-
-app.post('/add-to-order', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
-
-    console.log('Received request:', req.body);
-
-    try {
-        // Step 1: Check if there's an open draft order
-        const result = await pool.query(
-            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0',
-            [username]
-        );
-        const existingOrder = result.rows[0];
-        let orderId;
-
-        if (existingOrder) {
-            console.log('Existing draft order:', existingOrder);
-            if (existingOrder.razaosocial === razaosocial) {
-                orderId = existingOrder.id;
-            } else {
-                return res.status(400).json({
-                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.`,
-                });
-            }
-        } else {
-            // Step 2: Create a new draft order
-            const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, NOW(), 0, 0) RETURNING id',
-                [username, razaosocial, representante, cnpj]
-            );
-            orderId = newOrderResult.rows[0].id;
-            console.log('Created new draft order with ID:', orderId);
-        }
-
-        // Step 3: Add product to order items
-        await pool.query(
-            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
-            [orderId, codproduto, descricao, quantidade, preco]
-        );
-        console.log('Added product to order items');
-
-        // Step 4: Calculate the total price
-        const totalResult = await pool.query(
-            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
-            [orderId]
-        );
-        const total = totalResult.rows[0]?.total || 0;
-        console.log('Calculated total:', total);
-
-        // Step 5: Update the order total
-        await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [total, orderId]
-        );
-        console.log('Updated order total');
-
-        res.status(200).json({ success: true, message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
-    } catch (error) {
-        console.error('Error adding to order:', error);
-        res.status(500).json({ success: false, error: 'FALHA AO ADICIONAR O PRODUTO.' });
-    }
-});*/
 
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
@@ -439,7 +376,7 @@ app.get('/cadastropage', async (req, res) => {
         // Query the database using the 'username' field
         console.log('Executing database query for username:', username); // Log the query execution
         const result = await pool.query(
-            'SELECT representante, razaosocial, cnpj, telefone, email FROM cadastro WHERE username = $1',
+            'SELECT representante, razaosocial, cnpj, endereco, telefone, email FROM cadastro WHERE username = $1',
             [username]
         );
 
@@ -467,9 +404,17 @@ app.get('/orders', async (req, res) => {
     }
 
     try {
-        const result = await pool.query(
+        /*const result = await pool.query(
             'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
-            [username]
+            [username]*/
+
+
+
+            const result = await pool.query(
+                'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1 ORDER BY id DESC', // Add ORDER BY clause
+                [username]
+
+
         );
 
         if (result.rows.length === 0) {
@@ -502,7 +447,24 @@ app.get('/orders-admin', async (req, res) => {
 
     try {
 
-
+        const result = await pool.query(`
+            SELECT DISTINCT ON (pedidos.id)
+                pedidos.id, 
+                pedidos.username,          
+                cadastro.representante,    
+                pedidos.razaosocial, 
+                pedidos.data, 
+                pedidos.total, 
+                pedidos.status
+            FROM 
+                pedidos
+            LEFT JOIN 
+                cadastro 
+            ON 
+                pedidos.username = cadastro.username
+            ORDER BY pedidos.id DESC; -- Add the ORDER BY clause here
+        `);
+/*
 const result = await pool.query(`
     SELECT DISTINCT ON (pedidos.id)
     pedidos.id, 
@@ -520,7 +482,7 @@ ON
     pedidos.username = cadastro.username;
 
  `);
-
+*/
         
         if (result.rows.length === 0) {
             return res.json([]);  // Return an empty array if no orders found
@@ -538,7 +500,7 @@ ON
 
 // Create or update cadastro (user)
 app.post('/cadastro', async (req, res) => {
-    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
+    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
 
     try {
         // Directly attempt to update the cadastro; if no rows are affected, insert a new one
@@ -546,6 +508,7 @@ app.post('/cadastro', async (req, res) => {
             representante,
             razaosocial,
             cnpj,
+            endereco,
             telefone,
             email,
             username
@@ -563,15 +526,15 @@ app.post('/cadastro', async (req, res) => {
 });
 
 async function upsertCadastro(data) {
-    const { representante, razaosocial, cnpj, telefone, email, username } = data;
+    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = data;
 
     // Attempt to update the existing cadastro
     const result = await pool.query(
         `UPDATE cadastro 
-         SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5 
-         WHERE username = $6 
+         SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4, telefone = $5, email = $6 
+         WHERE username = $7 
          RETURNING *`,
-        [representante, razaosocial, cnpj, telefone, email, username]
+        [representante, razaosocial, cnpj, endereco, telefone, email, username]
     );
 
     if (result.rows.length > 0) {
@@ -581,10 +544,10 @@ async function upsertCadastro(data) {
 
     // If no rows were updated, insert a new cadastro
     const insertResult = await pool.query(
-        `INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO cadastro (representante, razaosocial, cnpj, endereco, telefone, email, username)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [representante, razaosocial, cnpj, telefone, email, username]
+        [representante, razaosocial, cnpj, endereco, telefone, email, username]
     );
 
     return { message: 'CADASTRO CRIADO COM SUCESSO!', cadastro: insertResult.rows[0] };
@@ -594,13 +557,13 @@ async function upsertCadastro(data) {
 
 //create cadastro (representante)
 app.post('/cadastrorep', async (req, res) => {
-    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
+    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
 
     try {
         // Validate the data (e.g., check if CNPJ is valid)
         const result = await pool.query(
-            'INSERT INTO cadastro (representante, razaosocial, cnpj, telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6)',
-            [representante, razaosocial, cnpj, telefone, email, username]
+            'INSERT INTO cadastro (representante, razaosocial, cnpj ,endereco ,telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6)',
+            [representante, razaosocial, cnpj, endereco, telefone, email, username]
         );
 
         res.json({ success: true, message: 'CADASTRO CRIADO COM SUCESSO!' });
@@ -614,15 +577,15 @@ app.post('/cadastrorep', async (req, res) => {
 //update cadastro (representante)
 app.put('/updatecadastro/:id', async (req, res) => {
     const customerId = req.params.id;  // Extract the customer id from the URL
-    const { razaosocial, cnpj, representante, telefone, email, username } = req.body;  // Extract data from request body
+    const { razaosocial, cnpj ,endereco ,representante, telefone, email, username } = req.body;  // Extract data from request body
 
     try {
         // SQL query to update customer data using the primary key (id)
         const result = await pool.query(
             `UPDATE cadastro 
-             SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5, username = $6 
-             WHERE id = $7;`,
-            [representante, razaosocial, cnpj, telefone, email, username, customerId]  // Use the values from the form and the customer id
+             SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4 ,telefone = $5, email = $6, username = $7 
+             WHERE id = $8;`,
+            [representante, razaosocial, cnpj, endereco, telefone, email, username, customerId]  // Use the values from the form and the customer id
         );
 
         if (result.rowCount === 0) {
@@ -643,15 +606,15 @@ app.put('/updatecadastro/:id', async (req, res) => {
 //update cadastro (admin)
 app.put('/updatecadastroadmin/:id', async (req, res) => {
     const customerId = req.params.id;  // Extract the customer id from the URL
-    const { razaosocial, cnpj, representante, telefone, email, username } = req.body;  // Extract data from request body
+    const { razaosocial, cnpj, endereco, representante, telefone, email, username } = req.body;  // Extract data from request body
 
     try {
         // SQL query to update customer data using the primary key (id)
         const result = await pool.query(
             `UPDATE cadastro 
-             SET representante = $1, razaosocial = $2, cnpj = $3, telefone = $4, email = $5, username = $6 
-             WHERE id = $7;`,
-            [representante, razaosocial, cnpj, telefone, email, username, customerId]  // Use the values from the form and the customer id
+             SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4 ,telefone = $5, email = $6, username = $7 
+             WHERE id = $8;`,
+            [representante, razaosocial, cnpj, endereco, telefone, email, username, customerId]  // Use the values from the form and the customer id
         );
 
         if (result.rowCount === 0) {
