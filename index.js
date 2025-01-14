@@ -606,7 +606,7 @@ app.post('/cadastrorep', async (req, res) => {
     }
 });
 
-
+*/
 
 //update cadastro (representante)
 app.put('/updatecadastro/:id', async (req, res) => {
@@ -636,7 +636,7 @@ app.put('/updatecadastro/:id', async (req, res) => {
 });
 
 
-*/
+
 
 
 
