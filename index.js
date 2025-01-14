@@ -500,7 +500,7 @@ ON
 
 // Create or update cadastro (user)
 app.post('/cadastro', async (req, res) => {
-    const { representante, razaosocial, cnpj, telefone, email, username } = req.body;
+    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
 
     try {
         // Directly attempt to update the cadastro; if no rows are affected, insert a new one
@@ -563,7 +563,7 @@ app.post('/cadastrorep', async (req, res) => {
         // Validate the data (e.g., check if CNPJ is valid)
         const result = await pool.query(
             'INSERT INTO cadastro (representante, razaosocial, cnpj ,endereco ,telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6)',
-            [representante, razaosocial, cnpj, telefone, email, username]
+            [representante, razaosocial, cnpj, endereco, telefone, email, username]
         );
 
         res.json({ success: true, message: 'CADASTRO CRIADO COM SUCESSO!' });
