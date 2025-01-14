@@ -614,7 +614,7 @@ app.put('/updatecadastroadmin/:id', async (req, res) => {
             `UPDATE cadastro 
              SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4 ,telefone = $5, email = $6, username = $7 
              WHERE id = $8;`,
-            [representante, razaosocial, cnpj, , endereco, telefone, email, username, customerId]  // Use the values from the form and the customer id
+            [representante, razaosocial, cnpj, endereco, telefone, email, username, customerId]  // Use the values from the form and the customer id
         );
 
         if (result.rowCount === 0) {
