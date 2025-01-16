@@ -810,7 +810,7 @@ app.get('/modalproducts/:id', async (req, res) => {
 
     try {
         // Busca o pedido
-        const pedidoResult = await pool.query('SELECT * FROM pedido WHERE idpedido = $1', [orderId]);
+        const pedidoResult = await pool.query('SELECT * FROM pedidoitens WHERE idpedido = $1', [orderId]);
         if (pedidoResult.rows.length === 0) {
             return res.status(404).json({ message: 'Pedido não encontrado' });
         }
