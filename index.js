@@ -776,6 +776,46 @@ app.post("/submit-order", async (req, res) => {
   
 
 
+
+
+
+
+
+
+
+  app.patch("/save-notes", async (req, res) => {
+    const { orderId, observation } = req.body;
+
+    try {
+        const updateQuery = `
+            UPDATE pedidos 
+            SET observacoes = $1
+            WHERE id = $2;
+        `;
+        const result = await pool.query(updateQuery, [observation, orderId]);
+
+        // Check if the order was updated
+        if (result.rowCount === 0) {
+            return res.status(404).send({ error: "Order not found." });
+        }
+
+        res.status(200).send({ message: "Notes updated successfully!" });
+    } catch (error) {
+        console.error("Error updating notes:", error);
+        res.status(500).send({ error: "Failed to update notes." });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
 // Endpoint para deletar um item do pedido
 app.delete('/delete-product', async (req, res) => {
     const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
