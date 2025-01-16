@@ -809,7 +809,28 @@ app.post("/submit-order", async (req, res) => {
 
 
 
+// Endpoint para deletar um item do pedido
+app.delete('/delete-order', async (req, res) => {
+    const { orderId } = req.body; // Lê os dados do corpo da requisição
 
+    try {
+        // Query para deletar o item da tabela pedidoitens
+        const result = await pool.query(
+            'DELETE FROM pedidos WHERE idpedido = $1',
+            [orderId]
+        );
+
+        // Verifica se alguma linha foi afetada
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Pedido não encontrado' });
+        }
+
+        return res.status(200).json({ message: 'Pedido deletado com sucesso' });
+    } catch (error) {
+        console.error('Erro ao deletar pedido:', error);
+        return res.status(500).json({ message: 'Erro ao deletar pedido' });
+    }
+});
 
 
 
