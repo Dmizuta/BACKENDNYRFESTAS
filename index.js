@@ -802,30 +802,24 @@ app.delete('/delete-product', async (req, res) => {
 
 
 
-
-
-// Endpoint para buscar dados do pedido e seus itens
+// Endpoint para buscar os itens do pedido
 app.get('/modalproducts/:id', async (req, res) => {
     const orderId = req.params.id;
 
     try {
-        // Busca o pedido
-        const pedidoResult = await pool.query('SELECT * FROM pedidoitens WHERE idpedido = $1', [orderId]);
-        if (pedidoResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Pedido não encontrado' });
+        // Busca os itens do pedido
+        const itensResult = await pool.query('SELECT * FROM pedidoitens WHERE idpedido = $1', [orderId]);
+
+        if (itensResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Nenhum item encontrado para este pedido' });
         }
 
-        // Busca os itens do pedido
-        const itensResult = await pool.query('SELECT * FROM pedidoitens WHERE pedidoId = $1', [orderId]);
-
-        // Retorna os dados do pedido e os itens
-        res.json({
-            ...pedidoResult.rows[0], // Dados do pedido
-            items: itensResult.rows,   // Itens do pedido
-        });
+        // Retorna os itens do pedido
+        res.json(itensResult.rows);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Erro ao buscar dados do pedido' });
+        res.status(500).json({ message: 'Erro ao buscar itens do pedido' });
     }
 });
+
 
