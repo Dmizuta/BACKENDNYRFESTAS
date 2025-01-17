@@ -809,6 +809,61 @@ app.post("/submit-order", async (req, res) => {
 
 
 
+
+
+// Endpoint para deletar um item do pedido com backup
+app.delete('/delete-order', async (req, res) => {
+    const { orderId } = req.body; // Lê os dados do corpo da requisição
+
+    try {
+        // Step 1: Inserir o pedido na tabela de backup
+        const backupResult = await pool.query(
+            'INSERT INTO pedidosdel (id, username, razaosocial, data, total, status, representante, cnpj, observacoes) ' +
+            'SELECT id, username, razaosocial, data, total, status, representante, cnpj, observacoes FROM pedidos WHERE id = $1',
+            [orderId]
+        );
+        
+
+        // Verifica se o pedido foi copiado para o backup
+        if (backupResult.rowCount === 0) {
+            return res.status(500).json({ message: 'Erro ao fazer backup do pedido' });
+        }
+
+        // Step 2: Deletar o pedido da tabela original
+        const deleteResult = await pool.query(
+            'DELETE FROM pedidos WHERE id = $1',
+            [orderId]
+        );
+
+        // Verifica se o pedido foi deletado
+        if (deleteResult.rowCount === 0) {
+            return res.status(404).json({ message: 'Pedido não encontrado' });
+        }
+
+        return res.status(200).json({ message: 'Pedido deletado com sucesso e backup feito' });
+    } catch (error) {
+        console.error('Erro ao deletar pedido:', error);
+        return res.status(500).json({ message: 'Erro ao deletar pedido' });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
 // Endpoint para deletar um item do pedido
 app.delete('/delete-order', async (req, res) => {
     const { orderId } = req.body; // Lê os dados do corpo da requisição
@@ -832,7 +887,7 @@ app.delete('/delete-order', async (req, res) => {
     }
 });
 
-
+*/
 
 
 
