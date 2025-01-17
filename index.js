@@ -59,7 +59,7 @@ app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
     try {
         const result = await pool.query(
-            'SELECT descricao, cxfechada, precofechada, precofrac, cxfracionada FROM produtos WHERE codproduto = $1',
+            'SELECT idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada FROM produtos WHERE codproduto = $1',
             [productCode]
         );
 
@@ -554,7 +554,41 @@ async function upsertCadastro(data) {
 }
 
 
+app.post('/cadastrorep', async (req, res) => {
+    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
 
+    // Validate required fields
+    if (!representante || !razaosocial || !cnpj || !endereco || !telefone || !email || !username) {
+        return res.status(400).json({ success: false, error: 'Todos os campos são obrigatórios.' });
+    }
+/*
+    // Basic CNPJ validation (14 numeric digits)
+    if (!/^\d{14}$/.test(cnpj)) {
+        return res.status(400).json({ success: false, error: 'CNPJ inválido.' });
+    }
+*/
+    try {
+        // Insert data into the database
+        const result = await pool.query(
+            'INSERT INTO cadastro (representante, razaosocial, cnpj, endereco, telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [representante, razaosocial, cnpj, endereco, telefone, email, username]
+        );
+
+        res.json({
+            success: true,
+            message: 'Cadastro criado com sucesso!',
+            data: { representante, razaosocial, cnpj, endereco, telefone, email, username }
+        });
+    } catch (error) {
+        // Handle database errors (e.g., unique constraints)
+        if (error.code === '23505') {
+            return res.status(409).json({ success: false, error: 'CNPJ ou username já cadastrado.' });
+        }
+
+        res.status(500).json({ success: false, error: 'Erro interno do servidor. Tente novamente mais tarde.' });
+    }
+});
+/*
 //create cadastro (representante)
 app.post('/cadastrorep', async (req, res) => {
     const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
@@ -572,7 +606,7 @@ app.post('/cadastrorep', async (req, res) => {
     }
 });
 
-
+*/
 
 //update cadastro (representante)
 app.put('/updatecadastro/:id', async (req, res) => {
@@ -600,6 +634,12 @@ app.put('/updatecadastro/:id', async (req, res) => {
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
+
+
+
+
+
+
 
 
 
@@ -736,6 +776,122 @@ app.post("/submit-order", async (req, res) => {
   
 
 
+
+
+
+
+
+
+
+  app.patch("/save-notes", async (req, res) => {
+    const { orderId, observation } = req.body;
+
+    try {
+        const updateQuery = `
+            UPDATE pedidos 
+            SET observacoes = $1
+            WHERE id = $2;
+        `;
+        const result = await pool.query(updateQuery, [observation, orderId]);
+
+        // Check if the order was updated
+        if (result.rowCount === 0) {
+            return res.status(404).send({ error: "Order not found." });
+        }
+
+        res.status(200).send({ message: "Notes updated successfully!" });
+    } catch (error) {
+        console.error("Error updating notes:", error);
+        res.status(500).send({ error: "Failed to update notes." });
+    }
+});
+
+
+
+
+
+
+// Endpoint para deletar um item do pedido com backup
+app.delete('/delete-order', async (req, res) => {
+    const { orderId } = req.body; // Lê os dados do corpo da requisição
+
+    try {
+        // Step 1: Inserir o pedido na tabela de backup
+        const backupResult = await pool.query(
+            'INSERT INTO pedidosdel (id, username, razaosocial, data, total, status, representante, cnpj, observacoes) ' +
+            'SELECT id, username, razaosocial, data, total, status, representante, cnpj, observacoes FROM pedidos WHERE id = $1',
+            [orderId]
+        );
+        
+
+        // Verifica se o pedido foi copiado para o backup
+        if (backupResult.rowCount === 0) {
+            return res.status(500).json({ message: 'Erro ao fazer backup do pedido' });
+        }
+
+        // Step 2: Deletar o pedido da tabela original
+        const deleteResult = await pool.query(
+            'DELETE FROM pedidos WHERE id = $1',
+            [orderId]
+        );
+
+        // Verifica se o pedido foi deletado
+        if (deleteResult.rowCount === 0) {
+            return res.status(404).json({ message: 'Pedido não encontrado' });
+        }
+
+        return res.status(200).json({ message: 'Pedido deletado com sucesso e backup feito' });
+    } catch (error) {
+        console.error('Erro ao deletar pedido:', error);
+        return res.status(500).json({ message: 'Erro ao deletar pedido' });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+// Endpoint para deletar um item do pedido
+app.delete('/delete-order', async (req, res) => {
+    const { orderId } = req.body; // Lê os dados do corpo da requisição
+
+    try {
+        // Query para deletar o item da tabela pedidoitens
+        const result = await pool.query(
+            'DELETE FROM pedidos WHERE id = $1',
+            [orderId]
+        );
+
+        // Verifica se alguma linha foi afetada
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Pedido não encontrado' });
+        }
+
+        return res.status(200).json({ message: 'Pedido deletado com sucesso' });
+    } catch (error) {
+        console.error('Erro ao deletar pedido:', error);
+        return res.status(500).json({ message: 'Erro ao deletar pedido' });
+    }
+});
+
+*/
+
+
+
+
 // Endpoint para deletar um item do pedido
 app.delete('/delete-product', async (req, res) => {
     const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
@@ -758,4 +914,28 @@ app.delete('/delete-product', async (req, res) => {
         return res.status(500).json({ message: 'Erro ao deletar item' });
     }
 });
+
+
+
+
+// Endpoint para buscar os itens do pedido
+app.get('/modalproducts/:id', async (req, res) => {
+    const orderId = req.params.id;
+
+    try {
+        // Busca os itens do pedido
+        const itensResult = await pool.query('SELECT * FROM pedidoitens WHERE idpedido = $1', [orderId]);
+
+        if (itensResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Nenhum item encontrado para este pedido' });
+        }
+
+        // Retorna os itens do pedido
+        res.json(itensResult.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao buscar itens do pedido' });
+    }
+});
+
 
