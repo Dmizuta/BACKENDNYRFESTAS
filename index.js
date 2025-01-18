@@ -943,7 +943,7 @@ app.get('/modalproducts/:id', async (req, res) => {
 
 
 
-/*
+
 
 // Example route to update the product quantity
 app.patch('/editproduct/:productId', async (req, res) => {
@@ -969,51 +969,5 @@ app.patch('/editproduct/:productId', async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-*/
-
-
-app.put('/editproduct', async (req, res) => {
-    const { itemId, newQuantity } = req.body;
-
-    try {
-        // Step 1: Update the quantity in the pedidoitens table
-        await pool.query(
-            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
-            [newQuantity, itemId]
-        );
-
-        // Step 2: Retrieve the idpedido for the updated item
-        const pedidoResult = await pool.query(
-            'SELECT idpedido FROM pedidoitens WHERE id = $1',
-            [itemId]
-        );
-
-        const orderId = pedidoResult.rows[0]?.idpedido;
-        if (!orderId) {
-            return res.status(404).send('Order not found');
-        }
-
-        // Step 3: Calculate the new total for the order
-        const totalResult = await pool.query(
-            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
-            [orderId]
-        );
-
-        const newTotal = totalResult.rows[0]?.total || 0;
-
-        // Step 4: Update the total in the pedidos table
-        await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [newTotal, orderId]
-        );
-
-        res.status(200).send('Quantity and total updated successfully');
-    } catch (error) {
-        console.error('Error updating quantity and total:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
-
 
 
