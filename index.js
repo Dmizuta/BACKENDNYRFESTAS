@@ -939,3 +939,33 @@ app.get('/modalproducts/:id', async (req, res) => {
 });
 
 
+
+
+
+
+
+
+// Example route to update the product quantity
+app.patch('/editproduct/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { quantity } = req.body; // The new quantity from frontend
+
+    try {
+        // Query to update the quantity in the pedidoitens table
+        const result = await pool.query(
+            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2 RETURNING *',
+            [quantity, productId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Optionally, recalculate the order total here and return it if needed
+        const updatedProduct = result.rows[0];
+        res.status(200).json({ message: 'Quantity updated successfully', updatedProduct });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
