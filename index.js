@@ -957,7 +957,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
         const idPedido = (await pool.query(
             'SELECT idpedido FROM pedidoitens WHERE id = $1',
             [productId]
-        )).rows[0].idpedido;
+        ));
 
         // Calculate the new total for the order
         const totalResult = await pool.query(
