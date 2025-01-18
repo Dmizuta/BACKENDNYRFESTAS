@@ -971,7 +971,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
 });
 */
 
-/*
+
 app.put('/editproduct', async (req, res) => {
     const { itemId, newQuantity } = req.body;
 
@@ -1013,48 +1013,7 @@ app.put('/editproduct', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
-*/
 
 
 
 
-app.put('/editproduct', async (req, res) => {
-    const { itemId, newQuantity } = req.body;
-
-    if (!itemId || newQuantity == null) {
-        return res.status(400).send('Item ID and new quantity are required');
-    }
-
-    try {
-        // Step 1: Update the quantity in the pedidoitens table
-        const updateResult = await pool.query(
-            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2 RETURNING idpedido',
-            [newQuantity, itemId]
-        );
-
-        if (updateResult.rowCount === 0) {
-            return res.status(404).send('Item not found');
-        }
-
-        const orderId = updateResult.rows[0].idpedido;
-
-        // Step 2: Calculate the new total for the order
-        const totalResult = await pool.query(
-            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
-            [orderId]
-        );
-
-        const newTotal = totalResult.rows[0]?.total || 0;
-
-        // Step 3: Update the total in the pedidos table
-        await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [newTotal, orderId]
-        );
-
-        res.status(200).send('Quantity and total updated successfully');
-    } catch (error) {
-        console.error('Error updating quantity and total:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
