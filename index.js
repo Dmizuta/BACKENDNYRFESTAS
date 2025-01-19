@@ -1025,7 +1025,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
         // Fetch all products for this order
         const updatedProducts = await pool.query(
-            'SELECT * FROM pedidoitens WHERE idpedido = $1 ORDER BY id',
+            'SELECT * FROM pedidoitens WHERE idpedido = $1',
             [idPedido]
         );
 
