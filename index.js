@@ -940,7 +940,7 @@ app.get('/modalproducts/:id', async (req, res) => {
 
 
 
-
+/*
 
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
@@ -985,10 +985,9 @@ app.patch('/editproduct/:productId', async (req, res) => {
     }
 });
 
+*/
 
 
-
-/*
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
@@ -1042,7 +1041,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
     }
 });
 
-*/
+
 
 
 
