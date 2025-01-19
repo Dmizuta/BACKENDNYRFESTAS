@@ -995,7 +995,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
     try {
         // Update quantity in pedidoitens
         const result = await pool.query(
-            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2 RETURNING *',
+            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
             [quantity, productId]
         );
 
