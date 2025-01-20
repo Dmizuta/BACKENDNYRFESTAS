@@ -1146,28 +1146,26 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
 
 
-// Endpoint to fetch customer details by ID
-app.get('/displayName/:id', async (req, res) => {
-    const customerId = parseInt(req.params.id, 10);
+app.post('/displayName', (req, res) => {
+    const { customerId } = req.body;
 
-    if (isNaN(customerId)) {
-        return res.status(400).json({ error: 'Invalid customer ID' });
+    if (!customerId) {
+        return res.status(400).json({ error: 'Customer ID is required' });
     }
 
-    try {
-        // Assuming you are using a database like PostgreSQL
-        const query = 'SELECT razaosocial FROM cadastro WHERE id = $1';
-        const values = [customerId];
-
-        const result = await pool.query(query, values); // Replace db.query with your database query method
-
-        if (result.rows.length > 0) {
-            res.status(200).json({ razaosocial: result.rows[0].razaosocial });
-        } else {
-            res.status(404).json({ error: 'Customer not found' });
-        }
-    } catch (error) {
-        console.error('Database error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+    const query = 'SELECT razaosocial FROM cadastro WHERE id = $1';
+    
+    db.query(query, [customerId])
+        .then(result => {
+            const customer = result.rows[0];
+            if (customer) {
+                res.status(200).json(customer);
+            } else {
+                res.status(404).json({ error: 'Customer not found' });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching customer:', error);
+            res.status(500).json({ error: 'Server error' });
+        });
 });
