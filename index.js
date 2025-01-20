@@ -1155,7 +1155,7 @@ app.post('/displayName', (req, res) => {
 
     const query = 'SELECT razaosocial FROM cadastro WHERE id = $1';
     
-    db.query(query, [customerId])
+    pool.query(query, [customerId])
         .then(result => {
             const customer = result.rows[0];
             if (customer) {
