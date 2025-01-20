@@ -249,7 +249,11 @@ app.post('/add-to-order', async (req, res) => {
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
-                    error: `FINALIZE O PEDIDO DO USUÁRIO <strong>${existingOrder.razaosocial}</strong> ANTES DE ABRIR UM NOVO PEDIDO.` 
+                    error: {
+                        message: 'FINALIZE O PEDIDO DO USUÁRIO',
+                        razaosocial: existingOrder.razaosocial,
+                        suffix: 'ANTES DE ABRIR UM NOVO PEDIDO.'
+                    }
                 });
             }
         } else {
@@ -316,7 +320,11 @@ app.post('/add-to-order-admin', async (req, res) => {
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
-                    error: `FINALIZE O PEDIDO DO USUÁRIO <strong>${existingOrder.razaosocial}</strong> ANTES DE ABRIR UM NOVO PEDIDO.` 
+                    error: {
+                        message: 'FINALIZE O PEDIDO DO USUÁRIO',
+                        razaosocial: existingOrder.razaosocial,
+                        suffix: 'ANTES DE ABRIR UM NOVO PEDIDO.'
+                    }
                 });
             }
         } else {
