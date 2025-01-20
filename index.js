@@ -249,7 +249,7 @@ app.post('/add-to-order', async (req, res) => {
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
-                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.` 
+                    error: `FINALIZE O PEDIDO DO USUÁRIO >>${existingOrder.razaosocial}<< ANTES DE ABRIR UM NOVO PEDIDO.` 
                 });
             }
         } else {
