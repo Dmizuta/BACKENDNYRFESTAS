@@ -1143,6 +1143,9 @@ app.patch('/editproduct/:productId', async (req, res) => {
 */
 
 
+
+
+
 // Endpoint to fetch customer details by ID
 app.get('/displayName/:id', async (req, res) => {
     const customerId = parseInt(req.params.id, 10);
