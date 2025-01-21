@@ -249,7 +249,7 @@ app.post('/add-to-order', async (req, res) => {
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
-                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.` 
+                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< ANTES DE ABRIR UM NOVO PEDIDO.`
                 });
             }
         } else {
@@ -316,7 +316,7 @@ app.post('/add-to-order-admin', async (req, res) => {
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
-                    error: `Salve o pedido do usuario >> ${existingOrder.razaosocial} << antes de abrir um novo pedido.` 
+                    error: `FINALIZE O PEDIDO DO USUÁRIO  >>>${existingOrder.razaosocial}<<< ANTES DE ABRIR UM NOVO PEDIDO.`
                 });
             }
         } else {
@@ -1141,3 +1141,31 @@ app.patch('/editproduct/:productId', async (req, res) => {
     }
 });
 */
+
+
+
+
+
+app.post('/displayName', (req, res) => {
+    const { customerId } = req.body;
+
+    if (!customerId) {
+        return res.status(400).json({ error: 'Customer ID is required' });
+    }
+
+    const query = 'SELECT razaosocial FROM cadastro WHERE id = $1';
+    
+    pool.query(query, [customerId])
+        .then(result => {
+            const customer = result.rows[0];
+            if (customer) {
+                res.status(200).json(customer);
+            } else {
+                res.status(404).json({ error: 'Customer not found' });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching customer:', error);
+            res.status(500).json({ error: 'Server error' });
+        });
+});
