@@ -1214,7 +1214,7 @@ app.post('/displayName', (req, res) => {
 
 
 
-app.get('/orderStatus', async (req, res) => {
+app.post('/orderStatus', async (req, res) => {
     const { orderId } = req.query;
 
     if (!orderId) {
