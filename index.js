@@ -1241,3 +1241,46 @@ app.get('/orderStatus', async (req, res) => {
         res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
+
+
+app.post('/checkOtherOpenedOrders', async (req, res) => {
+    const { username } = req.body;
+
+    try {
+        // Check if the user has any other orders with status 0 (Aberto)
+        const result = await pool.query(
+            'SELECT COUNT(*) FROM pedidos WHERE username = $1 AND status = 0',
+            [username]
+        );
+
+        const count = result.rows[0].count;
+
+        // If no other orders with status 0, allow reverting
+        if (parseInt(count) === 0) {
+            return res.json({ canRevert: true });
+        }
+
+        res.json({ canRevert: false });
+    } catch (error) {
+        console.error('Error checking open orders:', error);
+        res.status(500).json({ message: 'Error checking open orders.' });
+    }
+});
+
+
+app.post('/revertOrder', async (req, res) => {
+    const { orderId } = req.body;
+
+    try {
+        // Update the order status from 1 (submitted) to 0 (draft)
+        const result = await pool.query(
+            'UPDATE pedidos SET status = 0 WHERE id = $1',
+            [orderId]
+        );
+
+        res.json({ message: 'Order status reverted to draft.' });
+    } catch (error) {
+        console.error('Error reverting order status:', error);
+        res.status(500).json({ message: 'Error reverting order status.' });
+    }
+});
