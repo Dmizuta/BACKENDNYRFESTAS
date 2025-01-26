@@ -1218,27 +1218,26 @@ app.get('/orderStatus', async (req, res) => {
     const { orderId } = req.query;
 
     if (!orderId) {
-        return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
+        return res.status(400).json({ message: 'Order ID is required.' });
     }
 
     try {
-       
-            const result = await pool.query(
-                'SELECT id, razaosocial, status FROM pedidos WHERE id = $1', // Add ORDER BY clause
-                [orderId]
-
-
+        const result = await pool.query(
+            'SELECT id, razaosocial, status FROM pedidos WHERE id = $1', 
+            [orderId]
         );
 
+        // If no orders found, return a message
         if (result.rows.length === 0) {
-            return res.json([]);  // Return an empty array if no orders found
+            return res.status(404).json({ message: 'Order not found.' });  // 404 Not Found
         }
 
-        // Send the orders directly as an array
-        res.json(result.rows);
+        // Return the order data
+        res.status(200).json(result.rows[0]);  // Assuming you want to send only the first result
+
     } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
+        console.error('Error fetching order status:', error);
+        res.status(500).json({ message: 'Failed to fetch order status.' });
     }
 });
 
