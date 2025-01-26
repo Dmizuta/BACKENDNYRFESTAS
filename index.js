@@ -1214,35 +1214,38 @@ app.post('/displayName', (req, res) => {
 
 
 
+// Endpoint to get the status of an order
 app.post('/orderStatus', async (req, res) => {
-    const { orderId } = req.query;
+    const { orderId } = req.body;  // Extract the orderId from the request body
 
     if (!orderId) {
         return res.status(400).json({ message: 'Order ID is required.' });
     }
-   
 
     try {
+        // Query the database for the order status
         const result = await pool.query(
-            'SELECT id, razaosocial, status FROM pedidos WHERE id = $1', 
+            'SELECT status FROM pedidos WHERE id = $1',
             [orderId]
         );
 
-        // If no orders found, return a message
+        // If the order was not found, return an empty array or an error message
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Order not found.' });
-            
-
         }
 
-        // Return the order data
-        res.status(200).json(result.rows[0]);  // Assuming you want to send only the first result
+        // Retrieve the status from the query result
+        const orderStatus = result.rows[0].status;
+
+        // Return the status as a response
+        res.json({ status: orderStatus });
 
     } catch (error) {
         console.error('Error fetching order status:', error);
         res.status(500).json({ message: 'Failed to fetch order status.' });
     }
 });
+
 
 
 app.post('/checkOtherOpenedOrders', async (req, res) => {
