@@ -395,6 +395,35 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Endpoint to fetch orders for a specific username
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
@@ -1168,4 +1197,47 @@ app.post('/displayName', (req, res) => {
             console.error('Error fetching customer:', error);
             res.status(500).json({ error: 'Server error' });
         });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.get('/orderStatus', async (req, res) => {
+    const { orderId } = req.query;
+
+    if (!orderId) {
+        return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
+    }
+
+    try {
+       
+            const result = await pool.query(
+                'SELECT id, razaosocial, data, total, status FROM pedidos WHERE id = $1', // Add ORDER BY clause
+                [orderId]
+
+
+        );
+
+        if (result.rows.length === 0) {
+            return res.json([]);  // Return an empty array if no orders found
+        }
+
+        // Send the orders directly as an array
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
+    }
 });
