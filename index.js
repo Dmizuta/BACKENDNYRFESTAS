@@ -1224,7 +1224,7 @@ app.get('/orderStatus', async (req, res) => {
     try {
        
             const result = await pool.query(
-                'SELECT id, razaosocial, data, total, status FROM pedidos WHERE id = $1', // Add ORDER BY clause
+                'SELECT id, razaosocial, status FROM pedidos WHERE id = $1', // Add ORDER BY clause
                 [orderId]
 
 
