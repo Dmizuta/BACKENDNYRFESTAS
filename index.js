@@ -1220,7 +1220,7 @@ app.get('/orderStatus', async (req, res) => {
     if (!orderId) {
         return res.status(400).json({ message: 'Order ID is required.' });
     }
-    console.log(orderId);
+   
 
     try {
         const result = await pool.query(
