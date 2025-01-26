@@ -1220,6 +1220,7 @@ app.get('/orderStatus', async (req, res) => {
     if (!orderId) {
         return res.status(400).json({ message: 'Order ID is required.' });
     }
+    console.log(orderId);
 
     try {
         const result = await pool.query(
@@ -1229,7 +1230,9 @@ app.get('/orderStatus', async (req, res) => {
 
         // If no orders found, return a message
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Order not found.' });  // 404 Not Found
+            return res.status(404).json({ message: 'Order not found.' });
+            
+
         }
 
         // Return the order data
