@@ -1248,6 +1248,31 @@ app.post('/orderStatus', async (req, res) => {
 
 
 
+app.post('/checkOtherOpenedOrdersadmin', async (req, res) => {
+    const { username } = req.body;
+
+    try {
+        // Check if the user has any other orders with status 0 (Aberto)
+        const result = await pool.query(
+            'SELECT COUNT(*) FROM pedidos WHERE username = $1 AND status = 0',
+            [username]
+        );
+
+        const count = result.rows[0].count;
+
+        // If no other orders with status 0, allow reverting
+        if (parseInt(count) === 0) {
+            return res.json({ canRevert: true });
+        }
+
+        res.json({ canRevert: false });
+    } catch (error) {
+        console.error('Error checking open orders:', error);
+        res.status(500).json({ message: 'Error checking open orders.' });
+    }
+});
+
+
 app.post('/checkOtherOpenedOrders', async (req, res) => {
     const { username } = req.body;
 
@@ -1287,5 +1312,34 @@ app.post('/revertOrder', async (req, res) => {
     } catch (error) {
         console.error('Error reverting order status:', error);
         res.status(500).json({ message: 'Error reverting order status.' });
+    }
+});
+
+
+
+
+app.post('/getUsernameByOrderId', async (req, res) => {
+    const { orderId } = req.body; // Retrieve the orderId from the request body
+
+    try {
+        // Query to fetch the username from the 'pedidos' table where the 'id' matches the provided orderId
+        const result = await pool.query(
+            'SELECT username FROM pedidos WHERE id = $1', 
+            [orderId]
+        );
+
+        // If no matching order is found, return a 404 error
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        // Extract the username from the query result
+        const { username } = result.rows[0];
+
+        // Send the username back as a response
+        res.json({ username });
+    } catch (error) {
+        console.error('Error fetching username:', error);
+        res.status(500).json({ message: 'Error fetching username.' });
     }
 });
