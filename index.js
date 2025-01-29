@@ -395,6 +395,35 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Endpoint to fetch orders for a specific username
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
@@ -728,7 +757,7 @@ app.get('/order-details/:id', async (req, res) => {
         const order = orderResult.rows[0];
 
         // Fetch products associated with the order
-        const productsQuery = 'SELECT * FROM pedidoitens WHERE idpedido = $1';
+        const productsQuery = 'SELECT * FROM pedidoitens WHERE idpedido = $1 ORDER BY id';
         const productsResult = await pool.query(productsQuery, [orderId]);
 
         // Combine order details with products
@@ -1168,4 +1197,149 @@ app.post('/displayName', (req, res) => {
             console.error('Error fetching customer:', error);
             res.status(500).json({ error: 'Server error' });
         });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Endpoint to get the status of an order
+app.post('/orderStatus', async (req, res) => {
+    const { orderId } = req.body;  // Extract the orderId from the request body
+
+    if (!orderId) {
+        return res.status(400).json({ message: 'Order ID is required.' });
+    }
+
+    try {
+        // Query the database for the order status
+        const result = await pool.query(
+            'SELECT status FROM pedidos WHERE id = $1',
+            [orderId]
+        );
+
+        // If the order was not found, return an empty array or an error message
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        // Retrieve the status from the query result
+        const orderStatus = result.rows[0].status;
+
+        // Return the status as a response
+        res.json({ status: orderStatus });
+
+    } catch (error) {
+        console.error('Error fetching order status:', error);
+        res.status(500).json({ message: 'Failed to fetch order status.' });
+    }
+});
+
+
+
+app.post('/checkOtherOpenedOrdersadmin', async (req, res) => {
+    const { username } = req.body;
+
+    try {
+        // Check if the user has any other orders with status 0 (Aberto)
+        const result = await pool.query(
+            'SELECT COUNT(*) FROM pedidos WHERE username = $1 AND status = 0',
+            [username]
+        );
+
+        const count = result.rows[0].count;
+
+        // If no other orders with status 0, allow reverting
+        if (parseInt(count) === 0) {
+            return res.json({ canRevert: true });
+        }
+
+        res.json({ canRevert: false });
+    } catch (error) {
+        console.error('Error checking open orders:', error);
+        res.status(500).json({ message: 'Error checking open orders.' });
+    }
+});
+
+
+app.post('/checkOtherOpenedOrders', async (req, res) => {
+    const { username } = req.body;
+
+    try {
+        // Check if the user has any other orders with status 0 (Aberto)
+        const result = await pool.query(
+            'SELECT COUNT(*) FROM pedidos WHERE username = $1 AND status = 0',
+            [username]
+        );
+
+        const count = result.rows[0].count;
+
+        // If no other orders with status 0, allow reverting
+        if (parseInt(count) === 0) {
+            return res.json({ canRevert: true });
+        }
+
+        res.json({ canRevert: false });
+    } catch (error) {
+        console.error('Error checking open orders:', error);
+        res.status(500).json({ message: 'Error checking open orders.' });
+    }
+});
+
+
+app.post('/revertOrder', async (req, res) => {
+    const { orderId } = req.body;
+
+    try {
+        // Update the order status from 1 (submitted) to 0 (draft)
+        const result = await pool.query(
+            'UPDATE pedidos SET status = 0 WHERE id = $1',
+            [orderId]
+        );
+
+        res.json({ message: 'Order status reverted to draft.' });
+    } catch (error) {
+        console.error('Error reverting order status:', error);
+        res.status(500).json({ message: 'Error reverting order status.' });
+    }
+});
+
+
+
+
+app.post('/getUsernameByOrderId', async (req, res) => {
+    const { orderId } = req.body; // Retrieve the orderId from the request body
+
+    try {
+        // Query to fetch the username from the 'pedidos' table where the 'id' matches the provided orderId
+        const result = await pool.query(
+            'SELECT username FROM pedidos WHERE id = $1', 
+            [orderId]
+        );
+
+        // If no matching order is found, return a 404 error
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        // Extract the username from the query result
+        const { username } = result.rows[0];
+
+        // Send the username back as a response
+        res.json({ username });
+    } catch (error) {
+        console.error('Error fetching username:', error);
+        res.status(500).json({ message: 'Error fetching username.' });
+    }
 });
