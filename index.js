@@ -757,7 +757,7 @@ app.get('/order-details/:id', async (req, res) => {
         const order = orderResult.rows[0];
 
         // Fetch products associated with the order
-        const productsQuery = 'SELECT * FROM pedidoitens WHERE idpedido = $1';
+        const productsQuery = 'SELECT * FROM pedidoitens WHERE idpedido = $1 ORDER BY id';
         const productsResult = await pool.query(productsQuery, [orderId]);
 
         // Combine order details with products
