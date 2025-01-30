@@ -1343,3 +1343,45 @@ app.post('/getUsernameByOrderId', async (req, res) => {
         res.status(500).json({ message: 'Error fetching username.' });
     }
 });
+
+
+
+
+// Route to handle finishing the order (changing status to 2)
+app.post('/finishOrder', async (req, res) => {
+    const { orderId } = req.body;
+
+    // Validate if orderId exists
+    if (!orderId) {
+        return res.status(400).json({ error: 'Order ID is required.' });
+    }
+
+    try {
+        // Check if the order exists and its status is 0 (Aberto) or 1 (Orçamento)
+        const checkQuery = 'SELECT status FROM pedidos WHERE id = $1';
+        const result = await pool.query(checkQuery, [orderId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found.' });
+        }
+
+        const currentStatus = result.rows[0].status;
+
+        if (currentStatus === 0 || currentStatus === 1) {
+            // Update the order status to 2 (Fechado)
+            const updateQuery = 'UPDATE pedidos SET status = 2 WHERE id = $1 RETURNING *';
+            const updateResult = await pool.query(updateQuery, [orderId]);
+
+            if (updateResult.rows.length > 0) {
+                return res.status(200).json({ message: 'Order successfully finished.' });
+            } else {
+                return res.status(500).json({ error: 'Failed to update order status.' });
+            }
+        } else {
+            return res.status(400).json({ error: 'Order cannot be finished, it is already closed or processed.' });
+        }
+    } catch (error) {
+        console.error('Error processing the request:', error);
+        return res.status(500).json({ error: 'Internal server error.' });
+    }
+});
