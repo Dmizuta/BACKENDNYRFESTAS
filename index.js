@@ -1,14 +1,14 @@
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
-
+/*
 const corsOptions = {
     origin: 'https://nyrfestas.vercel.app',  // Allow the frontend domain
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'], // Allow these HTTP methods
     allowedHeaders: ['Content-Type', 'Authorization'],  // Specify allowed headers
 };
 
-app.use(cors(corsOptions));
+app.use(cors(corsOptions));*/
 
 
 const { Pool } = require('pg'); // PostgreSQL client for database connection
