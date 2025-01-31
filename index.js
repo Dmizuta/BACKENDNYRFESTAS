@@ -1360,11 +1360,55 @@ app.post('/getUsernameByOrderId', async (req, res) => {
 
 
 
+app.patch("/update-order", async (req, res) => {
+    const { orderId, observation, finish } = req.body;
 
+    if (!orderId) {
+        return res.status(400).json({ error: "Order ID is required." });
+    }
+
+    try {
+        // Check if the order exists and get its current status
+        const checkQuery = "SELECT status FROM pedidos WHERE id = $1";
+        const result = await pool.query(checkQuery, [orderId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Order not found." });
+        }
+
+        const currentStatus = result.rows[0].status;
+
+        // If finish is requested, ensure the status allows it
+        if (finish && !(currentStatus === 0 || currentStatus === 1)) {
+            return res.status(400).json({ error: "Order cannot be finished, it is already closed or processed." });
+        }
+
+        // Perform a single UPDATE query to modify both `observacoes` and `status` if needed
+        const updateQuery = `
+            UPDATE pedidos 
+            SET observacoes = COALESCE($1, observacoes),
+                status = CASE WHEN $2::boolean THEN 2 ELSE status END
+            WHERE id = $3
+            RETURNING *;
+        `;
+
+        const updateResult = await pool.query(updateQuery, [observation, finish, orderId]);
+
+        if (updateResult.rows.length > 0) {
+            return res.status(200).json({ message: "Order updated successfully." });
+        } else {
+            return res.status(500).json({ error: "Failed to update order." });
+        }
+    } catch (error) {
+        console.error("Error updating order:", error);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+});
+/*
 
 // Route to handle finishing the order (changing status to 2)
 app.post('/finishOrder', async (req, res) => {
-    const { orderId } = req.body;
+    const { orderId, observation } = req.body;
 
     // Validate if orderId exists
     if (!orderId) {
@@ -1385,17 +1429,11 @@ app.post('/finishOrder', async (req, res) => {
         if (currentStatus === 0 || currentStatus === 1) {
             // Update the order status to 2 (Fechado)
             const updateQuery = 
-         `
-            UPDATE pedidos 
-            SET observacoes = COALESCE($1, observacoes),
-                status = CASE WHEN $2::boolean THEN 2 ELSE status END
-            WHERE id = $3
-            RETURNING *;
-        `;
+      
             
             
             
-           /* 'UPDATE pedidos SET status = 2 WHERE id = $1 RETURNING *';*/
+           'UPDATE pedidos SET status = 2 WHERE id = $1 RETURNING *';
             const updateResult = await pool.query(updateQuery, [orderId]);
 
             if (updateResult.rows.length > 0) {
@@ -1410,4 +1448,4 @@ app.post('/finishOrder', async (req, res) => {
         console.error('Error processing the request:', error);
         return res.status(500).json({ error: 'Internal server error.' });
     }
-});
+});*/
