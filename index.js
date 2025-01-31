@@ -1359,7 +1359,7 @@ app.post('/getUsernameByOrderId', async (req, res) => {
 
 
 
-app.patch("/update-order", async (req, res) => {
+app.patch("/finishOrder", async (req, res) => {
     const { orderId, observation } = req.body;
 
     if (!orderId) {
