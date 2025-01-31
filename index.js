@@ -1359,16 +1359,15 @@ app.post('/getUsernameByOrderId', async (req, res) => {
 
 
 
-
-app.patch("/finishOrder", async (req, res) => {
-    const { orderId, observation, finish } = req.body;
+app.patch("/update-order", async (req, res) => {
+    const { orderId, observation } = req.body;
 
     if (!orderId) {
         return res.status(400).json({ error: "Order ID is required." });
     }
 
     try {
-        // Check if the order exists and get its current status
+        // Get the current order status
         const checkQuery = "SELECT status FROM pedidos WHERE id = $1";
         const result = await pool.query(checkQuery, [orderId]);
 
@@ -1378,21 +1377,19 @@ app.patch("/finishOrder", async (req, res) => {
 
         const currentStatus = result.rows[0].status;
 
-        // If finish is requested, ensure the status allows it
-        if (finish && !(currentStatus === 0 || currentStatus === 1)) {
-            return res.status(400).json({ error: "Order cannot be finished, it is already closed or processed." });
-        }
+        // If the order is already finished (status = 2), do not update status
+        const shouldFinishOrder = currentStatus === 0 || currentStatus === 1;
 
-        // Perform a single UPDATE query to modify both `observacoes` and `status` if needed
+        // Perform a single UPDATE query
         const updateQuery = `
             UPDATE pedidos 
             SET observacoes = COALESCE($1, observacoes),
-                status = CASE WHEN $2::boolean THEN 2 ELSE status END
+                status = CASE WHEN $2 THEN 2 ELSE status END
             WHERE id = $3
             RETURNING *;
         `;
 
-        const updateResult = await pool.query(updateQuery, [observation, finish, orderId]);
+        const updateResult = await pool.query(updateQuery, [observation, shouldFinishOrder, orderId]);
 
         if (updateResult.rows.length > 0) {
             return res.status(200).json({ message: "Order updated successfully." });
@@ -1404,6 +1401,7 @@ app.patch("/finishOrder", async (req, res) => {
         return res.status(500).json({ error: "Internal server error." });
     }
 });
+
 /*
 
 // Route to handle finishing the order (changing status to 2)
