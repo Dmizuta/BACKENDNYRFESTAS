@@ -1347,6 +1347,21 @@ app.post('/getUsernameByOrderId', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Route to handle finishing the order (changing status to 2)
 app.post('/finishOrder', async (req, res) => {
     const { orderId } = req.body;
@@ -1369,7 +1384,18 @@ app.post('/finishOrder', async (req, res) => {
 
         if (currentStatus === 0 || currentStatus === 1) {
             // Update the order status to 2 (Fechado)
-            const updateQuery = 'UPDATE pedidos SET status = 2 WHERE id = $1 RETURNING *';
+            const updateQuery = 
+         `
+            UPDATE pedidos 
+            SET observacoes = COALESCE($1, observacoes),
+                status = CASE WHEN $2::boolean THEN 2 ELSE status END
+            WHERE id = $3
+            RETURNING *;
+        `;
+            
+            
+            
+           /* 'UPDATE pedidos SET status = 2 WHERE id = $1 RETURNING *';*/
             const updateResult = await pool.query(updateQuery, [orderId]);
 
             if (updateResult.rows.length > 0) {
