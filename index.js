@@ -11,13 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(cors()); // Allows any origin to access the API
 
-const corsOptions = {
-    origin: '*',  // You can specify a specific origin like 'https://nyrfestas.vercel.app' if necessary
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],  // Explicitly define allowed HTTP methods
-    allowedHeaders: ['Content-Type', 'Authorization'],  // Specify headers that can be used
-  };
-  
-  app.use(cors(corsOptions));
+
   
 
 const JWT_SECRET = process.env.JWT_SECRET; // Secret key for JWT
@@ -1375,51 +1369,6 @@ app.post('/getUsernameByOrderId', async (req, res) => {
 
 
 
-app.patch("/finishOrder", async (req, res) => {
-    const { orderId, observation } = req.body;
-
-    if (!orderId) {
-        return res.status(400).json({ error: "Order ID is required." });
-    }
-
-    try {
-        // Get the current order status
-        const checkQuery = "SELECT status FROM pedidos WHERE id = $1";
-        const result = await pool.query(checkQuery, [orderId]);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Order not found." });
-        }
-
-        const currentStatus = result.rows[0].status;
-
-        // If the order is already finished (status = 2), do not update status
-        const shouldFinishOrder = currentStatus === 0 || currentStatus === 1;
-
-        // Perform a single UPDATE query
-        const updateQuery = `
-            UPDATE pedidos 
-            SET observacoes = COALESCE($1, observacoes),
-                status = CASE WHEN $2 THEN 2 ELSE status END
-            WHERE id = $3
-            RETURNING *;
-        `;
-
-        const updateResult = await pool.query(updateQuery, [observation, shouldFinishOrder, orderId]);
-
-        if (updateResult.rows.length > 0) {
-            return res.status(200).json({ message: "Order updated successfully." });
-        } else {
-            return res.status(500).json({ error: "Failed to update order." });
-        }
-    } catch (error) {
-        console.error("Error updating order:", error);
-        return res.status(500).json({ error: "Internal server error." });
-    }
-});
-
-/*
-
 // Route to handle finishing the order (changing status to 2)
 app.post('/finishOrder', async (req, res) => {
     const { orderId, observation } = req.body;
@@ -1462,4 +1411,4 @@ app.post('/finishOrder', async (req, res) => {
         console.error('Error processing the request:', error);
         return res.status(500).json({ error: 'Internal server error.' });
     }
-});*/
+});
