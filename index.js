@@ -270,7 +270,7 @@ app.post('/add-to-order', async (req, res) => {
                 if (duplicateCheck.rows.length > 0) {
                     // If product already exists, return an error message
                     return res.status(400).send({ 
-                        error: `O PRODUTO >>>${descricao}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
+                        error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
                     });
                 }
 
