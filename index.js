@@ -37,6 +37,16 @@ app.get('/test-db-connection', async (req, res) => {
     }
 });
 
+const cors = require('cors');
+
+const corsOptions = {
+    origin: 'https://nyrfestas.vercel.app',  // Allow the frontend domain
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'], // Allow these HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'],  // Specify allowed headers
+};
+
+app.use(cors(corsOptions));
+
 
 
 // Endpoint to get products from the database
