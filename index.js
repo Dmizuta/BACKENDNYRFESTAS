@@ -1,14 +1,7 @@
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
-/*
-const corsOptions = {
-    origin: 'https://nyrfestas.vercel.app',  // Allow the frontend domain
-    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'], // Allow these HTTP methods
-    allowedHeaders: ['Content-Type', 'Authorization'],  // Specify allowed headers
-};
 
-app.use(cors(corsOptions));*/
 
 
 const { Pool } = require('pg'); // PostgreSQL client for database connection
@@ -17,6 +10,15 @@ const jwt = require('jsonwebtoken'); // JWT for user authentication
 const app = express();
 app.use(express.json());
 app.use(cors()); // Allows any origin to access the API
+
+const corsOptions = {
+    origin: '*',  // You can specify a specific origin like 'https://nyrfestas.vercel.app' if necessary
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],  // Explicitly define allowed HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'],  // Specify headers that can be used
+  };
+  
+  app.use(cors(corsOptions));
+  
 
 const JWT_SECRET = process.env.JWT_SECRET; // Secret key for JWT
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN; // Expiration time for JWT
