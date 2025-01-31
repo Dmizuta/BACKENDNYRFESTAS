@@ -256,6 +256,26 @@ app.post('/add-to-order', async (req, res) => {
             if (existingOrder.razaosocial === razaosocial) {
                 // If razaosocial matches, add the product to the existing order
                 orderId = existingOrder.id;
+
+
+
+
+
+
+                const duplicateCheck = await pool.query(
+                    'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
+                    [orderId, codproduto]
+                );
+
+                if (duplicateCheck.rows.length > 0) {
+                    // If product already exists, return an error message
+                    return res.status(400).send({ 
+                        error: `O PRODUTO >>>${descricao}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
+                    });
+                }
+
+
+
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
