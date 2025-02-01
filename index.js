@@ -956,7 +956,7 @@ app.delete('/delete-product', async (req, res) => {
     try {
         // Query para deletar o item da tabela pedidoitens
         const result = await pool.query(
-            'DELETE FROM pedidoitens WHERE idpedido = $1 AND idproduto = $2', // Corrigido para idproduto
+            'DELETE FROM pedidoitens WHERE idpedido = $1 AND id = $2',
             [orderId, productId]
         );
 
@@ -964,6 +964,10 @@ app.delete('/delete-product', async (req, res) => {
         if (result.rowCount === 0) {
             return res.status(404).json({ message: 'Item não encontrado' });
         }
+
+
+
+
 
         // Calcula o novo total do pedido
         const totalResult = await pool.query(
@@ -978,6 +982,9 @@ app.delete('/delete-product', async (req, res) => {
         await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, orderId]);
 
         return res.status(200).json({ message: 'Item deletado com sucesso', newTotal: total });
+
+
+
     } catch (error) {
         console.error('Erro ao deletar item:', error);
         return res.status(500).json({ message: 'Erro ao deletar item' });
