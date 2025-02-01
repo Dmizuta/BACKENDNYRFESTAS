@@ -1406,7 +1406,7 @@ app.patch("/revertOrder", async (req, res) => {
 
         // Perform the update only if the status is 2
         const updateQuery = `
-            UPDATE pedidos SET status = 0 WHERE id = $1
+            UPDATE pedidos SET status = 1 WHERE id = $1
             RETURNING *;
         `;
 
