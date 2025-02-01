@@ -1,12 +1,18 @@
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
+
+
+
 const { Pool } = require('pg'); // PostgreSQL client for database connection
 const jwt = require('jsonwebtoken'); // JWT for user authentication
 
 const app = express();
 app.use(express.json());
 app.use(cors()); // Allows any origin to access the API
+
+
+  
 
 const JWT_SECRET = process.env.JWT_SECRET; // Secret key for JWT
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN; // Expiration time for JWT
@@ -36,6 +42,10 @@ app.get('/test-db-connection', async (req, res) => {
         });
     }
 });
+
+
+
+
 
 
 
@@ -246,10 +256,30 @@ app.post('/add-to-order', async (req, res) => {
             if (existingOrder.razaosocial === razaosocial) {
                 // If razaosocial matches, add the product to the existing order
                 orderId = existingOrder.id;
+
+
+
+
+
+
+                const duplicateCheck = await pool.query(
+                    'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
+                    [orderId, codproduto]
+                );
+
+                if (duplicateCheck.rows.length > 0) {
+                    // If product already exists, return an error message
+                    return res.status(400).send({ 
+                        error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
+                    });
+                }
+
+
+
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
-                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< ANTES DE ABRIR UM NOVO PEDIDO.`
+                    error: `PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< ESTÁ EM ABERTO.`
                 });
             }
         } else {
@@ -1347,9 +1377,106 @@ app.post('/getUsernameByOrderId', async (req, res) => {
 
 
 
+
+
+
+
+app.patch("/revertOrder", async (req, res) => {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+        return res.status(400).json({ error: "Order ID is required." });
+    }
+
+    try {
+        // Get the current order status
+        const checkQuery = "SELECT status FROM pedidos WHERE id = $1";
+        const result = await pool.query(checkQuery, [orderId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Order not found." });
+        }
+
+        const currentStatus = result.rows[0].status;
+
+        // If the status is already 0 or 1, no need to revert
+        if (currentStatus === 0 || currentStatus === 1) {
+            return res.status(400).json({ message: "Order is already in an allowed state. No action needed." });
+        }
+
+        // Perform the update only if the status is 2
+        const updateQuery = `
+            UPDATE pedidos SET status = 1 WHERE id = $1
+            RETURNING *;
+        `;
+
+        const updateResult = await pool.query(updateQuery, [orderId]);
+
+        if (updateResult.rows.length > 0) {
+            return res.status(200).json({ message: "Order successfully reverted to status 0." });
+        } else {
+            return res.status(500).json({ error: "Failed to update order." });
+        }
+    } catch (error) {
+        console.error("Error updating order:", error);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+});
+
+
+
+
+
+
+
+app.patch("/finishOrder", async (req, res) => {
+    const { orderId, observation } = req.body;
+
+    if (!orderId) {
+        return res.status(400).json({ error: "Order ID is required." });
+    }
+
+    try {
+        // Get the current order status
+        const checkQuery = "SELECT status FROM pedidos WHERE id = $1";
+        const result = await pool.query(checkQuery, [orderId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Order not found." });
+        }
+
+        const currentStatus = result.rows[0].status;
+
+        // If the order is already finished (status = 2), do not update status
+        const shouldFinishOrder = currentStatus === 0 || currentStatus === 1;
+
+        // Perform a single UPDATE query
+        const updateQuery = `
+            UPDATE pedidos 
+            SET observacoes = COALESCE($1, observacoes),
+                status = CASE WHEN $2 THEN 2 ELSE status END
+            WHERE id = $3
+            RETURNING *;
+        `;
+
+        const updateResult = await pool.query(updateQuery, [observation, shouldFinishOrder, orderId]);
+
+        if (updateResult.rows.length > 0) {
+            return res.status(200).json({ message: "Order updated successfully." });
+        } else {
+            return res.status(500).json({ error: "Failed to update order." });
+        }
+    } catch (error) {
+        console.error("Error updating order:", error);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+});
+
+/*
+
 // Route to handle finishing the order (changing status to 2)
 app.post('/finishOrder', async (req, res) => {
-    const { orderId } = req.body;
+    const { orderId, observation } = req.body;
 
     // Validate if orderId exists
     if (!orderId) {
@@ -1369,7 +1496,12 @@ app.post('/finishOrder', async (req, res) => {
 
         if (currentStatus === 0 || currentStatus === 1) {
             // Update the order status to 2 (Fechado)
-            const updateQuery = 'UPDATE pedidos SET status = 2 WHERE id = $1 RETURNING *';
+            const updateQuery = 
+      
+            
+            
+            
+           'UPDATE pedidos SET status = 2 WHERE id = $1 RETURNING *';
             const updateResult = await pool.query(updateQuery, [orderId]);
 
             if (updateResult.rows.length > 0) {
@@ -1384,4 +1516,4 @@ app.post('/finishOrder', async (req, res) => {
         console.error('Error processing the request:', error);
         return res.status(500).json({ error: 'Internal server error.' });
     }
-});
+});*/
