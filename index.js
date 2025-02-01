@@ -1381,7 +1381,47 @@ app.post('/getUsernameByOrderId', async (req, res) => {
 
 
 
+app.patch("/revertOrder", async (req, res) => {
+    const { orderId } = req.body;
 
+    if (!orderId) {
+        return res.status(400).json({ error: "Order ID is required." });
+    }
+
+    try {
+        // Get the current order status
+        const checkQuery = "SELECT status FROM pedidos WHERE id = $1";
+        const result = await pool.query(checkQuery, [orderId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Order not found." });
+        }
+
+        const currentStatus = result.rows[0].status;
+
+        // If the status is already 0 or 1, no need to revert
+        if (currentStatus === 0 || currentStatus === 1) {
+            return res.status(400).json({ message: "Order is already in an allowed state. No action needed." });
+        }
+
+        // Perform the update only if the status is 2
+        const updateQuery = `
+            UPDATE pedidos SET status = 0 WHERE id = $1
+            RETURNING *;
+        `;
+
+        const updateResult = await pool.query(updateQuery, [orderId]);
+
+        if (updateResult.rows.length > 0) {
+            return res.status(200).json({ message: "Order successfully reverted to status 0." });
+        } else {
+            return res.status(500).json({ error: "Failed to update order." });
+        }
+    } catch (error) {
+        console.error("Error updating order:", error);
+        return res.status(500).json({ error: "Internal server error." });
+    }
+});
 
 
 
