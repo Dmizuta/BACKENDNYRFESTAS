@@ -47,12 +47,10 @@ app.get('/test-db-connection', async (req, res) => {
 
 
 
-
-
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM produtos ASC');
+        const result = await pool.query('SELECT * FROM produtos ORDER BY id ASC'); 
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({
@@ -62,6 +60,9 @@ app.get('/products', async (req, res) => {
         });
     }
 });
+
+
+
 
 
 
