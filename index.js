@@ -949,8 +949,58 @@ app.delete('/delete-order', async (req, res) => {
 */
 
 
+// Endpoint para deletar um item do pedido
+app.delete('/delete-product', async (req, res) => {
+    const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
 
+    try {
+        // Query para deletar o item da tabela pedidoitens
+        const result = await pool.query(
+            'DELETE FROM pedidoitens WHERE idpedido = $1 AND idproduto = $2', // Corrigido para idproduto
+            [orderId, productId]
+        );
 
+        // Verifica se alguma linha foi afetada
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Item não encontrado' });
+        }
+
+        // Calcula o novo total do pedido
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco), 0) AS total FROM pedidoitens WHERE idpedido = $1',
+            [orderId]
+        );
+
+        const total = totalResult.rows[0].total;
+        console.log('Novo total calculado:', total); // Log do novo total
+
+        // Atualiza o total na tabela pedidos
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, orderId]);
+
+        return res.status(200).json({ message: 'Item deletado com sucesso', newTotal: total });
+    } catch (error) {
+        console.error('Erro ao deletar item:', error);
+        return res.status(500).json({ message: 'Erro ao deletar item' });
+    }
+});
+
+// Endpoint para buscar os itens do pedido
+app.get('/modalproducts/:id', async (req, res) => {
+    const orderId = req.params.id;
+
+    try {
+        // Busca os itens do pedido
+        const itensResult = await pool.query('SELECT * FROM pedidoitens WHERE idpedido = $1', [orderId]);
+
+        // Se nenhum item for encontrado, apenas retorna um array vazio
+        return res.json(itensResult.rows);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Erro ao buscar itens do pedido' });
+    }
+});
+
+/*
 // Endpoint para deletar um item do pedido
 app.delete('/delete-product', async (req, res) => {
     const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
@@ -961,6 +1011,32 @@ app.delete('/delete-product', async (req, res) => {
             'DELETE FROM pedidoitens WHERE idpedido = $1 AND id = $2',
             [orderId, productId]
         );
+
+
+
+
+
+
+// Step 4: Calculate the total price for the order
+const totalResult = await pool.query(
+    'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
+    [orderId]
+);
+
+const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
+console.log('Calculated total:', total); // Log do total calculado
+
+// Step 5: Update the total in the pedidos table
+const updateResult = await pool.query(
+    'UPDATE pedidos SET total = $1 WHERE id = $2',
+    [total, orderId]
+);
+
+
+
+
+
+
 
         // Verifica se alguma linha foi afetada
         if (result.rowCount === 0) {
@@ -996,8 +1072,7 @@ app.get('/modalproducts/:id', async (req, res) => {
         res.status(500).json({ message: 'Erro ao buscar itens do pedido' });
     }
 });
-
-
+*/
 
 
 
