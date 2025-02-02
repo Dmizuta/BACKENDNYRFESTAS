@@ -1035,7 +1035,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
         // Calculate the new total for the order
         const totalResult = await pool.query(
-            'SELECT SUM(quantidade * preco * ipi) AS total FROM pedidoitens WHERE idpedido = $1',
+            'SELECT SUM(quantidade * preco + (ipi * quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
             [idPedido]
         );
 
