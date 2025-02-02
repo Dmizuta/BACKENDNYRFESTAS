@@ -1051,7 +1051,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
         
 // Step 4: Calculate the total price for the order with IPI
 const totalResult = await pool.query(
-    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 555) AS total FROM pedidoitens WHERE idpedido = $1',
+    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
     [idpedido]
 );
 
@@ -1067,12 +1067,21 @@ const totalResult = await pool.query(
         // Update the total in pedidos table
         await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, idpedido]);
 
+
+
+        res.status(200).json({
+            message: 'Quantity updated successfully',
+            updatedProduct: { idpedido, quantity, ipi, total }
+        });
+        
+/*
         // Send response with updated product details
         res.status(200).json({
             message: 'Quantity updated successfully',
             updatedProduct: { idpedido, quantity, ipi },
             total
-        });
+        });*/
+        
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
