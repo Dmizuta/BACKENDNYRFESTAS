@@ -47,10 +47,12 @@ app.get('/test-db-connection', async (req, res) => {
 
 
 
+
+
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM produtos ORDER BY idprod ASC');
+        const result = await pool.query('SELECT * FROM produtos');
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({
@@ -67,7 +69,7 @@ app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
     try {
         const result = await pool.query(
-            'SELECT idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada, ipi FROM produtos WHERE codproduto = $1',
+            'SELECT idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada FROM produtos WHERE codproduto = $1',
             [productCode]
         );
 
@@ -238,7 +240,7 @@ app.get('/get-user-info', async (req, res) => {
 
 
 app.post('/add-to-order', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj } = req.body;
 
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
@@ -292,15 +294,13 @@ app.post('/add-to-order', async (req, res) => {
 
         // Step 3: Add product to order items
         await pool.query(
-            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6)',
-            [orderId, codproduto, descricao, quantidade, preco, ipi]
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
+            [orderId, codproduto, descricao, quantidade, preco]
         );
 
         // Step 4: Calculate the total price for the order
         const totalResult = await pool.query(
-            `SELECT SUM((quantidade * preco) + (quantidade * preco * 0.13 * ipi)) AS total 
-     FROM pedidoitens 
-     WHERE idpedido = $1`,
+            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
             [orderId]
         );
 
@@ -949,6 +949,8 @@ app.delete('/delete-order', async (req, res) => {
 */
 
 
+
+
 // Endpoint para deletar um item do pedido
 app.delete('/delete-product', async (req, res) => {
     const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
@@ -965,36 +967,15 @@ app.delete('/delete-product', async (req, res) => {
             return res.status(404).json({ message: 'Item não encontrado' });
         }
 
-
-// Step 4: Calculate the total price for the order with IPI
-const totalResult = await pool.query(
-    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
-    [orderId]
-);
-
-
-/*
-        // Calcula o novo total do pedido
-        const totalResult = await pool.query(
-            'SELECT COALESCE(SUM(quantidade * preco), 0) AS total FROM pedidoitens WHERE idpedido = $1',
-            [orderId]
-        );*/
-
-        const total = totalResult.rows[0].total;
-        console.log('Novo total calculado:', total); // Log do novo total
-
-        // Atualiza o total na tabela pedidos
-        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, orderId]);
-
-        return res.status(200).json({ message: 'Item deletado com sucesso', newTotal: total });
-
-
-
+        return res.status(200).json({ message: 'Item deletado com sucesso' });
     } catch (error) {
         console.error('Erro ao deletar item:', error);
         return res.status(500).json({ message: 'Erro ao deletar item' });
     }
 });
+
+
+
 
 // Endpoint para buscar os itens do pedido
 app.get('/modalproducts/:id', async (req, res) => {
@@ -1004,11 +985,15 @@ app.get('/modalproducts/:id', async (req, res) => {
         // Busca os itens do pedido
         const itensResult = await pool.query('SELECT * FROM pedidoitens WHERE idpedido = $1', [orderId]);
 
-        // Se nenhum item for encontrado, apenas retorna um array vazio
-        return res.json(itensResult.rows);
+        if (itensResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Nenhum item encontrado para este pedido' });
+        }
+
+        // Retorna os itens do pedido
+        res.json(itensResult.rows);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: 'Erro ao buscar itens do pedido' });
+        res.status(500).json({ message: 'Erro ao buscar itens do pedido' });
     }
 });
 
@@ -1016,138 +1001,8 @@ app.get('/modalproducts/:id', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-app.patch('/editproduct/:productId', async (req, res) => {
-    const { productId } = req.params;
-    const { quantity } = req.body;
-
-    try {
-        // Update quantity in pedidoitens
-        const updateResult = await pool.query(
-            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
-            [quantity, productId]
-        );
-
-        if (updateResult.rowCount === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        // Get idpedido and ipi from updated product
-        const { idpedido, ipi } = (await pool.query(
-            'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
-            [productId]
-        )).rows[0];
-
-
-
-
-        
-// Step 4: Calculate the total price for the order with IPI
-const totalResult = await pool.query(
-    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
-    [idpedido]
-);
-
-
-  
-        const total = totalResult.rows[0].total;
-
-        // Update the total in pedidos table
-        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, idpedido]);
-
-
-
-        res.status(200).json({
-            message: 'Quantity updated successfully',
-            updatedProduct: { idpedido, quantity, ipi, total }
-        });
-        
-
-        // Send response with updated product details
-        res.status(200).json({
-            message: 'Quantity updated successfully',
-            updatedProduct: { idpedido, quantity, ipi },
-            total
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-
 /*
 
-app.patch('/editproduct/:productId', async (req, res) => {
-    const { productId } = req.params;
-    const { quantity } = req.body;
-
-    try {
-        // Update quantity in pedidoitens
-        const result = await pool.query(
-            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
-            [quantity, productId]
-        );
-
-        // Get idpedido and ipi associated with the updated item
-        const productDetails = (await pool.query(
-            'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
-            [productId]
-        )).rows[0];
-
-        const { idPedido, ipi } = productDetails;
-
-        // Calculate the new total for the order
-        const totalResult = await pool.query(
-            'SELECT (SUM(quantidade * preco * (1 + ipi * 0.13))) AS total FROM pedidoitens WHERE idpedido = $1',
-            [idPedido]
-        );
-
-
-        const total = 1000;//totalResult.rows[0]?.total ?? 0; // Ensures a fallback to 0 if undefined or null
-
-        await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [total, idPedido]
-        );
-        
-
-
-
-        const total = totalResult.rows[0].total || 0; // If no items, total is 0
-
-        // Update the total in the pedidos table
-        await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [total, idPedido]
-        );
-
-
-
-
-
-
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        // Include ipi in the response
-        res.status(200).json({ message: 'Quantity updated successfully', updatedProduct: { ...productDetails, quantity }, total });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});*/
-
-/*
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
@@ -1161,13 +1016,61 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
         // Get idpedido associated with the updated item
         const idPedido = (await pool.query(
-            'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
+            'SELECT idpedido FROM pedidoitens WHERE id = $1',
             [productId]
         )).rows[0].idpedido;
 
         // Calculate the new total for the order
         const totalResult = await pool.query(
-            'SELECT SUM(quantidade * preco * ipi) AS total FROM pedidoitens WHERE idpedido = $1',
+            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
+            [idPedido]
+        );
+
+        const total = totalResult.rows[0].total || 0; // If no items, total is 0
+
+        // Update the total in the pedidos table
+        await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, idPedido]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        const updatedProduct = result.rows[0];
+        res.status(200).json({ message: 'Quantity updated successfully', updatedProduct, newTotal: total });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+*/
+
+
+
+
+
+app.patch('/editproduct/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    try {
+        // Update quantity in pedidoitens
+        const result = await pool.query(
+            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
+            [quantity, productId]
+        );
+
+        // Get idpedido associated with the updated item
+        const idPedido = (await pool.query(
+            'SELECT idpedido FROM pedidoitens WHERE id = $1',
+            [productId]
+        )).rows[0].idpedido;
+
+        // Calculate the new total for the order
+        const totalResult = await pool.query(
+            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
             [idPedido]
         );
 
@@ -1189,10 +1092,118 @@ app.patch('/editproduct/:productId', async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
-});*/
+});
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+app.patch('/editproduct/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    try {
+        // Update quantity in pedidoitens
+        const result = await pool.query(
+            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
+            [quantity, productId]
+        );
+
+        // Get idpedido associated with the updated item
+        const idPedido = (await pool.query(
+            'SELECT idpedido FROM pedidoitens WHERE id = $1',
+            [productId]
+        )).rows[0].idpedido;
+
+        // Calculate the new total for the order
+        const totalResult = await pool.query(
+            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
+            [idPedido]
+        );
+
+        const total = totalResult.rows[0].total || 0; // If no items, total is 0
+
+        // Update the total in the pedidos table
+        await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, idPedido]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Fetch all products for this order
+        const updatedProducts = await pool.query(
+            'SELECT * FROM pedidoitens WHERE idpedido = $1 ORDER BY id',
+            [idPedido]
+        );
+
+        res.status(200).json({
+            message: 'Quantity updated successfully',
+            updatedProduct: result.rows[0],
+            updatedProducts: updatedProducts.rows, // Return all products in order
+            total
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+*/
+
+
+
+
+
+/*
+app.patch('/editproduct/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    try {
+        // Update quantity in pedidoitens
+        const result = await pool.query(
+            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
+            [quantity, productId]
+        );
+
+        // Get idpedido associated with the updated item
+        const idPedido = (await pool.query(
+            'SELECT idpedido FROM pedidoitens WHERE id = $1',
+            [productId]
+        )).rows[0].idpedido;
+
+        // Calculate the new total for the order
+        const totalResult = await pool.query(
+            'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
+            [idPedido]
+        );
+
+        const total = totalResult.rows[0].total || 0; // If no items, total is 0
+
+        // Update the total in the pedidos table
+        await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, idPedido]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        const updatedProduct = result.rows[0];
+        res.status(200).json({ message: 'Quantity updated successfully', updatedProduct });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+*/
+
+
+
+
 
 app.post('/displayName', (req, res) => {
     const { customerId } = req.body;
