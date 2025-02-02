@@ -1039,6 +1039,17 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [idPedido]
         );
 
+
+        const total = totalResult.rows[0]?.total ?? 0; // Ensures a fallback to 0 if undefined or null
+
+        await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, idPedido]
+        );
+        
+
+
+/*
         const total = totalResult.rows[0].total || 0; // If no items, total is 0
 
         // Update the total in the pedidos table
@@ -1046,7 +1057,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
             'UPDATE pedidos SET total = $1 WHERE id = $2',
             [total, idPedido]
         );
-
+*/
         if (result.rowCount === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
