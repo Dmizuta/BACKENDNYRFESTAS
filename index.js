@@ -1014,6 +1014,63 @@ app.get('/modalproducts/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+app.patch('/editproduct/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    try {
+        // Update quantity in pedidoitens
+        const updateResult = await pool.query(
+            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
+            [quantity, productId]
+        );
+
+        if (updateResult.rowCount === 0) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Get idpedido and ipi from updated product
+        const { idpedido, ipi } = (await pool.query(
+            'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
+            [productId]
+        )).rows[0];
+
+        // Calculate total with ipi
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
+            [idpedido]
+        );
+
+        const total = totalResult.rows[0].total;
+
+        // Update the total in pedidos table
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, idpedido]);
+
+        // Send response with updated product details
+        res.status(200).json({
+            message: 'Quantity updated successfully',
+            updatedProduct: { idpedido, quantity, ipi },
+            total
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+/*
+
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
@@ -1068,7 +1125,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
-});
+});*/
 
 /*
 app.patch('/editproduct/:productId', async (req, res) => {
