@@ -1065,7 +1065,7 @@ const totalResult = await pool.query(
         const total = totalResult.rows[0].total;
 
         // Update the total in pedidos table
-        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, idpedido]);
+        await pool.query('UPDATE pedidos SET total = 555 WHERE id = $2', [total, idpedido]);
 
 
 
@@ -1081,7 +1081,7 @@ const totalResult = await pool.query(
             updatedProduct: { idpedido, quantity, ipi },
             total
         });*/
-        
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
