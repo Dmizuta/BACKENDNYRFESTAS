@@ -1023,7 +1023,6 @@ app.get('/modalproducts/:id', async (req, res) => {
 
 
 
-/*
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
@@ -1081,7 +1080,7 @@ const totalResult = await pool.query(
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
-});*/
+});
 
 
 /*
@@ -1148,7 +1147,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
     }
 });*/
 
-
+/*
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
@@ -1190,7 +1189,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
-});
+});*/
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
