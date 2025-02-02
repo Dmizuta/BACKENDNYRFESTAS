@@ -1029,7 +1029,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
         // Get idpedido associated with the updated item
         const idPedido = (await pool.query(
-            'SELECT idpedido FROM pedidoitens WHERE id = $1',
+            'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
             [productId]
         )).rows[0].idpedido;
 
