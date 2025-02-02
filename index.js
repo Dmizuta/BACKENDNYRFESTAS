@@ -1051,7 +1051,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
         
 // Step 4: Calculate the total price for the order with IPI
 const totalResult = await pool.query(
-    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
+    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 555) AS total FROM pedidoitens WHERE idpedido = $1',
     [idpedido]
 );
 
