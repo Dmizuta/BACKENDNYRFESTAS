@@ -1072,8 +1072,7 @@ const totalResult = await pool.query(
         // Send response with updated product details
         res.status(200).json({
             message: 'Quantity updated successfully',
-            updatedProduct: { idpedido, quantity, ipi },
-            total
+            updatedProduct: { idpedido, quantity, ipi, total }
         });
 
     } catch (error) {
