@@ -1023,7 +1023,7 @@ app.get('/modalproducts/:id', async (req, res) => {
 
 
 
-
+/*
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
@@ -1056,12 +1056,7 @@ const totalResult = await pool.query(
 );
 
 
-       /* // Calculate total with ipi
-        const totalResult = await pool.query(
-            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
-            [idpedido]
-        );
-*/
+  
         const total = totalResult.rows[0].total;
 
         // Update the total in pedidos table
@@ -1074,19 +1069,19 @@ const totalResult = await pool.query(
             updatedProduct: { idpedido, quantity, ipi, total }
         });
         
-/*
+
         // Send response with updated product details
         res.status(200).json({
             message: 'Quantity updated successfully',
             updatedProduct: { idpedido, quantity, ipi },
             total
-        });*/
+        });
 
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
-});
+});*/
 
 
 /*
@@ -1153,7 +1148,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
     }
 });*/
 
-/*
+
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
@@ -1197,7 +1192,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
     }
 });
 
-*/
+
 
 
 app.post('/displayName', (req, res) => {
