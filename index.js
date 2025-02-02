@@ -1031,7 +1031,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [productId]
         )).rows[0];
 
-        const { idPedido, ipi } = productDetails;
+        const { idPedido } = productDetails;
 
         // Calculate the new total for the order
         const totalResult = await pool.query(
