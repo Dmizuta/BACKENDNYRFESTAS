@@ -1040,17 +1040,29 @@ app.patch('/editproduct/:productId', async (req, res) => {
         }
 
         // Get idpedido and ipi from updated product
-        const { idpedido, ipi } = (await pool.query(
+        const { result } = (await pool.query(
             'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
             [productId]
         )).rows[0];
 
-        // Calculate total with ipi
+      const orderId = result.idpedido;
+      const ipi = result.ipi;
+
+
+        
+// Step 4: Calculate the total price for the order with IPI
+const totalResult = await pool.query(
+    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
+    [orderId]
+);
+
+
+       /* // Calculate total with ipi
         const totalResult = await pool.query(
             'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
             [idpedido]
         );
-
+*/
         const total = totalResult.rows[0].total;
 
         // Update the total in pedidos table
@@ -1120,7 +1132,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
 
 
-        
+
         if (result.rowCount === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
