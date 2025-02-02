@@ -1040,7 +1040,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
         );
 
 
-        const total = totalResult.rows[0]?.total ?? 0; // Ensures a fallback to 0 if undefined or null
+        const total = 1000;//totalResult.rows[0]?.total ?? 0; // Ensures a fallback to 0 if undefined or null
 
         await pool.query(
             'UPDATE pedidos SET total = $1 WHERE id = $2',
