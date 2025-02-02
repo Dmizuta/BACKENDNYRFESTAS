@@ -966,14 +966,19 @@ app.delete('/delete-product', async (req, res) => {
         }
 
 
+// Step 4: Calculate the total price for the order with IPI
+const totalResult = await pool.query(
+    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
+    [orderId]
+);
 
 
-
+/*
         // Calcula o novo total do pedido
         const totalResult = await pool.query(
             'SELECT COALESCE(SUM(quantidade * preco), 0) AS total FROM pedidoitens WHERE idpedido = $1',
             [orderId]
-        );
+        );*/
 
         const total = totalResult.rows[0].total;
         console.log('Novo total calculado:', total); // Log do novo total
