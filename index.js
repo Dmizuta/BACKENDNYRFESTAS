@@ -277,7 +277,7 @@ app.post('/add-to-order', async (req, res) => {
             } else {
                 // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
-                    error: `PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< ESTÁ EM ABERTO.`
+                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< E TENTE NOVAMENTE.`
                 });
             }
         } else {
