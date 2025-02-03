@@ -739,7 +739,8 @@ app.get('/customers', async (req, res) => {
 
     try {
         const customers = await pool.query(
-            `SELECT * FROM cadastro WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
+            //`SELECT * FROM cadastro WHERE username = $1 AND (razaosocial ILIKE $2 OR cnpj ILIKE $2)`,
+            `SELECT * FROM cadastro WHERE username = $1 `,
             [username, `%${searchTerm}%`]
         );
         res.json({ success: true, data: customers.rows });
