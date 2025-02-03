@@ -1419,22 +1419,18 @@ app.patch("/revertOrder", async (req, res) => {
 
 
 
-
-
 app.patch("/receiveOrder", async (req, res) => {
     const { orderId } = req.body;
 
-    if (!orderId) {
-        return res.status(400).json({ error: "Order ID is required." });
+    if (!orderId || isNaN(orderId)) {
+        return res.status(400).json({ error: "Valid Order ID is required." });
     }
 
     try {
-       
-
-        // Perform a single UPDATE query
         const updateQuery = `
             UPDATE pedidos 
-            SET status = 3
+            SET status = 3 
+            WHERE id = $1
             RETURNING *;
         `;
 
@@ -1443,14 +1439,13 @@ app.patch("/receiveOrder", async (req, res) => {
         if (updateResult.rows.length > 0) {
             return res.status(200).json({ message: "Order updated successfully." });
         } else {
-            return res.status(500).json({ error: "Failed to update order." });
+            return res.status(404).json({ error: "Order not found." });
         }
     } catch (error) {
         console.error("Error updating order:", error);
         return res.status(500).json({ error: "Internal server error." });
     }
 });
-
 
 
 
