@@ -1578,13 +1578,11 @@ app.delete("/deleteCustomer/:id", async (req, res) => {
     const customerId = req.params.id;
 
     try {
-        const result = await pool.query("DELETE FROM cadastro WHERE id = $1", [customerId]);
-
-        try (result.rowCount > 0) {
-            res.json({ success: true, message: "Customer deleted" });
-        } 
+        await pool.query("DELETE FROM cadastro WHERE id = $1", [customerId]);
+        res.json({ success: true, message: "Customer deleted" });
     } catch (error) {
         console.error("Error deleting customer:", error);
         res.status(500).json({ success: false, message: "Server error" });
     }
 });
+
