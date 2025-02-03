@@ -759,7 +759,7 @@ app.get('/allcustomers', async (req, res) => {
   
 
     try {
-        const customers = await pool.query('SELECT * FROM cadastro ORDER BY representante ASC');
+        const customers = await pool.query('SELECT * FROM cadastro ORDER BY username ASC');
         res.json({ success: true, data: customers.rows });
 
     } catch (error) {
