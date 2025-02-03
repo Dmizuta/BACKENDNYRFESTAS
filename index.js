@@ -745,7 +745,7 @@ app.get('/customers', async (req, res) => {
             WHERE username = $1 
             AND (razaosocial ILIKE $2 OR cnpj ILIKE $2) 
             ORDER BY razaosocial ASC`,  // Sorting alphabetically
-            
+
             [username, `%${searchTerm}%`]
         );
         res.json({ success: true, data: customers.rows });
@@ -759,7 +759,7 @@ app.get('/allcustomers', async (req, res) => {
   
 
     try {
-        const customers = await pool.query('SELECT * FROM cadastro');
+        const customers = await pool.query('SELECT * FROM cadastro ORDER BY representante ASC');
         res.json({ success: true, data: customers.rows });
 
     } catch (error) {
