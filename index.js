@@ -381,13 +381,17 @@ app.post('/add-to-order-admin', async (req, res) => {
             'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6)',
             [orderId, codproduto, descricao, quantidade, preco, ipi]
         );
+        
+        const ipitax = await pool.query(
+            'SELECT ipi_tax FROM pedidos WHERE id = $1', 
+            [orderId])
 
         // Step 4: Calculate the total price for the order
         const totalResult = await pool.query(
-            `SELECT SUM((quantidade * preco) + (quantidade * preco * 0.13 * ipi)) AS total 
+            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
      FROM pedidoitens 
-     WHERE idpedido = $1`,
-            [orderId]
+     WHERE idpedido = $2`,
+            [ipitax, orderId]
         );
 
         const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
