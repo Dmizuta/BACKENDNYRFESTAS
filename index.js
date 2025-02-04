@@ -324,7 +324,7 @@ app.post('/add-to-order', async (req, res) => {
 
 
 app.post('/add-to-order-admin', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj, ipi } = req.body;
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj, ipi, ipiValue } = req.body;
 
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
@@ -377,10 +377,10 @@ await pool.query(
 
 // Step 4: Calculate the total price for the order
 const totalResult = await pool.query(
-    `SELECT SUM((quantidade * preco) + (quantidade * preco * 0.13 * ipi)) AS total 
+    `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
 FROM pedidoitens 
-WHERE idpedido = $1`,
-    [orderId]
+WHERE idpedido = $2`,
+    [ipiValue, orderId]
 );
 
 
