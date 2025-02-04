@@ -324,6 +324,95 @@ app.post('/add-to-order', async (req, res) => {
 
 
 app.post('/add-to-order-admin', async (req, res) => {
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
+
+    try {
+        // Step 1: Check if there's an open draft order for the given razaosocial
+        const result = await pool.query(
+            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
+            [username]
+        );
+        const existingOrder = result.rows[0];
+
+        let orderId;
+
+        if (existingOrder) {
+            if (existingOrder.razaosocial === razaosocial) {
+                // If razaosocial matches, add the product to the existing order
+                orderId = existingOrder.id;
+
+
+
+
+
+
+                const duplicateCheck = await pool.query(
+                    'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
+                    [orderId, codproduto]
+                );
+
+                if (duplicateCheck.rows.length > 0) {
+                    // If product already exists, return an error message
+                    return res.status(400).send({ 
+                        error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
+                    });
+                }
+
+
+
+            } else {
+                // If razaosocial doesn't match, show an error message asking to save the order
+                return res.status(400).send({ 
+                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< E TENTE NOVAMENTE.`
+                });
+            }
+        } else {
+            // Step 2: If no draft order exists, create a new one
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj]
+            );
+            const newOrder = newOrderResult.rows[0];
+            orderId = newOrder.id;
+        }
+
+        // Step 3: Add product to order items
+        await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6)',
+            [orderId, codproduto, descricao, quantidade, preco, ipi]
+        );
+
+        // Step 4: Calculate the total price for the order
+        const totalResult = await pool.query(
+            `SELECT SUM((quantidade * preco) + (quantidade * preco * 0.13 * ipi)) AS total 
+     FROM pedidoitens 
+     WHERE idpedido = $1`,
+            [orderId]
+        );
+
+        const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
+        console.log('Calculated total:', total); // Log do total calculado
+
+        // Step 5: Update the total in the pedidos table
+        const updateResult = await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, orderId]
+        );
+
+        console.log('Update result:', updateResult); // Log do resultado da atualização
+
+        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
+    }
+});
+    
+    
+    
+    /*
+    
+app.post('/add-to-order-admin', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj, ipi } = req.body;
 
     try {
@@ -359,14 +448,20 @@ app.post('/add-to-order-admin', async (req, res) => {
             orderId = newOrder.id;
 
            
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
                 // Step 1: Check if there's an open draft order for the given razaosocial
                 const ipitax = await pool.query(
                     'SELECT ipi_tax FROM pedidos WHERE id = $1', 
                     [newOrder]
                             
-                );
-        }
-
+                
+        
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
 
         // Step 3: Add product to order items
@@ -405,7 +500,7 @@ const updateResult = await pool.query(
 
 
 
-
+*/
 
 /// GET route: Fetch user data by username
 app.get('/cadastropage', async (req, res) => {
