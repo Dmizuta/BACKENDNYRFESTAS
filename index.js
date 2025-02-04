@@ -1509,3 +1509,16 @@ app.patch("/finishOrder", async (req, res) => {
     }
 });
 
+router.post("/update-ipi", async (req, res) => {
+    try {
+        const { orderId, newIPI } = req.body;
+
+        const query = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
+        await pool.query(query, [newIPI, orderId]);
+
+        res.json({ message: `IPI atualizado para ${newIPI * 100}%` });
+    } catch (error) {
+        console.error("Erro ao atualizar IPI:", error);
+        res.status(500).json({ error: "Erro interno do servidor" });
+    }
+});
