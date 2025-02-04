@@ -1549,3 +1549,34 @@ app.post('/finishOrder', async (req, res) => {
         return res.status(500).json({ error: 'Internal server error.' });
     }
 });*/
+
+
+router.post("/get-ipi-state", async (req, res) => {
+    try {
+        const { productIds } = req.body; // Get product IDs from request
+
+        if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+            return res.status(400).json({ error: "Invalid product IDs" });
+        }
+
+        // Query to fetch IPI state for the given product IDs
+        const query = `
+            SELECT id, ipi FROM produtos
+            WHERE id = ANY($1)
+        `;
+        const { rows } = await pool.query(query, [productIds]);
+
+        // Convert result to object { "1": 1, "2": 0, ... }
+        const ipiData = {};
+        rows.forEach(row => {
+            ipiData[row.id] = row.ipi; // Store IPI state for each product
+        });
+
+        res.json(ipiData);
+    } catch (error) {
+        console.error("Error fetching IPI states:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+module.exports = router;
