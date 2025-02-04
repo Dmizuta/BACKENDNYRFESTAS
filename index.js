@@ -1551,7 +1551,7 @@ app.post('/finishOrder', async (req, res) => {
 });*/
 
 
-router.post("/get-ipi-state", async (req, res) => {
+app.post("/get-ipi-state", async (req, res) => {
     try {
         const { productIds } = req.body; // Get product IDs from request
 
@@ -1578,5 +1578,3 @@ router.post("/get-ipi-state", async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
-
-module.exports = router;
