@@ -1512,11 +1512,12 @@ app.patch("/finishOrder", async (req, res) => {
 
 
 
-router.post("/update-ipi", async (req, res) => {
+
+app.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
-        
-        console.log("Received Data:", req.body); // Debugging line
+
+        console.log("Received Data:", req.body); // Debugging log
 
         if (!orderId || newIPI === undefined) {
             return res.status(400).json({ error: "Missing orderId or newIPI" });
@@ -1531,3 +1532,5 @@ router.post("/update-ipi", async (req, res) => {
         res.status(500).json({ error: "Erro interno do servidor" });
     }
 });
+
+
