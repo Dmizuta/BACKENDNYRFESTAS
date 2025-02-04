@@ -324,7 +324,7 @@ app.post('/add-to-order', async (req, res) => {
 
 
 app.post('/add-to-order-admin', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj, ipi, ipiValue } = req.body;
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
 
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
@@ -359,39 +359,18 @@ app.post('/add-to-order-admin', async (req, res) => {
             orderId = newOrder.id;
         }
 
-
-// Step 3: Add product to order items
-await pool.query(
-    'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6)',
-    [orderId, codproduto, descricao, quantidade, preco, ipi]
-);
-/*
         // Step 3: Add product to order items
         await pool.query(
             'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
             [orderId, codproduto, descricao, quantidade, preco]
         );
-*/
 
 
-
-// Step 4: Calculate the total price for the order
-const totalResult = await pool.query(
-    `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
-FROM pedidoitens 
-WHERE idpedido = $2`,
-    [ipiValue, orderId]
-);
-
-
-/*
 // Step 4: Calculate the total price for the order
 const totalResult = await pool.query(
     'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
     [orderId]
 );
-*/
-
 
 const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
 console.log('Calculated total:', total); // Log do total calculado
@@ -1570,19 +1549,3 @@ app.post('/finishOrder', async (req, res) => {
         return res.status(500).json({ error: 'Internal server error.' });
     }
 });*/
-
-
-
-
-app.delete("/deleteCustomer/:id", async (req, res) => {
-    const customerId = req.params.id;
-
-    try {
-        await pool.query("DELETE FROM cadastro WHERE id = $1", [customerId]);
-        res.json({ success: true, message: "Customer deleted" });
-    } catch (error) {
-        console.error("Error deleting customer:", error);
-        res.status(500).json({ success: false, message: "Server error" });
-    }
-});
-
