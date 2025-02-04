@@ -1515,6 +1515,12 @@ app.patch("/finishOrder", async (req, res) => {
 router.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
+        
+        console.log("Received Data:", req.body); // Debugging line
+
+        if (!orderId || newIPI === undefined) {
+            return res.status(400).json({ error: "Missing orderId or newIPI" });
+        }
 
         const query = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
         await pool.query(query, [newIPI, orderId]);
