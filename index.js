@@ -324,7 +324,7 @@ app.post('/add-to-order', async (req, res) => {
 
 
 app.post('/add-to-order-admin', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj } = req.body;
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, customerId, representante, cnpj, ipi } = req.body;
 
     try {
         // Step 1: Check if there's an open draft order for the given razaosocial
@@ -361,15 +361,20 @@ app.post('/add-to-order-admin', async (req, res) => {
 
         // Step 3: Add product to order items
         await pool.query(
-            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco) VALUES ($1, $2, $3, $4, $5)',
-            [orderId, codproduto, descricao, quantidade, preco]
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6)',
+            
+            [orderId, codproduto, descricao, quantidade, preco, ipi]
         );
 
 
 // Step 4: Calculate the total price for the order
 const totalResult = await pool.query(
-    'SELECT SUM(quantidade * preco) AS total FROM pedidoitens WHERE idpedido = $1',
-    [orderId]
+
+`SELECT SUM((quantidade * preco) + (quantidade * preco * 0.13 * ipi)) AS total 
+     FROM pedidoitens 
+     WHERE idpedido = $1`,
+            [orderId]
+
 );
 
 const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
