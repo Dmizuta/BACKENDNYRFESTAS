@@ -382,7 +382,24 @@ app.post('/add-to-order-admin', async (req, res) => {
             [orderId, codproduto, descricao, quantidade, preco, ipi]
         );
         
-        const ipitax = await pool.query(
+
+
+        const ipiTaxResult = await pool.query(
+            'SELECT ipi_tax FROM pedidos WHERE id = $1', 
+            [orderId]
+        );
+        
+        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0; // Extract the value and set 0 if undefined
+        
+        // Now use ipiTax in the query correctly
+        const totalResult = await pool.query(
+            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
+             FROM pedidoitens 
+             WHERE idpedido = $2`,
+            [ipiTax, orderId] // ✅ Now it's a number
+        );
+    
+  /*      const ipitax = await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1', 
             [orderId])
 
@@ -393,7 +410,7 @@ app.post('/add-to-order-admin', async (req, res) => {
      WHERE idpedido = $2`,
             [ipitax, orderId]
         );
-
+*/
         const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
         console.log('Calculated total:', total); // Log do total calculado
 
