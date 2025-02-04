@@ -1508,7 +1508,7 @@ app.patch("/finishOrder", async (req, res) => {
         return res.status(500).json({ error: "Internal server error." });
     }
 });
-
+/*
 router.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
@@ -1522,3 +1522,4 @@ router.post("/update-ipi", async (req, res) => {
         res.status(500).json({ error: "Erro interno do servidor" });
     }
 });
+*/
