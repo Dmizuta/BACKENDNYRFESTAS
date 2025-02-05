@@ -376,15 +376,14 @@ app.post('/add-to-order-admin', async (req, res) => {
             orderId = newOrder.id;
         }
 
-        // Step 3: Add product to order items
-        await pool.query(
-            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6)',
+        const newItemResult = await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
             [orderId, codproduto, descricao, quantidade, preco, ipi]
         );
+        const newItemId = newItemResult.rows[0].id;
         
 
-
-        const ipiTaxResult = await pool.query(
+        await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1', 
             [orderId]
         );
@@ -400,6 +399,12 @@ app.post('/add-to-order-admin', async (req, res) => {
             [ipiTax, orderId] // ✅ Now it's a number
         );
     
+
+        const newOrderResult = await pool.query(
+            'INSERT INTO pedidoitens (ipitax, subtotal) VALUES ($1, $2) WHERE id',
+            [newItemId]
+        );
+     
   
         const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
         console.log('Calculated total:', total); // Log do total calculado
