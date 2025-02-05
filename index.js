@@ -401,7 +401,7 @@ app.post('/add-to-order-admin', async (req, res) => {
     
 
         await pool.query(
-            'INSERT INTO pedidoitens (ipitax, subtotal) VALUES ($1, $2) WHERE id',
+            'INSERT INTO pedidoitens (ipitax, subtotal) VALUES ($1, $2) WHERE id = $1',
             [newItemId]
         );
      
