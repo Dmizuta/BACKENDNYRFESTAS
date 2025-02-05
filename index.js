@@ -1556,7 +1556,7 @@ app.delete("/deleteCustomer/:id", async (req, res) => {
     const { id } = req.params;
 
     try {
-        const result = await pool.query("DELETE FROM customers WHERE id = $1 RETURNING *", [id]);
+        const result = await pool.query("DELETE FROM cadastro WHERE id = $1 RETURNING *", [id]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ success: false, message: "Customer not found" });
