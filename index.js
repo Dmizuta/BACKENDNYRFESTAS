@@ -399,12 +399,12 @@ app.post('/add-to-order-admin', async (req, res) => {
             [ipiTax, orderId] // Now it's a number
         );
     
-
         await pool.query(
-            'INSERT INTO pedidoitens (ipitax, subtotal) VALUES ($1, $2) WHERE id = $1',
-            [newItemId]
+            'UPDATE pedidoitens SET ipitax = $1, subtotal = $2 WHERE id = $3',
+            [ipiTax, total, newItemId] // Use the correct values for ipitax and subtotal
         );
-     
+        
+      
   
         const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
         console.log('Calculated total:', total); // Log do total calculado
