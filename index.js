@@ -383,7 +383,7 @@ app.post('/add-to-order-admin', async (req, res) => {
         const newItemId = newItemResult.rows[0].id;
         
 
-        await pool.query(
+        const ipiTaxResult = await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1', 
             [orderId]
         );
