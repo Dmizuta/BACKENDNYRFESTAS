@@ -323,28 +323,24 @@ app.post('/add-to-order', async (req, res) => {
 });
 
 
+
+
+
+
 app.post('/add-to-order-admin', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
 
     try {
-        // Step 1: Check if there's an open draft order for the given razaosocial
         const result = await pool.query(
             'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
             [username]
         );
         const existingOrder = result.rows[0];
-
         let orderId;
 
         if (existingOrder) {
             if (existingOrder.razaosocial === razaosocial) {
-                // If razaosocial matches, add the product to the existing order
                 orderId = existingOrder.id;
-
-
-
-
-
 
                 const duplicateCheck = await pool.query(
                     'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
@@ -352,28 +348,21 @@ app.post('/add-to-order-admin', async (req, res) => {
                 );
 
                 if (duplicateCheck.rows.length > 0) {
-                    // If product already exists, return an error message
                     return res.status(400).send({ 
                         error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
                     });
                 }
-
-
-
             } else {
-                // If razaosocial doesn't match, show an error message asking to save the order
                 return res.status(400).send({ 
                     error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< E TENTE NOVAMENTE.`
                 });
             }
         } else {
-            // Step 2: If no draft order exists, create a new one
             const newOrderResult = await pool.query(
                 'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
                 [username, razaosocial, representante, cnpj]
             );
-            const newOrder = newOrderResult.rows[0];
-            orderId = newOrder.id;
+            orderId = newOrderResult.rows[0].id;
         }
 
         const newItemResult = await pool.query(
@@ -381,53 +370,46 @@ app.post('/add-to-order-admin', async (req, res) => {
             [orderId, codproduto, descricao, quantidade, preco, ipi]
         );
         const newItemId = newItemResult.rows[0].id;
-        
 
         const ipiTaxResult = await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1', 
             [orderId]
         );
         
-        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0; // Extract the value and set 0 if undefined
+        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
         console.log('IpiTax:', ipiTax);
-        
-        // Now use ipiTax in the query correctly
+
         const totalResult = await pool.query(
             `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
              FROM pedidoitens 
              WHERE idpedido = $2`,
-            [ipiTax, orderId] // Now it's a number
+            [ipiTax, orderId]
         );
-    
-      
-      
-  
-        const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
-        console.log('Calculated total:', total); // Log do total calculado
 
-        // Step 5: Update the total in the pedidos table
+        const total = totalResult.rows[0]?.total || 0;
+        console.log('Calculated total:', total);
+
         const updateResult = await pool.query(
             'UPDATE pedidos SET total = $1 WHERE id = $2',
             [total, orderId]
         );
 
-const ipivalue = ipitax * preco;
+        const ipivalue = ipiTax * preco;
+        const subtotal = (quantidade * preco) + (quantidade * preco * ipiTax);
 
         await pool.query(
             'UPDATE pedidoitens SET ipitax = $1, subtotal = $2 WHERE id = $3',
-            [ipivalue, total, newItemId] // Use the correct values for ipitax and subtotal
+            [ipivalue, subtotal, newItemId]
         );
-        
 
-        console.log('Update result:', updateResult); // Log do resultado da atualização
-
+        console.log('Update result:', updateResult);
         res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
     } catch (error) {
         console.error('Error adding to order:', error);
         res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
     }
 });
-    
+
     
     
 
