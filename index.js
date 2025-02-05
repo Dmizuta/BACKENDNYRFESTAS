@@ -399,11 +399,7 @@ app.post('/add-to-order-admin', async (req, res) => {
             [ipiTax, orderId] // Now it's a number
         );
     
-        await pool.query(
-            'UPDATE pedidoitens SET ipitax = $1, subtotal = $2 WHERE id = $3',
-            [ipiTax, total, newItemId] // Use the correct values for ipitax and subtotal
-        );
-        
+      
       
   
         const total = totalResult.rows[0].total || 0; // Se não houver itens, total será 0
@@ -414,6 +410,12 @@ app.post('/add-to-order-admin', async (req, res) => {
             'UPDATE pedidos SET total = $1 WHERE id = $2',
             [total, orderId]
         );
+
+        await pool.query(
+            'UPDATE pedidoitens SET ipitax = $1, subtotal = $2 WHERE id = $3',
+            [ipiTax, total, newItemId] // Use the correct values for ipitax and subtotal
+        );
+        
 
         console.log('Update result:', updateResult); // Log do resultado da atualização
 
