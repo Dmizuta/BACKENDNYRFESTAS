@@ -411,9 +411,11 @@ app.post('/add-to-order-admin', async (req, res) => {
             [total, orderId]
         );
 
+const ipivalue = ipitax * preco;
+
         await pool.query(
             'UPDATE pedidoitens SET ipitax = $1, subtotal = $2 WHERE id = $3',
-            [ipiTax, total, newItemId] // Use the correct values for ipitax and subtotal
+            [ipivalue, total, newItemId] // Use the correct values for ipitax and subtotal
         );
         
 
