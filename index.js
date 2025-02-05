@@ -396,7 +396,7 @@ app.post('/add-to-order-admin', async (req, res) => {
             `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
              FROM pedidoitens 
              WHERE idpedido = $2`,
-            [ipiTax, orderId] // ✅ Now it's a number
+            [ipiTax, orderId] // Now it's a number
         );
     
 
