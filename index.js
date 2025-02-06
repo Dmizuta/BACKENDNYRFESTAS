@@ -905,7 +905,7 @@ app.delete('/delete-order', async (req, res) => {
         // Step 1: Inserir o pedido na tabela de backup
         const backupResult = await pool.query(
             'INSERT INTO pedidosdel (id, username, razaosocial, data, total, status, representante, cnpj, observacoes) ' +
-            'SELECT id, username, razaosocial, data, total, status, representante, cnpj, observacoes FROM pedidos WHERE id = $1',
+            'SELECT id, username, razaosocial, data, total, status, representante, cnpj, observacoes, ipitotal, ipi_tax FROM pedidos WHERE id = $1',
             [orderId]
         );
         
