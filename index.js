@@ -394,13 +394,13 @@ app.post('/add-to-order-admin', async (req, res) => {
             [total, orderId]
         );
 
-        const ipivalue = ipiTax * preco;
+       /* const ipivalue = ipiTax * preco;
         const subtotal = (quantidade * preco) + (quantidade * preco * ipiTax);
 
         await pool.query(
-            'UPDATE pedidoitens SET ipitax = $1, subtotal = $2 WHERE id = $3',
+            'UPDATE pedidoitens SET ipivalue = $1, subtotal = $2 WHERE id = $3',
             [ipivalue, subtotal, newItemId]
-        );
+        );*/
 
         console.log('Update result:', updateResult);
         res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
