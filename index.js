@@ -1049,15 +1049,12 @@ app.get('/modalproducts/:id', async (req, res) => {
 
 
 
-
-
-
 app.patch('/editproduct/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
 
     try {
-        // Update quantity in pedidoitens
+        // Step 1: Update quantity in pedidoitens
         const updateResult = await pool.query(
             'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
             [quantity, productId]
@@ -1067,168 +1064,44 @@ app.patch('/editproduct/:productId', async (req, res) => {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Get idpedido and ipi from updated product
-        const { idpedido, ipi } = (await pool.query(
+        // Step 2: Get idpedido and ipi from updated product
+        const productData = (await pool.query(
             'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
             [productId]
         )).rows[0];
 
+        const { idpedido, ipi } = productData;
 
-
-        const newIPI = (await pool.query(
+        // Step 3: Get the ipi_tax from the pedidos table
+        const pedidoData = (await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1',
             [idpedido]
         )).rows[0];
-        
 
+        const ipiTax = pedidoData ? pedidoData.ipi_tax : 0; // Default to 0 if not found
 
-         // Step 2: Calculate the new total for the order with updated IPI
-         const totalResult = await pool.query(
+        // Step 4: Calculate the new total for the order with updated IPI
+        const totalResult = await pool.query(
             'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
-            [newIPI, idpedido]  // Use the updated IPI value
+            [ipiTax, idpedido]  // Use the updated ipi_tax value
+        );
 
-/*
-// Step 4: Calculate the total price for the order with IPI
-const totalResult = await pool.query(
-    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
-    [idpedido]*/
-);
-
-
-  
         const total = totalResult.rows[0].total;
 
-        // Update the total in pedidos table
+        // Step 5: Update the total in pedidos table
         await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, idpedido]);
 
-
-
-        res.status(200).json({
-            message: 'Quantity updated successfully',
-            updatedProduct: { idpedido, quantity, ipi, total }
-        });
-        
-
-        // Send response with updated product details
-        res.status(200).json({
+        // Step 6: Send response with updated product details and total
+        return res.status(200).json({
             message: 'Quantity updated successfully',
             updatedProduct: { idpedido, quantity, ipi, total }
         });
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 });
-
-
-/*
-
-app.patch('/editproduct/:productId', async (req, res) => {
-    const { productId } = req.params;
-    const { quantity } = req.body;
-
-    try {
-        // Update quantity in pedidoitens
-        const result = await pool.query(
-            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
-            [quantity, productId]
-        );
-
-        // Get idpedido and ipi associated with the updated item
-        const productDetails = (await pool.query(
-            'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
-            [productId]
-        )).rows[0];
-
-        const { idPedido, ipi } = productDetails;
-
-        // Calculate the new total for the order
-        const totalResult = await pool.query(
-            'SELECT (SUM(quantidade * preco * (1 + ipi * 0.13))) AS total FROM pedidoitens WHERE idpedido = $1',
-            [idPedido]
-        );
-
-
-        const total = 1000;//totalResult.rows[0]?.total ?? 0; // Ensures a fallback to 0 if undefined or null
-
-        await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [total, idPedido]
-        );
-        
-
-
-
-        const total = totalResult.rows[0].total || 0; // If no items, total is 0
-
-        // Update the total in the pedidos table
-        await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [total, idPedido]
-        );
-
-
-
-
-
-
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        // Include ipi in the response
-        res.status(200).json({ message: 'Quantity updated successfully', updatedProduct: { ...productDetails, quantity }, total });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});*/
-
-/*
-app.patch('/editproduct/:productId', async (req, res) => {
-    const { productId } = req.params;
-    const { quantity } = req.body;
-
-    try {
-        // Update quantity in pedidoitens
-        const result = await pool.query(
-            'UPDATE pedidoitens SET quantidade = $1 WHERE id = $2',
-            [quantity, productId]
-        );
-
-        // Get idpedido associated with the updated item
-        const idPedido = (await pool.query(
-            'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
-            [productId]
-        )).rows[0].idpedido;
-
-        // Calculate the new total for the order
-        const totalResult = await pool.query(
-            'SELECT SUM(quantidade * preco * ipi) AS total FROM pedidoitens WHERE idpedido = $1',
-            [idPedido]
-        );
-
-        const total = totalResult.rows[0].total || 0; // If no items, total is 0
-
-        // Update the total in the pedidos table
-        await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [total, idPedido]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        const updatedProduct = result.rows[0];
-        res.status(200).json({ message: 'Quantity updated successfully', updatedProduct });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});*/
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
