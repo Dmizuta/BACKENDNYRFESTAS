@@ -904,7 +904,7 @@ app.delete('/delete-order', async (req, res) => {
     try {
         // Step 1: Inserir o pedido na tabela de backup
         const backupResult = await pool.query(
-            'INSERT INTO pedidosdel (id, username, razaosocial, data, total, status, representante, cnpj, observacoes) ' +
+            'INSERT INTO pedidosdel (id, username, razaosocial, data, total, status, representante, cnpj, observacoes, ipitotal, ipi_tax) ' +
             'SELECT id, username, razaosocial, data, total, status, representante, cnpj, observacoes, ipitotal, ipi_tax FROM pedidos WHERE id = $1',
             [orderId]
         );
@@ -975,7 +975,6 @@ app.delete('/delete-order', async (req, res) => {
 
 */
 
-
 // Endpoint para deletar um item do pedido
 app.delete('/delete-product', async (req, res) => {
     const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
@@ -992,36 +991,39 @@ app.delete('/delete-product', async (req, res) => {
             return res.status(404).json({ message: 'Item não encontrado' });
         }
 
+        // Step 1: Fetch the current IPI tax from the 'pedidos' table
+        const ipiQuery = 'SELECT ipi_tax FROM pedidos WHERE id = $1'; // Assuming 'ipi_tax' is the field holding the IPI rate
+        const ipiResult = await pool.query(ipiQuery, [orderId]);
 
-// Step 4: Calculate the total price for the order with IPI
-const totalResult = await pool.query(
-    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * 0.13)), 0) AS total FROM pedidoitens WHERE idpedido = $1',
-    [orderId]
-);
+        // Check if IPI value is available
+        if (ipiResult.rows.length === 0) {
+            return res.status(404).json({ message: 'IPI não encontrado para o pedido' });
+        }
 
+        const ipiTax = ipiResult.rows[0].ipi_tax; // Get the IPI value
 
-/*
-        // Calcula o novo total do pedido
+        // Step 2: Calculate the total price for the order with the fetched IPI
         const totalResult = await pool.query(
-            'SELECT COALESCE(SUM(quantidade * preco), 0) AS total FROM pedidoitens WHERE idpedido = $1',
-            [orderId]
-        );*/
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [ipiTax, orderId]  // Use the fetched IPI value
+        );
 
         const total = totalResult.rows[0].total;
         console.log('Novo total calculado:', total); // Log do novo total
 
-        // Atualiza o total na tabela pedidos
+        // Step 3: Atualiza o total na tabela pedidos
         await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, orderId]);
 
         return res.status(200).json({ message: 'Item deletado com sucesso', newTotal: total });
-
-
 
     } catch (error) {
         console.error('Erro ao deletar item:', error);
         return res.status(500).json({ message: 'Erro ao deletar item' });
     }
 });
+
+
+
 
 // Endpoint para buscar os itens do pedido
 app.get('/modalproducts/:id', async (req, res) => {
