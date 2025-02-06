@@ -1078,6 +1078,8 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [idpedido]
         )).rows[0];
 
+        console.log('pedidoData:', pedidoData);
+
         const ipiTax = pedidoData ? pedidoData.ipi_tax : 0; // Default to 0 if not found
 
         // Step 4: Calculate the new total for the order with updated IPI
