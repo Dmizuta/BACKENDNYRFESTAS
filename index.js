@@ -1094,8 +1094,10 @@ app.patch('/editproduct/:productId', async (req, res) => {
         // Step 6: Send response with updated product details and total
         return res.status(200).json({
             message: 'Quantity updated successfully',
-            updatedProduct: { idpedido, quantity, ipi, total }
+            updatedProduct: { ipiTax, idpedido, quantity, ipi, total },
+            
         });
+        
 
     } catch (error) {
         console.error(error);
