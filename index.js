@@ -50,7 +50,7 @@ app.get('/test-db-connection', async (req, res) => {
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM produtos WHERE estoque = 1 ORDER BY idprod ASC');
+        const result = await pool.query('SELECT * FROM produtos ORDER BY idprod ASC');
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({
