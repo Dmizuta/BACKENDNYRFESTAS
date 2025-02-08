@@ -290,6 +290,59 @@ app.post('/add-to-order', async (req, res) => {
             orderId = newOrder.id;
         }
 
+
+
+
+
+
+        const newItemResult = await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [orderId, codproduto, descricao, quantidade, preco, ipi]
+        );
+        const newItemId = newItemResult.rows[0].id;
+
+        const ipiTaxResult = await pool.query(
+            'SELECT ipi_tax FROM pedidos WHERE id = $1', 
+            [orderId]
+        );
+        
+        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
+        console.log('IpiTax:', ipiTax);
+
+        const totalResult = await pool.query(
+            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
+             FROM pedidoitens 
+             WHERE idpedido = $2`,
+            [ipiTax, orderId]
+        );
+
+        const total = totalResult.rows[0]?.total || 0;
+        console.log('Calculated total:', total);
+
+        const updateResult = await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, orderId]
+        );
+
+       /* const ipivalue = ipiTax * preco;
+        const subtotal = (quantidade * preco) + (quantidade * preco * ipiTax);
+
+        await pool.query(
+            'UPDATE pedidoitens SET ipivalue = $1, subtotal = $2 WHERE id = $3',
+            [ipivalue, subtotal, newItemId]
+        );*/
+
+        console.log('Update result:', updateResult);
+        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
+    }
+});
+
+
+
+/*
         // Step 3: Add product to order items
         await pool.query(
             'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6)',
@@ -322,7 +375,7 @@ app.post('/add-to-order', async (req, res) => {
     }
 });
 
-
+*/
 
 
 
