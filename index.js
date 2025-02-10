@@ -45,8 +45,32 @@ app.get('/test-db-connection', async (req, res) => {
 
 
 
+// Endpoint to get products from the database
+app.get('/products', async (req, res) => {
+    const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
+    try {
+        let query = 'SELECT * FROM produtos WHERE estoque = 1';
+        const queryParams = [];
 
+        // Se 'epoca' for fornecido, adicione à consulta
+        if (epoca) {
+            query += ' AND epoca = $1';
+            queryParams.push(epoca);
+        }
 
+        query += ' ORDER BY idprod ASC';
+        const result = await pool.query(query, queryParams);
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
+            error: error.message,
+        });
+    }
+});
+
+/*
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     try {
@@ -61,7 +85,7 @@ app.get('/products', async (req, res) => {
     }
 });
 
-
+*/
 
 app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
