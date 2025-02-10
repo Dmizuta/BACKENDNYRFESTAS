@@ -1120,9 +1120,8 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [codproduto]
         )).rows[0];
 
-        const cxfechada = cxfechadainfo;
-        const precofechada = cxfechadainfo.precofechada.value;
-        const precofrac = cxfechadainfo.precofrac.value;
+        const precoinfo = precoinfo;
+        
 
 
 
@@ -1149,11 +1148,20 @@ app.patch('/editproduct/:productId', async (req, res) => {
         await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, idpedido]);
 
         // Step 6: Send response with updated product details and total
-        return res.status(200).json({
-            message: 'Quantity updated successfully',
-            updatedProduct: { ipiTax, idpedido, quantity, ipi, total, cxfechada, precofechada, precofrac },
-            
-        });
+return res.status(200).json({
+    message: 'Quantity updated successfully',
+    updatedProduct: { 
+        ipiTax, 
+        idpedido, 
+        quantity, 
+        ipi, 
+        total,
+        cxfechada: cxfechadainfo?.cxfechada || 0, 
+        precofechada: cxfechadainfo?.precofechada || 0, 
+        precofrac: cxfechadainfo?.precofrac || 0
+    }
+});
+
         
 
     } catch (error) {
