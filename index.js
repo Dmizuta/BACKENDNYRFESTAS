@@ -1116,12 +1116,16 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
          // Step x: Get qtd cx fechada from produtos
          const cxfechadainfo = (await pool.query(
-            'SELECT cxfechada FROM produtos WHERE codproduto = $1',
+            'SELECT cxfechada, precofechada, precofrac FROM produtos WHERE codproduto = $1',
             [codproduto]
         )).rows[0];
 
-        const cxfechada = cxfechadainfo;
-        
+        const cxfechada = cxfechadainfo.cxfechada.value;
+        const precofechada = cxfechadainfo.precofechada.value;
+        const precofrac = cxfechadainfo.precofrac.value;
+
+
+
 
         // Step 3: Get the ipi_tax from the pedidos table
         const pedidoData = (await pool.query(
@@ -1147,7 +1151,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
         // Step 6: Send response with updated product details and total
         return res.status(200).json({
             message: 'Quantity updated successfully',
-            updatedProduct: { ipiTax, idpedido, quantity, ipi, total, cxfechada },
+            updatedProduct: { ipiTax, idpedido, quantity, ipi, total, cxfechada, precofechada, precofrac },
             
         });
         
