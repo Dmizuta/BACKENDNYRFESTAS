@@ -1120,7 +1120,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [codproduto]
         )).rows[0];
 
-        const precoinfo = precoinfo;
+        
         
 
 
