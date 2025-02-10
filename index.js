@@ -1107,11 +1107,21 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
         // Step 2: Get idpedido and ipi from updated product
         const productData = (await pool.query(
-            'SELECT idpedido, ipi FROM pedidoitens WHERE id = $1',
+            'SELECT idpedido, ipi, codproduto FROM pedidoitens WHERE id = $1',
             [productId]
         )).rows[0];
 
-        const { idpedido, ipi } = productData;
+        const { idpedido, ipi, codproduto } = productData;
+
+
+         // Step x: Get qtd cx fechada from produtos
+         const cxfechadainfo = (await pool.query(
+            'SELECT cxfechada FROM produtos WHERE codproduto = $1',
+            [codproduto]
+        )).rows[0];
+
+        const cxfechada = cxfechadainfo;
+        
 
         // Step 3: Get the ipi_tax from the pedidos table
         const pedidoData = (await pool.query(
@@ -1137,7 +1147,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
         // Step 6: Send response with updated product details and total
         return res.status(200).json({
             message: 'Quantity updated successfully',
-            updatedProduct: { ipiTax, idpedido, quantity, ipi, total },
+            updatedProduct: { ipiTax, idpedido, quantity, ipi, total, cxfechada },
             
         });
         
