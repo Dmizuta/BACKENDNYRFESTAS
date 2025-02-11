@@ -1122,7 +1122,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
         
         
-
+        const chosenPrice = (quantity >= cxfechada) ? precofechada : precofrac;
 
 
 
@@ -1138,8 +1138,8 @@ app.patch('/editproduct/:productId', async (req, res) => {
 
         // Step 4: Calculate the new total for the order with updated IPI
         const totalResult = await pool.query(
-            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
-            [ipiTax, idpedido]  // Use the updated ipi_tax value
+            'SELECT COALESCE(SUM(quantidade * $1 * (1 + ipi * $2)), 0) AS total FROM pedidoitens WHERE idpedido = $3',
+            [chosenPrice, ipiTax, idpedido ]  // Use the updated ipi_tax value
         );
 
         const total = totalResult.rows[0].total;
