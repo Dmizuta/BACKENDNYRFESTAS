@@ -1114,6 +1114,18 @@ app.patch('/editproduct/:productId', async (req, res) => {
         const { idpedido, ipi, codproduto } = productData;
 
 
+
+
+
+
+        const { cxfechada, precofechada, precofrac } = (await pool.query(
+            'SELECT cxfechada, precofechada, precofrac FROM produtos WHERE codproduto = $1',
+            [codproduto]
+        )).rows[0];
+
+
+
+        /*
         // Step x: Get qtd cx fechada from produtos
 const cxfechadainfo = (await pool.query(
     'SELECT cxfechada, precofechada, precofrac FROM produtos WHERE codproduto = $1',
@@ -1124,17 +1136,13 @@ const cxfechadainfo = (await pool.query(
 const { cxfechada, precofechada, precofrac } = cxfechadainfo;
 
 // Convert to numbers, defaulting to 0 if conversion fails
-const cxFechadaNum = Number(cxfechada) || 0;
-const precoFechadaNum = Number(precofechada) || 0;
-const precoFracNum = Number(precofrac) || 0;
-
+//const cxFechadaNum = Number(cxfechada) || 0;
+//const precoFechadaNum = Number(precofechada) || 0;
+//const precoFracNum = Number(precofrac) || 0;
+*/
         
-        const chosenPrice = quantity >= cxFechadaNum ? precoFechadaNum : precoFracNum;
-        console.log('QUANTIDADE:', chosenPrice);
-        console.log('PRECO FECHADA:', chosenPrice);
-        console.log('PRECO FRACIONADA:', chosenPrice);
-        console.log('Chosen Price:', chosenPrice);
-        
+        const chosenPrice = quantity >= cxfechada ? precofechada : precofrac;
+               
         // Step 3: Get the ipi_tax from the pedidos table
         const pedidoData = (await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1',
