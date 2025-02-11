@@ -1114,16 +1114,20 @@ app.patch('/editproduct/:productId', async (req, res) => {
         const { idpedido, ipi, codproduto } = productData;
 
 
-         // Step x: Get qtd cx fechada from produtos
-         const cxfechadainfo = (await pool.query(
-            'SELECT cxfechada, precofechada, precofrac FROM produtos WHERE codproduto = $1',
-            [codproduto]
-        )).rows[0];
+        // Step x: Get qtd cx fechada from produtos
+const cxfechadainfo = (await pool.query(
+    'SELECT cxfechada, precofechada, precofrac FROM produtos WHERE codproduto = $1',
+    [codproduto]
+)).rows[0];
 
-        const { cxfechada, precofechada, precofrac } = cxfechadainfo.rows[0];
-        const cxFechadaNum = Number(cxfechada) || 0;
-        const precoFechadaNum = Number(precofechada) || 0;
-        const precoFracNum = Number(precofrac) || 0;
+// Destructure the properties from cxfechadainfo
+const { cxfechada, precofechada, precofrac } = cxfechadainfo;
+
+// Convert to numbers, defaulting to 0 if conversion fails
+const cxFechadaNum = Number(cxfechada) || 0;
+const precoFechadaNum = Number(precofechada) || 0;
+const precoFracNum = Number(precofrac) || 0;
+
         
         const chosenPrice = quantity >= cxFechadaNum ? precoFechadaNum : precoFracNum;
         
