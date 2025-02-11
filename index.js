@@ -1120,6 +1120,10 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [codproduto]
         )).rows[0];
 
+        const cxfechada = cxfechadainfo?.cxfechada || 0; 
+        const precofechada = cxfechadainfo?.precofechada || 0;; 
+        const precofrac = cxfechadainfo?.precofrac || 0;
+
         
         
         const chosenPrice = (quantity >= cxfechada) ? precofechada : precofrac;
@@ -1156,9 +1160,9 @@ return res.status(200).json({
         quantity, 
         ipi, 
         total,
-        cxfechada: cxfechadainfo?.cxfechada || 0, 
-        precofechada: cxfechadainfo?.precofechada || 0, 
-        precofrac: cxfechadainfo?.precofrac || 0
+        cxfechada, 
+        precofechada, 
+        precofrac
     }
 });
 
