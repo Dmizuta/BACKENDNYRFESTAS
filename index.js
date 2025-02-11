@@ -1153,7 +1153,7 @@ const { cxfechada, precofechada, precofrac } = cxfechadainfo;
         const ipiTax = pedidoData ? pedidoData.ipi_tax : 0; // Default to 0 if not found
 
 
-
+console.log('IDPEDIDO:', idpedido);
         // Step 4: Calculate the new total for the order with updated IPI
         const totalResult = await pool.query(
             'SELECT COALESCE(SUM(quantidade * $1 * (1 + ipi * $2)), 0) AS total FROM pedidoitens WHERE idpedido = $3',
