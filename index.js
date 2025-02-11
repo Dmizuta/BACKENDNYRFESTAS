@@ -1160,9 +1160,9 @@ return res.status(200).json({
         quantity, 
         ipi, 
         total,
-        cxfechada, 
-        precofechada, 
-        precofrac
+        cxfechada: cxfechadainfo?.cxfechada || 0, 
+        precofechada: cxfechadainfo?.precofechada || 0, 
+        precofrac: cxfechadainfo?.precofrac || 0
     }
 });
 
