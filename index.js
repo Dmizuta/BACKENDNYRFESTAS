@@ -1120,7 +1120,7 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [codproduto]
         )).rows[0];
 
-        const { cxfechada, precofechada, precofrac } = productResult.rows[0];
+        const { cxfechada, precofechada, precofrac } = cxfechadainfo.rows[0];
         const cxFechadaNum = Number(cxfechada) || 0;
         const precoFechadaNum = Number(precofechada) || 0;
         const precoFracNum = Number(precofrac) || 0;
