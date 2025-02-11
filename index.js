@@ -1120,25 +1120,23 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [codproduto]
         )).rows[0];
 
-        //const cxfechada = cxfechadainfo?.cxfechada || 0; 
-       // const precofechada = cxfechadainfo?.precofechada || 0;; 
-       // const precofrac = cxfechadainfo?.precofrac || 0;
-
+        const { cxfechada, precofechada, precofrac } = productResult.rows[0];
+        const cxFechadaNum = Number(cxfechada) || 0;
+        const precoFechadaNum = Number(precofechada) || 0;
+        const precoFracNum = Number(precofrac) || 0;
         
+        const chosenPrice = quantity >= cxFechadaNum ? precoFechadaNum : precoFracNum;
         
-       // const chosenPrice = (quantity >= cxfechada) ? precofechada : precofrac;
-
-
-
         // Step 3: Get the ipi_tax from the pedidos table
         const pedidoData = (await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1',
             [idpedido]
         )).rows[0];
 
-        console.log('pedidoData:', pedidoData);
-
+      
         const ipiTax = pedidoData ? pedidoData.ipi_tax : 0; // Default to 0 if not found
+
+
 
         // Step 4: Calculate the new total for the order with updated IPI
         const totalResult = await pool.query(
@@ -1173,7 +1171,6 @@ return res.status(200).json({
         return res.status(500).json({ message: 'Internal server error' });
     }
 });
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
