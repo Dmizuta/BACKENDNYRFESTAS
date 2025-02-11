@@ -1130,6 +1130,10 @@ const precoFracNum = Number(precofrac) || 0;
 
         
         const chosenPrice = quantity >= cxFechadaNum ? precoFechadaNum : precoFracNum;
+        console.log('QUANTIDADE:', chosenPrice);
+        console.log('PRECO FECHADA:', chosenPrice);
+        console.log('PRECO FRACIONADA:', chosenPrice);
+        console.log('Chosen Price:', chosenPrice);
         
         // Step 3: Get the ipi_tax from the pedidos table
         const pedidoData = (await pool.query(
