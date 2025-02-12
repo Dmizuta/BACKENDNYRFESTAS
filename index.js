@@ -810,7 +810,7 @@ app.put('/updatecadastroadmin/:id', async (req, res) => {
         const result = await pool.query(
             `UPDATE cadastro 
              SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4 ,telefone = $5, email = $6 
-             WHERE id = $8;`,
+             WHERE id = $7;`,
             [representante, razaosocial, cnpj, endereco, telefone, email, customerId]  // Use the values from the form and the customer id
         );
 
