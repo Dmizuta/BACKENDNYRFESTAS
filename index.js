@@ -803,15 +803,15 @@ app.put('/updatecadastro/:id', async (req, res) => {
 //update cadastro (admin)
 app.put('/updatecadastroadmin/:id', async (req, res) => {
     const customerId = req.params.id;  // Extract the customer id from the URL
-    const { razaosocial, cnpj, endereco, representante, telefone, email, username } = req.body;  // Extract data from request body
+    const { razaosocial, cnpj, endereco, representante, telefone, email} = req.body;  // Extract data from request body
 
     try {
         // SQL query to update customer data using the primary key (id)
         const result = await pool.query(
             `UPDATE cadastro 
-             SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4 ,telefone = $5, email = $6, username = $7 
+             SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4 ,telefone = $5, email = $6 
              WHERE id = $8;`,
-            [representante, razaosocial, cnpj, endereco, telefone, email, username, customerId]  // Use the values from the form and the customer id
+            [representante, razaosocial, cnpj, endereco, telefone, email, customerId]  // Use the values from the form and the customer id
         );
 
         if (result.rowCount === 0) {
