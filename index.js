@@ -1526,7 +1526,7 @@ app.post("/update-ipi", async (req, res) => {
 
         if (statusResult.rows[0].status !== 0) {
             return res.status(403).json({
-                error: "O Pedido está em orçamento ou fechado, não pode ser alterado.",
+                error: "O Pedido não pode ser alterado, pois está em orçamento ou fechado.",
                 currentStatus: statusResult.rows[0].status
             });
         }
