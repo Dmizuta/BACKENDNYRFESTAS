@@ -1533,12 +1533,12 @@ app.post("/update-ipi", async (req, res) => {
         }
 
 */
-        if (statusResult.rows[0].status !== "0") {
+       /* if (statusResult.rows[0].status !== "0") {
             return res.status(403).json({ 
                 error: "Order is not in open state. Cannot update IPI.",
                 currentStatus: statusResult.rows[0].status  // Send the current status value
             });
-        }
+        }*/
         
 
 
