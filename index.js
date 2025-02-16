@@ -1517,10 +1517,20 @@ app.post("/update-ipi", async (req, res) => {
         if (statusResult.rows.length === 0) {
             return res.status(404).json({ error: "Order not found" });
         }
-
+/*
         if (statusResult.rows[0].status !== "0") {
             return res.status(403).json({ error: "Order is not in open state. Cannot update IPI."});
         }
+
+*/
+        if (statusResult.rows[0].status !== "0") {
+            return res.status(403).json({ 
+                error: "Order is not in open state. Cannot update IPI.",
+                currentStatus: statusResult.rows[0].status  // Send the current status value
+            });
+        }
+        
+
 
         // Step 2: Update the ipi_tax in pedidos table
         const updateIpiQuery = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
