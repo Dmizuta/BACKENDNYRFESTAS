@@ -1516,7 +1516,11 @@ app.post("/update-ipi", async (req, res) => {
 
 
 
+// Log the entire result object
+console.log("Status Query Result:", statusResult);
 
+// Log the rows specifically to see the status
+console.log("Status:", statusResult.rows);
 
 
         
