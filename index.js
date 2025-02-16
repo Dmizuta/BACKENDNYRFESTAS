@@ -1497,9 +1497,75 @@ app.patch("/finishOrder", async (req, res) => {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+app.post("/update-ipi", async (req, res) => {
+    try {
+        const { orderId, newIPI } = req.body;
+
+        console.log("Received Data:", req.body); // Log the received request data
+
+        if (!orderId || newIPI === undefined) {
+            return res.status(400).json({ error: "Missing orderId or newIPI" });
+        }
+
+        // Log before proceeding with the status query
+        console.log("Checking status for orderId:", orderId);
+
+        // Step 1: Check if order is in "open" state
+        const statusQuery = `SELECT status FROM pedidos WHERE id = $1`;
+        const statusResult = await pool.query(statusQuery, [orderId]);
+
+        console.log("Status Query Result:", statusResult.rows); // Log the result of the status query
+
+        if (statusResult.rows.length === 0 || statusResult.rows[0].status === undefined) {
+            return res.status(403).json({
+                error: "Order status not found. Cannot update IPI."
+            });
+        }
+
+        console.log("Current Order Status:", statusResult.rows[0].status); // Log the status value
+
+        if (statusResult.rows[0].status !== "0") {
+            return res.status(403).json({
+                error: "Order is not in open state. Cannot update IPI.",
+                currentStatus: statusResult.rows[0].status
+            });
+        }
+
+        // Log the values before updating IPI and calculating the total
+        console.log("Order is in open state. Updating IPI to:", newIPI);
+
+        // Step 2: Update the ipi_tax in pedidos table
+        const updateIpiQuery = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
+        await pool.query(updateIpiQuery, [newIPI, orderId]);
+
+        console.log("IPI updated successfully for orderId:", orderId);
+
+        // Step 3: Calculate the new total for the order with updated IPI
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [newIPI, orderId]
+        );
+
+        console.log("Total calculation result:", totalResult.rows); // Log the result of total calculation
+
+        const newTotal = totalResult.rows[0].total;
+
+        // Step 4: Update the total field in the pedidos table
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [newTotal, orderId]);
+
+        console.log("Total updated successfully for orderId:", orderId);
+
+        // Final response
+        res.json({ message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` });
+
+    } catch (error) {
+        console.error("Error updating IPI:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
 
 
-
+/*
 app.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
@@ -1560,7 +1626,7 @@ console.log("Status Result:", statusResult.rows);
         res.status(500).json({ error: "Erro interno do servidor" });
     }
 });
-
+*/
 /*
 app.post("/update-ipi", async (req, res) => {
     try {
