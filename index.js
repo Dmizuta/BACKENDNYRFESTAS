@@ -1493,8 +1493,51 @@ app.patch("/finishOrder", async (req, res) => {
     }
 });
 
+app.post("/update-ipi", async (req, res) => {
+    try {
+        const { orderId, newIPI } = req.body;
 
+        console.log("Received Data:", req.body); // Debugging log
 
+        if (!orderId || newIPI === undefined) {
+            return res.status(400).json({ error: "Missing orderId or newIPI" });
+        }
+
+        // Step 1: Check if order is in "open" state
+        const statusQuery = `SELECT status FROM pedidos WHERE id = $1`;
+        const statusResult = await pool.query(statusQuery, [orderId]);
+
+        if (statusResult.rows.length === 0) {
+            return res.status(404).json({ error: "Order not found" });
+        }
+
+        if (statusResult.rows[0].status !== "open") {
+            return res.status(403).json({ error: "Order is not in open state. Cannot update IPI." });
+        }
+
+        // Step 2: Update the ipi_tax in pedidos table
+        const updateIpiQuery = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
+        await pool.query(updateIpiQuery, [newIPI, orderId]);
+
+        // Step 3: Calculate the new total for the order with updated IPI
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [newIPI, orderId]
+        );
+
+        const newTotal = totalResult.rows[0].total;
+
+        // Step 4: Update the total field in the pedidos table
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [newTotal, orderId]);
+
+        res.json({ message: `IPI atualizado para ${newIPI * 100}% e total atualizado para ${newTotal}` });
+    } catch (error) {
+        console.error("Erro ao atualizar IPI:", error);
+        res.status(500).json({ error: "Erro interno do servidor" });
+    }
+});
+
+/*
 app.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
@@ -1525,29 +1568,8 @@ app.post("/update-ipi", async (req, res) => {
         console.error("Erro ao atualizar IPI:", error);
         res.status(500).json({ error: "Erro interno do servidor" });
     }
-});
+});*/
 
-/*
-app.post("/update-ipi", async (req, res) => {
-    try {
-        const { orderId, newIPI } = req.body;
-
-        console.log("Received Data:", req.body); // Debugging log
-
-        if (!orderId || newIPI === undefined) {
-            return res.status(400).json({ error: "Missing orderId or newIPI" });
-        }
-
-        const query = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
-        await pool.query(query, [newIPI, orderId]);
-
-        res.json({ message: `IPI atualizado para ${newIPI * 100}%` });
-    } catch (error) {
-        console.error("Erro ao atualizar IPI:", error);
-        res.status(500).json({ error: "Erro interno do servidor" });
-    }
-});
-*/
 
 
 // DELETE endpoint to remove a customer by ID
