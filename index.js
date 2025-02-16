@@ -1531,19 +1531,12 @@ console.log("Status Result:", statusResult.rows);
             });
         }
         
-/*
-        if (statusResult.rows[0].status !== "0") {
+
+        if (statusResult.rows[0].value !== "0") {
             return res.status(403).json({ error: "Order is not in open state. Cannot update IPI."});
         }
 
-*/if (statusResult.rows[0].status !== "0") {
-    console.log("Order status is not open:", statusResult.rows[0].status); // Log the current status for debugging
 
-    return res.status(403).json({
-        error: "Order is not in open state. Cannot update IPI.",
-        currentStatus: statusResult.rows[0].status  // Send the current status value
-    });
-}
 
 
         // Step 2: Update the ipi_tax in pedidos table
