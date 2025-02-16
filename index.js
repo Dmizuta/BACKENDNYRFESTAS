@@ -1519,7 +1519,7 @@ app.post("/update-ipi", async (req, res) => {
         }
 
         if (statusResult.rows[0].status !== "0") {
-            return res.status(403).json({ error: "Order is not in open state. Cannot update IPI." });
+            return res.status(403).json({ error: "Order is not in open state. Cannot update IPI." + $(statusResult) });
         }
 
         // Step 2: Update the ipi_tax in pedidos table
