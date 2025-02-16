@@ -1526,7 +1526,7 @@ app.post("/update-ipi", async (req, res) => {
 
         if (statusResult.rows[0].status !== 0) {
             return res.status(403).json({
-                error: "Order is not in open state. Cannot update IPI.",
+                error: "O Pedido está em orçamento ou fechado, não pode ser alterado.",
                 currentStatus: statusResult.rows[0].status
             });
         }
