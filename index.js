@@ -1514,9 +1514,19 @@ app.post("/update-ipi", async (req, res) => {
         const statusQuery = `SELECT status FROM pedidos WHERE id = $1`;
         const statusResult = await pool.query(statusQuery, [orderId]);
 
-        if (statusResult.rows.length === 0) {
-            return res.status(404).json({ error: "Order not found" });
+
+
+
+
+
+        
+        
+        if (statusResult.rows.length === 0 || statusResult.rows[0].status === undefined) {
+            return res.status(403).json({
+                error: "Order status not found. Cannot update IPI."
+            });
         }
+        
 /*
         if (statusResult.rows[0].status !== "0") {
             return res.status(403).json({ error: "Order is not in open state. Cannot update IPI."});
