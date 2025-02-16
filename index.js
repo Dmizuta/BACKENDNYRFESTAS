@@ -1555,8 +1555,12 @@ app.post("/update-ipi", async (req, res) => {
 
         console.log("Total updated successfully for orderId:", orderId);
 
-        // Final response
-        res.json({ message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` });
+            // Final response
+            res.json({ message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` });
+            const responseMessage = { message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` };
+console.log("Response Sent:", responseMessage); 
+res.json(responseMessage);
+
 
     } catch (error) {
         console.error("Error updating IPI:", error);
