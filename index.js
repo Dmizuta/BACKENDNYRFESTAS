@@ -79,7 +79,7 @@ app.get('/products', async (req, res) => {
 app.get('/products', async (req, res) => {
     const { epoca } = req.query; // Capture 'epoca' from the query parameters
     try {
-        let query = 'SELECT * FROM produtos'; // Base query to select all products
+        let query = 'SELECT * FROM produtos WHERE estoque = 1'; // Base query to select all products
         const queryParams = []; // Array for query parameters
         let conditions = []; // Array to hold conditions
 
