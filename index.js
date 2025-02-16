@@ -1493,6 +1493,13 @@ app.patch("/finishOrder", async (req, res) => {
     }
 });
 
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 app.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
@@ -1511,7 +1518,7 @@ app.post("/update-ipi", async (req, res) => {
             return res.status(404).json({ error: "Order not found" });
         }
 
-        if (statusResult.rows[0].status !== "open") {
+        if (statusResult.rows[0].status !== "0") {
             return res.status(403).json({ error: "Order is not in open state. Cannot update IPI." });
         }
 
