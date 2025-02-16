@@ -77,7 +77,7 @@ app.get('/products', async (req, res) => {
 app.get('/products', async (req, res) => {
     const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
     try {
-        let query = 'SELECT * FROM produtos WHERE estoque = 1';
+        let query = 'SELECT * FROM produtos WHERE estoque = 1 ORDER BY idprod ASC';
         const queryParams = [];
 
         // Se 'epoca' for fornecido, adicione à consulta
