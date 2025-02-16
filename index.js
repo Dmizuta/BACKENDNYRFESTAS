@@ -43,13 +43,39 @@ app.get('/test-db-connection', async (req, res) => {
     }
 });
 
-
-
+////////////////////////////////////////////////////////////////////////////
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
     try {
-        let query = 'SELECT * FROM produtos';
+        let query = 'SELECT * FROM produtos'; // No stock filter anymore
+        const queryParams = [];
+
+        // Se 'epoca' for fornecido, adicione à consulta
+        if (epoca) {
+            query += ' WHERE epoca = $1';  // Only filter by epoca if provided
+            queryParams.push(epoca);
+        }
+
+        query += ' ORDER BY idprod ASC';
+        const result = await pool.query(query, queryParams);
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
+            error: error.message,
+        });
+    }
+});
+
+
+/*
+// Endpoint to get products from the database
+app.get('/products', async (req, res) => {
+    const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
+    try {
+        let query = 'SELECT * FROM produtos WHERE estoque = 1';
         const queryParams = [];
 
         // Se 'epoca' for fornecido, adicione à consulta
@@ -69,6 +95,9 @@ app.get('/products', async (req, res) => {
         });
     }
 });
+*/
+
+////////////////////////////////////////////////////////////////////////////
 
 /*
 // Endpoint to get products from the database
@@ -1526,7 +1555,7 @@ app.post("/update-ipi", async (req, res) => {
 
         if (statusResult.rows[0].status !== 0) {
             return res.status(403).json({
-                error: "O Pedido não pode ser alterado, pois está em orçamento ou fechado.",
+                error: "O Pedido não pode ser alterado, pois.",
                 currentStatus: statusResult.rows[0].status
             });
         }
@@ -1556,10 +1585,10 @@ app.post("/update-ipi", async (req, res) => {
         console.log("Total updated successfully for orderId:", orderId);
 
             // Final response
-            /*res.json({ message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` });
+            res.json({ message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` });
             const responseMessage = { message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` };
 console.log("Response Sent:", responseMessage); 
-res.json(responseMessage);*/
+res.json(responseMessage);
 
 
     } catch (error) {
