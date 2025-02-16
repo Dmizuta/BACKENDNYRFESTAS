@@ -80,15 +80,22 @@ app.get('/products', async (req, res) => {
         let query = 'SELECT * FROM produtos';
         const queryParams = [];
 
+console.log('produtos:', query);
+
         // Se 'epoca' for fornecido, adicione à consulta
         if (epoca) {
             query += ' AND epoca = $1';
             queryParams.push(epoca);
         }
 
+        console.log ('epoca:', epoca);
+
         query += ' ORDER BY idprod ASC';
         const result = await pool.query(query, queryParams);
         res.json(result.rows);
+
+        console.log('parametros:', queryParams);
+
     } catch (error) {
         res.status(500).json({
             status: 'error',
