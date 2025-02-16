@@ -73,41 +73,6 @@ app.get('/products', async (req, res) => {
 */
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-/*
-app.get('/products', async (req, res) => {
-    const { epoca } = req.query; // Capture 'epoca' from the query parameters
-    try {
-        let query = 'SELECT * FROM produtos'; // Base query to select all products
-        const queryParams = []; // Array for query parameters
-        let conditions = []; // Array to hold conditions
-
-        // If 'epoca' is provided, add to conditions
-        if (epoca) {
-            conditions.push(`epoca = $${queryParams.length + 1}`); // Add parameterized condition for 'epoca'
-            queryParams.push(epoca); // Push the value of epoca
-        }
-
-        // If there are any conditions, append them to the query
-        if (conditions.length > 0) {
-            query += ' WHERE ' + conditions.join(' AND '); // Construct WHERE clause
-        }
-
-        query += ' ORDER BY idprod ASC'; // Order by idprod
-
-        const result = await pool.query(query, queryParams); // Perform the query
-        res.json(result.rows); // Return the result as JSON
-    } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
-            error: error.message,
-        });
-    }
-});
-*/
-
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
