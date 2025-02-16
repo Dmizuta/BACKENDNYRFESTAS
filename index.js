@@ -80,7 +80,7 @@ app.get('/products', async (req, res) => {
         let query = 'SELECT * FROM produtos';
         const queryParams = [];
 
-console.log('produtos:', query);
+console.log('produtos:', queryParams);
 
         // Se 'epoca' for fornecido, adicione à consulta
         if (epoca) {
