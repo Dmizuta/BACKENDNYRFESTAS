@@ -44,6 +44,8 @@ app.get('/test-db-connection', async (req, res) => {
 });
 
 ////////////////////////////////////////////////////////////////////////////
+
+/*
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
@@ -68,9 +70,9 @@ app.get('/products', async (req, res) => {
         });
     }
 });
+*/
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-/*
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
@@ -95,7 +97,7 @@ app.get('/products', async (req, res) => {
         });
     }
 });
-*/
+
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -113,8 +115,8 @@ app.get('/products', async (req, res) => {
         });
     }
 });
-
 */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
