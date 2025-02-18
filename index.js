@@ -565,7 +565,7 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -638,9 +638,7 @@ app.get('/orders', async (req, res) => {
     }
 
     try {
-        /*const result = await pool.query(
-            'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1',
-            [username]*/
+      
 
 
 
