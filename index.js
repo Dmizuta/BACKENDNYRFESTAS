@@ -593,7 +593,7 @@ app.get('/orders', async (req, res) => {
         // Clean the representante name using extractKeyword function
         function extractKeyword(input) {
             input = input.replace(/\(.*?\)/g, "").trim(); // Remove text in parentheses
-            const match = input.match(/^[A-Z]+(?:\s[A-Z]+)?/); // Extract up to 2 uppercase words
+           //const match = input.match(/^[A-Z]+(?:\s[A-Z]+)?/); // Extract up to 2 uppercase words
             return match ? match[0] : "";
         }
 
