@@ -590,10 +590,10 @@ app.get('/orders', async (req, res) => {
 
         let representante = representanteResult.rows[0].representante;
 
-        // Clean the representante name using extractKeyword function
+        // Function to extract keyword without uppercase restriction
         function extractKeyword(input) {
-            input = input.replace(/\(.*?\)/g, "").trim(); // Remove text in parentheses
-           //const match = input.match(/^[A-Z]+(?:\s[A-Z]+)?/); // Extract up to 2 uppercase words
+            input = input.replace(/\(.*?\)/g, "").trim(); // Remove text inside ()
+            const match = input.match(/^[^\s()]+(?:\s[^\s()]+)?/); // Get first 1-2 words
             return match ? match[0] : "";
         }
 
@@ -614,6 +614,7 @@ app.get('/orders', async (req, res) => {
         res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
+
 /*
 
 app.get('/orders', async (req, res) => {
