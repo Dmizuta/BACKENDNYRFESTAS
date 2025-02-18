@@ -572,6 +572,41 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
+app.get('/orders', async (req, res) => {
+    const { username } = req.query;
+
+    if (!username) {
+        return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
+    }
+
+    try {
+        // Step 1: Get the representante name from registro table
+        const representanteResult = await pool.query(
+            'SELECT representante FROM registro WHERE username = $1',
+            [username]
+        );
+
+        if (representanteResult.rows.length === 0) {
+            return res.status(404).json({ message: 'USUÁRIO NÃO ENCONTRADO.' });
+        }
+
+        const representante = representanteResult.rows[0].representante;
+
+        // Step 2: Fetch orders for both username and representante
+        const ordersResult = await pool.query(
+            `SELECT id, razaosocial, data, total, status 
+             FROM pedidos 
+             WHERE username = $1 OR representante = $2
+             ORDER BY id DESC`, 
+            [username, representante]
+        );
+
+        res.json(ordersResult.rows);
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
+    }
+});
 
 
 
@@ -593,7 +628,7 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
-
+/*
 // Endpoint to fetch orders for a specific username
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
@@ -627,6 +662,22 @@ app.get('/orders', async (req, res) => {
         res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
