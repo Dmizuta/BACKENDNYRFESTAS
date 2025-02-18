@@ -43,18 +43,19 @@ app.get('/test-db-connection', async (req, res) => {
     }
 });
 
+////////////////////////////////////////////////////////////////////////////
 
-
+/*
 // Endpoint to get products from the database
 app.get('/products', async (req, res) => {
     const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
     try {
-        let query = 'SELECT * FROM produtos WHERE estoque = 1';
+        let query = 'SELECT * FROM produtos'; // No stock filter anymore
         const queryParams = [];
 
         // Se 'epoca' for fornecido, adicione à consulta
         if (epoca) {
-            query += ' AND epoca = $1';
+            query += ' WHERE epoca = $1';  // Only filter by epoca if provided
             queryParams.push(epoca);
         }
 
@@ -69,6 +70,47 @@ app.get('/products', async (req, res) => {
         });
     }
 });
+*/
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Endpoint to get products from the database
+app.get('/products', async (req, res) => {
+    const { epoca } = req.query; // Captura o parâmetro de consulta 'epoca'
+    try {
+        let query = 'SELECT * FROM produtos WHERE estoque IN (0, 1)';
+
+       
+
+
+        const queryParams = [];
+
+console.log('produtos:', queryParams);
+
+        // Se 'epoca' for fornecido, adicione à consulta
+        if (epoca) {
+            query += ' AND epoca = $1';
+            queryParams.push(epoca);
+        }
+
+        console.log ('epoca:', epoca);
+
+        query += ' ORDER BY idprod ASC';
+        const result = await pool.query(query, queryParams);
+        res.json(result.rows);
+
+        console.log('parametros:', queryParams);
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
+            error: error.message,
+        });
+    }
+});
+
+
+////////////////////////////////////////////////////////////////////////////
 
 /*
 // Endpoint to get products from the database
@@ -84,8 +126,8 @@ app.get('/products', async (req, res) => {
         });
     }
 });
-
 */
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
@@ -803,15 +845,15 @@ app.put('/updatecadastro/:id', async (req, res) => {
 //update cadastro (admin)
 app.put('/updatecadastroadmin/:id', async (req, res) => {
     const customerId = req.params.id;  // Extract the customer id from the URL
-    const { razaosocial, cnpj, endereco, representante, telefone, email, username } = req.body;  // Extract data from request body
+    const { razaosocial, cnpj, endereco, representante, telefone, email} = req.body;  // Extract data from request body
 
     try {
         // SQL query to update customer data using the primary key (id)
         const result = await pool.query(
             `UPDATE cadastro 
-             SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4 ,telefone = $5, email = $6, username = $7 
-             WHERE id = $8;`,
-            [representante, razaosocial, cnpj, endereco, telefone, email, username, customerId]  // Use the values from the form and the customer id
+             SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4 ,telefone = $5, email = $6 
+             WHERE id = $7;`,
+            [representante, razaosocial, cnpj, endereco, telefone, email, customerId]  // Use the values from the form and the customer id
         );
 
         if (result.rowCount === 0) {
@@ -1495,6 +1537,143 @@ app.patch("/finishOrder", async (req, res) => {
 
 
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+app.post("/update-ipi", async (req, res) => {
+    try {
+        const { orderId, newIPI } = req.body;
+
+        console.log("Received Data:", req.body); // Log the received request data
+
+        if (!orderId || newIPI === undefined) {
+            return res.status(400).json({ error: "Missing orderId or newIPI" });
+        }
+
+        // Log before proceeding with the status query
+        console.log("Checking status for orderId:", orderId);
+
+        // Step 1: Check if order is in "open" state
+        const statusQuery = `SELECT status FROM pedidos WHERE id = $1`;
+        const statusResult = await pool.query(statusQuery, [orderId]);
+
+        console.log("Status Query Result:", statusResult.rows); // Log the result of the status query
+
+        if (statusResult.rows.length === 0 || statusResult.rows[0].status === undefined) {
+            return res.status(403).json({
+                error: "Order status not found. Cannot update IPI."
+            });
+        }
+
+        console.log("Current Order Status:", statusResult.rows[0].status); // Log the status value
+
+        if (statusResult.rows[0].status !== 0) {
+            return res.status(403).json({
+                error: "O Pedido não pode ser alterado, pois.",
+                currentStatus: statusResult.rows[0].status
+            });
+        }
+
+        // Log the values before updating IPI and calculating the total
+        console.log("Order is in open state. Updating IPI to:", newIPI);
+
+        // Step 2: Update the ipi_tax in pedidos table
+        const updateIpiQuery = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
+        await pool.query(updateIpiQuery, [newIPI, orderId]);
+
+        console.log("IPI updated successfully for orderId:", orderId);
+
+        // Step 3: Calculate the new total for the order with updated IPI
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [newIPI, orderId]
+        );
+
+        console.log("Total calculation result:", totalResult.rows); // Log the result of total calculation
+
+        const newTotal = totalResult.rows[0].total;
+
+        // Step 4: Update the total field in the pedidos table
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [newTotal, orderId]);
+
+        console.log("Total updated successfully for orderId:", orderId);
+
+            // Final response
+            res.json({ message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` });
+            const responseMessage = { message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` };
+console.log("Response Sent:", responseMessage); 
+res.json(responseMessage);
+
+
+    } catch (error) {
+        console.error("Error updating IPI:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+
+/*
+app.post("/update-ipi", async (req, res) => {
+    try {
+        const { orderId, newIPI } = req.body;
+
+        console.log("Received Data:", req.body); // Debugging log
+
+        if (!orderId || newIPI === undefined) {
+            return res.status(400).json({ error: "Missing orderId or newIPI" });
+        }
+
+        // Step 1: Check if order is in "open" state
+        const statusQuery = `SELECT status FROM pedidos WHERE id = $1`;
+        const statusResult = await pool.query(statusQuery, [orderId]);
+
+
+
+// Log the entire result object
+console.log("Status Query Result:", statusResult);
+
+// Log the rows specifically to see the status
+console.log("Status Result:", statusResult.rows);
+
+
+        
+        
+        if (statusResult.rows.length === 0 || statusResult.rows[0].status === undefined) {
+            return res.status(403).json({
+                error: "Order status not found. Cannot update IPI."
+            });
+        }
+        
+
+        if (statusResult.rows[0].value !== "0") {
+            return res.status(403).json({ error: "Order is not in open state. Cannot update IPI."});
+        }
+
+
+
+
+        // Step 2: Update the ipi_tax in pedidos table
+        const updateIpiQuery = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
+        await pool.query(updateIpiQuery, [newIPI, orderId]);
+
+        // Step 3: Calculate the new total for the order with updated IPI
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [newIPI, orderId]
+        );
+
+        const newTotal = totalResult.rows[0].total;
+
+        // Step 4: Update the total field in the pedidos table
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [newTotal, orderId]);
+
+        res.json({ message: `IPI atualizado para ${newIPI * 100}% e total atualizado para ${newTotal}` });
+    } catch (error) {
+        console.error("Erro ao atualizar IPI:", error);
+        res.status(500).json({ error: "Erro interno do servidor" });
+    }
+});
+*/
+/*
 app.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
@@ -1525,29 +1704,8 @@ app.post("/update-ipi", async (req, res) => {
         console.error("Erro ao atualizar IPI:", error);
         res.status(500).json({ error: "Erro interno do servidor" });
     }
-});
+});*/
 
-/*
-app.post("/update-ipi", async (req, res) => {
-    try {
-        const { orderId, newIPI } = req.body;
-
-        console.log("Received Data:", req.body); // Debugging log
-
-        if (!orderId || newIPI === undefined) {
-            return res.status(400).json({ error: "Missing orderId or newIPI" });
-        }
-
-        const query = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
-        await pool.query(query, [newIPI, orderId]);
-
-        res.json({ message: `IPI atualizado para ${newIPI * 100}%` });
-    } catch (error) {
-        console.error("Erro ao atualizar IPI:", error);
-        res.status(500).json({ error: "Erro interno do servidor" });
-    }
-});
-*/
 
 
 // DELETE endpoint to remove a customer by ID
