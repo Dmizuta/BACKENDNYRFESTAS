@@ -595,7 +595,7 @@ app.get('/ordersrep', async (req, res) => {
 const cleanedRepresentante = (representante || '').toString().replace(/\s*\(.*?\)\s*/g, '').trim();
 
 const ordersResult = await pool.query(
-    `SELECT id, razaosocial, data, total, status 
+    `SELECT id, razaosocial, data, total, status, representante 
      FROM pedidos 
      WHERE username = $1 OR TRIM(representante) = $2
      ORDER BY id DESC`,
