@@ -607,8 +607,7 @@ const ordersResult = await pool.query(
 const ordersResult = await pool.query(
     `SELECT id, razaosocial, data, total, status, representante 
      FROM pedidos 
-     WHERE username = $1 
-        OR TRIM(REGEXP_REPLACE(representante, '[^a-zA-Z0-9 ]', '', 'g')) = $2
+     WHERE TRIM(REGEXP_REPLACE(representante, '[^a-zA-Z0-9 ]', '', 'g')) = $2
      ORDER BY id DESC`,
     [username, representante]
 );
