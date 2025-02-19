@@ -604,6 +604,8 @@ representante = (representante || '').toString().replace(/\s*\(.*?\)\s*/g, '').t
             [username, representante]
         );
 
+        console.log("ORDER RESULT:", ordersResult);
+
         res.json(ordersResult.rows);
     } catch (error) {
         console.error('Error fetching orders:', error);
