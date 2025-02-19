@@ -607,9 +607,14 @@ app.get('/cadastropage', async (req, res) => {
     const ordersResult = await pool.query(
         `SELECT id, razaosocial, data, total, status, representante 
         FROM pedidos 
-        WHERE TRIM(REGEXP_REPLACE(representante, '\s*\(.*?\)', '', 'g')) = $1
-        ORDER BY id DESC`,
-        [representante]
+
+  WHERE username = $1 
+        OR RIM(REGEXP_REPLACE(representante, '\s*\(.*?\)', '', 'g')) = $2
+     ORDER BY id DESC`,
+    [username, representante]
+
+
+      
     );
 
     console.log("RES:", ordersResult.rows[1]);
