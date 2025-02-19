@@ -568,7 +568,7 @@ app.get('/cadastropage', async (req, res) => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
+/*
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
 
@@ -612,8 +612,8 @@ app.get('/orders', async (req, res) => {
     }
 });
 
+*/
 
-/*
 
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
@@ -652,7 +652,7 @@ app.get('/orders', async (req, res) => {
 });
 
 
-*/
+
 
 
 
