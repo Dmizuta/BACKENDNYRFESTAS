@@ -568,7 +568,7 @@ app.get('/cadastropage', async (req, res) => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-app.get('/orders', async (req, res) => {
+app.get('/ordersrep', async (req, res) => {
     const { username } = req.query;
 
     if (!username) {
