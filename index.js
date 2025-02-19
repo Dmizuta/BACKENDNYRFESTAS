@@ -612,7 +612,7 @@ app.get('/cadastropage', async (req, res) => {
         [representante]
     );
 
-    console.log("RES:", ordersResult.rows);
+    console.log("RES:", ordersResult.rows[1]);
 
 
 
