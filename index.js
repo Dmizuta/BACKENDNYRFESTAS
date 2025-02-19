@@ -569,7 +569,6 @@ app.get('/cadastropage', async (req, res) => {
 
 
 
-
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
 
@@ -590,14 +589,12 @@ app.get('/orders', async (req, res) => {
 
         let representante = representanteResult.rows[0].representante;
 
-        // Function to extract keyword without uppercase restriction
-        function extractKeyword(input) {
-            input = input.replace(/\(.*?\)/g, "").trim(); // Remove text inside ()
-            const match = input.match(/^[^\s()]+(?:\s[^\s()]+)?/); // Get first 1-2 words
-            return match ? match[0] : "";
+        // Function to clean the representante value
+        function cleanText(input) {
+            return input.replace(/\(.*?\)/g, "").trim(); // Remove text inside () and trim spaces
         }
 
-        representante = extractKeyword(representante);
+        representante = cleanText(representante);
 
         // Step 2: Fetch orders for both username and representante
         const ordersResult = await pool.query(
@@ -614,6 +611,7 @@ app.get('/orders', async (req, res) => {
         res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
+
 
 /*
 
