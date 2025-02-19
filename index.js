@@ -588,8 +588,10 @@ app.get('/ordersrep', async (req, res) => {
 
         let representante = representanteResult.rows[0].representante;
 
-        // Remove content inside parentheses and trim spaces
-        representante = representante.replace(/\s*\(.*?\)\s*/g, '').trim();
+        // Ensure `representante` is a string before applying replace and trim
+representante = (representante || '').toString().replace(/\s*\(.*?\)\s*/g, '').trim();
+
+       // representante = representante.replace(/\s*\(.*?\)\s*/g, '').trim();
 
         console.log("REPRESENTANTE:", representante);
 
