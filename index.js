@@ -591,6 +591,8 @@ app.get('/ordersrep', async (req, res) => {
         // Remove content inside parentheses and trim spaces
         representante = representante.replace(/\s*\(.*?\)\s*/g, '').trim();
 
+        console.log("REPRESENTANTE:", representante);
+
         // Step 2: Fetch orders using the cleaned representante
         const ordersResult = await pool.query(
             `SELECT id, razaosocial, data, total, status 
