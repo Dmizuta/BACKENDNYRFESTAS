@@ -588,21 +588,25 @@ app.get('/ordersrep', async (req, res) => {
 
         let representante = representanteResult.rows[0].representante;
 
-        // Ensure `representante` is a string before applying replace and trim
-representante = (representante || '').toString().replace(/\s*\(.*?\)\s*/g, '').trim();
 
-       // representante = representante.replace(/\s*\(.*?\)\s*/g, '').trim();
 
-        console.log("REPRESENTANTE:", representante);
 
-        // Step 2: Fetch orders using the cleaned representante
-        const ordersResult = await pool.query(
-            `SELECT id, razaosocial, data, total, status, representante 
-             FROM pedidos 
-             WHERE username = $1 OR representante = $2
-             ORDER BY id DESC`, 
-            [username, representante]
-        );
+// Ensure cleaned representante is properly formatted
+const cleanedRepresentante = (representante || '').toString().replace(/\s*\(.*?\)\s*/g, '').trim();
+
+const ordersResult = await pool.query(
+    `SELECT id, razaosocial, data, total, status 
+     FROM pedidos 
+     WHERE username = $1 OR TRIM(representante) = $2
+     ORDER BY id DESC`,
+    [username, cleanedRepresentante]
+);
+
+
+
+
+
+
 
         console.log("ORDER RESULT:", ordersResult);
 
