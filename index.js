@@ -609,7 +609,7 @@ app.get('/cadastropage', async (req, res) => {
         FROM pedidos 
 
   WHERE username = $1 
-       OR representante = $2 OR TRIM(REGEXP_REPLACE(representante, '\([^)]*\)', '', 'g')) = $2 OR representante = $2
+       OR TRIM(REGEXP_REPLACE(representante, '\(.*?\)', '', 'g')) = $2 OR representante = $2
      ORDER BY id DESC`,
     [username, representante]
 
