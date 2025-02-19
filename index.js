@@ -612,7 +612,7 @@ const ordersResult = await pool.query(
     [representante]
 );
 
-
+console.log("RES:", id, razaosocial, data, total, status, representante);
 
 
 
