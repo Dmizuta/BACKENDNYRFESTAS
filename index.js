@@ -602,7 +602,7 @@ console.log("REPRESENTANTE 02:", cleanedRepresentante);
 const ordersResult = await pool.query(
     `SELECT id, razaosocial, data, total, status, representante 
      FROM pedidos 
-     WHERE username = $1 OR TRIM(representante) = $2
+     WHERE username = $1 OR representante = $2
      ORDER BY id DESC`,
     [username, cleanedRepresentante]
 );
