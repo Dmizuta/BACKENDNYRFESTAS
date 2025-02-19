@@ -589,10 +589,15 @@ app.get('/ordersrep', async (req, res) => {
         let representante = representanteResult.rows[0].representante;
 
 
+        console.log("REPRESENTANTE 01:", representante);
 
 
 // Ensure cleaned representante is properly formatted
 const cleanedRepresentante = (representante || '').toString().replace(/\s*\(.*?\)\s*/g, '').trim();
+
+
+
+console.log("REPRESENTANTE 02:", cleanedRepresentante);
 
 const ordersResult = await pool.query(
     `SELECT id, razaosocial, data, total, status, representante 
@@ -608,7 +613,6 @@ const ordersResult = await pool.query(
 
 
 
-        console.log("ORDER RESULT:", ordersResult);
 
         res.json(ordersResult.rows);
     } catch (error) {
