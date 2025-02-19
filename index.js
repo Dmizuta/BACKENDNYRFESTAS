@@ -665,9 +665,9 @@ app.get('/orders', async (req, res) => {
 
 
 
-/*
+
 // Endpoint to fetch orders for a specific username
-app.get('/orders', async (req, res) => {
+app.get('/userorders', async (req, res) => {
     const { username } = req.query;
 
     if (!username) {
@@ -697,9 +697,6 @@ app.get('/orders', async (req, res) => {
         res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
-*/
-
-
 
 
 
