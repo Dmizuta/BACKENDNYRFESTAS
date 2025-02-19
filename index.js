@@ -568,7 +568,6 @@ app.get('/cadastropage', async (req, res) => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/*
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
 
@@ -589,14 +588,10 @@ app.get('/orders', async (req, res) => {
 
         let representante = representanteResult.rows[0].representante;
 
-        // Function to clean the representante value
-        function cleanText(input) {
-            return input.replace(/\(.*?\)/g, "").trim(); // Remove text inside () and trim spaces
-        }
+        // Remove content inside parentheses and trim spaces
+        representante = representante.replace(/\s*\(.*?\)\s*/g, '').trim();
 
-        representante = cleanText(representante);
-
-        // Step 2: Fetch orders for both username and representante
+        // Step 2: Fetch orders using the cleaned representante
         const ordersResult = await pool.query(
             `SELECT id, razaosocial, data, total, status 
              FROM pedidos 
@@ -612,9 +607,8 @@ app.get('/orders', async (req, res) => {
     }
 });
 
-*/
 
-
+/*
 app.get('/orders', async (req, res) => {
     const { username } = req.query;
 
@@ -652,7 +646,7 @@ app.get('/orders', async (req, res) => {
 });
 
 
-
+*/
 
 
 
