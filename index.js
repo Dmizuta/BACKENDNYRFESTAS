@@ -592,7 +592,7 @@ app.get('/ordersrep', async (req, res) => {
 
 
 // Ensure cleaned representante is properly formatted
-const cleanedRepresentante = (representante || '').toString().replace(/\s*\(.*?\)\s*/g, '').trim();
+const cleanedRepresentante = (representante || '').replace(/\s*\(.*?\)\s*/g, '').trim();
 
 const ordersResult = await pool.query(
     `SELECT id, razaosocial, data, total, status 
