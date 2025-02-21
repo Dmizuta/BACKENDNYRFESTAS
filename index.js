@@ -978,29 +978,8 @@ app.put('/updatecadastroadmin/:id', async (req, res) => {
 
 
 
-app.get('/customers', async (req, res) => { 
-    const username = req.query.username;
-    const searchTerm = req.query.searchTerm || '';
-    const limit = 2; // Limit the number of records returned
-
-    try {
-        const customers = await pool.query(
-            `SELECT * FROM cadastro 
-            WHERE username = $1 
-            AND (representante ILIKE $2 OR razaosocial ILIKE $2 OR cnpj ILIKE $2) 
-            ORDER BY razaosocial ASC 
-            LIMIT $3`,  // Limiting the number of results
-
-            [username, `%${searchTerm}%`, limit]
-        );
-        res.json({ success: true, data: customers.rows });
-    } catch (error) {
-        res.status(500).json({ success: false, error: 'Database query failed' });
-    }
-});
 
 
-/*
 // cadastro list
 app.get('/customers', async (req, res) => { 
     const username = req.query.username;
@@ -1022,7 +1001,7 @@ app.get('/customers', async (req, res) => {
         res.status(500).json({ success: false, error: 'Database query failed' });
     }
 });
-*/
+
 
 app.get('/allcustomers', async (req, res) => {
   
