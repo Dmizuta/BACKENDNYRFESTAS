@@ -981,7 +981,7 @@ app.put('/updatecadastroadmin/:id', async (req, res) => {
 app.get('/customers', async (req, res) => { 
     const username = req.query.username;
     const searchTerm = req.query.searchTerm || '';
-    const limit = 10; // Limit the number of records returned
+    const limit = 2; // Limit the number of records returned
 
     try {
         const customers = await pool.query(
