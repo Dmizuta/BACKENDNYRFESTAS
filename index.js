@@ -794,8 +794,10 @@ app.put('/updatecadastroadmin/:id', async (req, res) => {
 
 
 
+
+
 // cadastro list
-app.get('/customers', async (req, res) => {
+app.get('/customers', async (req, res) => { 
     const username = req.query.username;
     const searchTerm = req.query.searchTerm || '';  // Optional filter query for search
 
@@ -805,7 +807,7 @@ app.get('/customers', async (req, res) => {
 
             `SELECT * FROM cadastro 
             WHERE username = $1 
-            AND (razaosocial ILIKE $2 OR cnpj ILIKE $2) 
+            AND (representante ILIKE $2 OR razaosocial ILIKE $2 OR cnpj ILIKE $2) 
             ORDER BY razaosocial ASC`,  // Sorting alphabetically
 
             [username, `%${searchTerm}%`]
