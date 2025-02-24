@@ -587,21 +587,23 @@ app.get('/orders-admin', async (req, res) => {
     try {
 
         const result = await pool.query(`
-            SELECT DISTINCT ON (pedidos.id)
+
+
+
+SELECT 
                 pedidos.id, 
                 pedidos.username,          
-                cadastro.representante,    
+                pedidos.representante,    -- Now directly from the pedidos table
                 pedidos.razaosocial, 
                 pedidos.data, 
                 pedidos.total, 
                 pedidos.status
             FROM 
                 pedidos
-            LEFT JOIN 
-                cadastro 
-            ON 
-                pedidos.username = cadastro.username
-            ORDER BY pedidos.id DESC; -- Add the ORDER BY clause here
+            ORDER BY pedidos.id DESC;  -- Keep the order by ID
+
+
+           
         `);
 
         
