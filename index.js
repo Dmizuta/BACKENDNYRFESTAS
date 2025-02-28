@@ -1542,3 +1542,22 @@ app.delete("/deleteCustomer/:id", async (req, res) => {
     }
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+app.get('/productsExcel', async (req, res) => { 
+    try {
+        let query = 'SELECT * FROM produtos';
+
+        query += ' ORDER BY idprod ASC';
+        const result = await pool.query(query);
+        res.json(result.rows);
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
+            error: error.message,
+        });
+    }
+});
