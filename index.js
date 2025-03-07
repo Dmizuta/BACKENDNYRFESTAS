@@ -90,7 +90,7 @@ app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
     try {
         const result = await pool.query(
-            'SELECT idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada, ipi, estoque FROM produtos WHERE codproduto = $1',
+            'SELECT idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada, ipi, estoque FROM produtos WHERE codproduto = $1 LIMIT 1',
             [productCode]
         );
 
