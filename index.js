@@ -924,7 +924,7 @@ console.log("Converted discount:", discountValue, "Type:", typeof discountValue)
 try {
     const updateQuery = `
         UPDATE pedidos 
-        SET observacoes = $1, desconto = 100
+        SET desconto = 100
         WHERE id = $3;
     `;
 
