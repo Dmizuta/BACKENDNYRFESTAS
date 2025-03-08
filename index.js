@@ -918,7 +918,7 @@ app.post("/submit-order", async (req, res) => {
     console.log("Received request data:", { orderId, observation, discount });
 
     // Convert discount to a float to ensure correct SQL insertion
-    const discountValue = parseFloat(discount);
+    //const discountValue = parseFloat(discount);
     console.log("Converted discount:", discountValue, "Type:", typeof discountValue);
 
     try {
@@ -928,7 +928,7 @@ app.post("/submit-order", async (req, res) => {
             WHERE id = $3;
         `;
 
-        const result = await pool.query(updateQuery, [observation, discountValue, orderId]);
+        const result = await pool.query(updateQuery, [observation, discount, orderId]);
 
         console.log("Query executed, rowCount:", result.rowCount);
 
