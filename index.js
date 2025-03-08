@@ -913,6 +913,8 @@ app.post("/submit-order", async (req, res) => {
   app.patch("/save-notes", async (req, res) => {
     const { orderId, observation, discount } = req.body; // Get discount from request
 
+    console.log("Received request data:", { orderId, observation, discount });
+
     try {
         const updateQuery = `
             UPDATE pedidos 
@@ -921,6 +923,8 @@ app.post("/submit-order", async (req, res) => {
         `;
 
         const result = await pool.query(updateQuery, [observation, discount, orderId]);
+
+        console.log("Query executed, rowCount:", result.rowCount);
 
         // Check if the order was updated
         if (result.rowCount === 0) {
