@@ -105,7 +105,7 @@ app.get('/product-buy/:id', async (req, res) => {
             });
         } else {
             // If multiple products are found (unexpected scenario), return the full array
-            res.json(result.rows);
+            res.json(result.rows[0]);
         }
     } catch (error) {
         console.error('Error fetching product:', error.message);
