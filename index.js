@@ -545,7 +545,7 @@ app.get('/userorders', async (req, res) => {
 
 
             const result = await pool.query(
-                'SELECT id, razaosocial, data, total, status FROM pedidos WHERE username = $1 ORDER BY id DESC', // Add ORDER BY clause
+                'SELECT id, razaosocial, data, total, status, desconto FROM pedidos WHERE username = $1 ORDER BY id DESC', // Add ORDER BY clause
                 [username]
 
 
