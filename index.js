@@ -928,6 +928,7 @@ app.post("/submit-order", async (req, res) => {
         }
 
         res.status(200).send({ message: "Notes and discount updated successfully!" });
+        console.log('DESCONTO:', discount);
     } catch (error) {
         console.error("Error updating notes and discount:", error);
         res.status(500).send({ error: "Failed to update order." });
