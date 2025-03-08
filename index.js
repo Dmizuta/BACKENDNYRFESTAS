@@ -587,21 +587,23 @@ app.get('/orders-admin', async (req, res) => {
     try {
 
         const result = await pool.query(`
-            SELECT DISTINCT ON (pedidos.id)
+
+
+
+SELECT 
                 pedidos.id, 
                 pedidos.username,          
-                cadastro.representante,    
+                pedidos.representante,    -- Now directly from the pedidos table
                 pedidos.razaosocial, 
                 pedidos.data, 
                 pedidos.total, 
                 pedidos.status
             FROM 
                 pedidos
-            LEFT JOIN 
-                cadastro 
-            ON 
-                pedidos.username = cadastro.username
-            ORDER BY pedidos.id DESC; -- Add the ORDER BY clause here
+            ORDER BY pedidos.id DESC;  -- Keep the order by ID
+
+
+           
         `);
 
         
@@ -910,44 +912,8 @@ app.post("/submit-order", async (req, res) => {
 
 
 
-  app.patch("/save-notes", async (req, res) => {
-    const { orderId, observation, discount } = req.body; // Get discount from request
-
-    console.log("Received request data:", { orderId, observation, discount });
 
 
-
-// Convert discount to a float to ensure correct SQL insertion
-//const discountValue = parseFloat(discount);
-console.log("Converted discount:", discountValue, "Type:", typeof discountValue);
-
-try {
-    const updateQuery = `
-        UPDATE pedidos 
-        SET observacoes = $1, desconto = $1
-        WHERE id = $3;
-    `;
-
-    const result = await pool.query(updateQuery, [observation, discount, orderId]);
-
-
-
-        console.log("Query executed, rowCount:", result.rowCount);
-
-        // Check if the order was updated
-        if (result.rowCount === 0) {
-            return res.status(404).send({ error: "Order not found." });
-        }
-        console.log('DESCONTO:', discount);
-        res.status(200).send({ message: "Notes and discount updated successfully!" });
-        
-    } catch (error) {
-        console.error("Error updating notes and discount:", error);
-        res.status(500).send({ error: "Failed to update order." });
-    }
-});
-
-/*
   app.patch("/save-notes", async (req, res) => {
     const { orderId, observation } = req.body;
 
@@ -970,7 +936,7 @@ try {
         res.status(500).send({ error: "Failed to update notes." });
     }
 });
-*/
+
 
 
 
@@ -1576,3 +1542,22 @@ app.delete("/deleteCustomer/:id", async (req, res) => {
     }
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+app.get('/productsExcel', async (req, res) => { 
+    try {
+        let query = 'SELECT * FROM produtos';
+
+        query += ' ORDER BY idprod ASC';
+        const result = await pool.query(query);
+        res.json(result.rows);
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
+            error: error.message,
+        });
+    }
+});
