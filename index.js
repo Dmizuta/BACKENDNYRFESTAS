@@ -90,7 +90,7 @@ app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
     try {
         const result = await pool.query(
-            'SELECT idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada, ipi, estoque FROM produtos WHERE codproduto = $1 LIMIT 1',
+            'SELECT idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada, ipi, estoque FROM produtos WHERE codproduto = $1',
             [productCode]
         );
 
@@ -105,7 +105,7 @@ app.get('/product-buy/:id', async (req, res) => {
             });
         } else {
             // If multiple products are found (unexpected scenario), return the full array
-            res.json(result.rows[1]);
+            res.json(result.rows);
         }
     } catch (error) {
         console.error('Error fetching product:', error.message);
