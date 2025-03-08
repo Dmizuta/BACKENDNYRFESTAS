@@ -919,7 +919,7 @@ app.post("/submit-order", async (req, res) => {
 
     // Convert discount to a float to ensure correct SQL insertion
     //const discountValue = parseFloat(discount);
-    console.log("Converted discount:", discountValue, "Type:", typeof discountValue);
+    //console.log("Converted discount:", discountValue, "Type:", typeof discountValue);
 
     try {
         const updateQuery = `
