@@ -836,10 +836,6 @@ app.get('/allcustomers', async (req, res) => {
 
 
 
-// Start the server on port 80
-app.listen(80, () => {
-    console.log('Servidor rodando na porta 80');
-});
 
 
 
@@ -937,7 +933,7 @@ app.post("/submit-order", async (req, res) => {
             return res.status(404).send({ error: "Order not found." });
         }
 
-        console.log('DESCONTO:', discountValue);
+       // console.log('DESCONTO:', discountValue);
         res.status(200).send({ message: "Notes and discount updated successfully!" });
 
     } catch (error) {
@@ -1593,4 +1589,11 @@ app.get('/productsExcel', async (req, res) => {
             error: error.message,
         });
     }
+});
+
+
+
+// Start the server on port 80
+app.listen(80, () => {
+    console.log('Servidor rodando na porta 80');
 });
