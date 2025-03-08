@@ -922,7 +922,7 @@ app.post("/submit-order", async (req, res) => {
     try {
         const updateQuery = `
             UPDATE pedidos 
-            SET observacoes = "teste"
+            SET observacoes = $1, ipitotal = $2
             WHERE id = $3;
         `;
 
