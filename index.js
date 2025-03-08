@@ -587,21 +587,23 @@ app.get('/orders-admin', async (req, res) => {
     try {
 
         const result = await pool.query(`
-            SELECT DISTINCT ON (pedidos.id)
+
+
+
+SELECT 
                 pedidos.id, 
                 pedidos.username,          
-                cadastro.representante,    
+                pedidos.representante,    -- Now directly from the pedidos table
                 pedidos.razaosocial, 
                 pedidos.data, 
                 pedidos.total, 
                 pedidos.status
             FROM 
                 pedidos
-            LEFT JOIN 
-                cadastro 
-            ON 
-                pedidos.username = cadastro.username
-            ORDER BY pedidos.id DESC; -- Add the ORDER BY clause here
+            ORDER BY pedidos.id DESC;  -- Keep the order by ID
+
+
+           
         `);
 
         
@@ -1573,3 +1575,22 @@ app.delete("/deleteCustomer/:id", async (req, res) => {
     }
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+app.get('/productsExcel', async (req, res) => { 
+    try {
+        let query = 'SELECT * FROM produtos';
+
+        query += ' ORDER BY idprod ASC';
+        const result = await pool.query(query);
+        res.json(result.rows);
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'FALHA AO BUSCAR OS DADOS DOS PRODUTOS.',
+            error: error.message,
+        });
+    }
+});
