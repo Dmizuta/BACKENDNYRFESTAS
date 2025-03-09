@@ -1593,6 +1593,27 @@ app.post("/update-desc", async (req, res) => {
         }
 
 
+        const statusQuery = `SELECT status FROM pedidos WHERE id = $1`;
+        const statusResult = await pool.query(statusQuery, [orderId]);
+
+        console.log("Status Query Result:", statusResult.rows); // Log the result of the status query
+
+        if (statusResult.rows.length === 0 || statusResult.rows[0].status === undefined) {
+            return res.status(403).json({
+                error: "Order status not found."
+            });
+        }
+
+        console.log("Current Order Status:", statusResult.rows[0].status); // Log the status value
+
+        if (statusResult.rows[0].status !== 0) {
+            return res.status(403).json({
+                error: "O Pedido não pode ser alterado.",
+                currentStatus: statusResult.rows[0].status
+            });
+        }
+
+
     try {
         const updateQuery = `
             UPDATE pedidos 
@@ -1605,7 +1626,7 @@ app.post("/update-desc", async (req, res) => {
 
 
 
-        
+
 
         console.log("Query executed, rowCount:", result.rowCount);
 
@@ -1658,7 +1679,7 @@ app.post("/update-ipi", async (req, res) => {
 
         if (statusResult.rows[0].status !== 0) {
             return res.status(403).json({
-                error: "O Pedido não pode ser alterado, pois.",
+                error: "O Pedido não pode ser alterado.",
                 currentStatus: statusResult.rows[0].status
             });
         }
