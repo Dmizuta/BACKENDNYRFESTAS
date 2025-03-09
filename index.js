@@ -340,18 +340,21 @@ app.post('/add-to-order', async (req, res) => {
         const newItemId = newItemResult.rows[0].id;
 
         const ipiTaxResult = await pool.query(
-            'SELECT ipi_tax FROM pedidos WHERE id = $1', 
+            'SELECT ipi_tax, desconto FROM pedidos WHERE id = $1', 
             [orderId]
         );
         
         const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
         console.log('IpiTax:', ipiTax);
 
+        const desconto = descontoResult.rows[0]?.desconto || 0;
+        console.log('Desconto:', desconto);
+
         const totalResult = await pool.query(
-            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
+            `SELECT SUM(((quantidade * preco) + (quantidade * preco * $1 * ipi)*(1-$2)) AS total 
              FROM pedidoitens 
-             WHERE idpedido = $2`,
-            [ipiTax, orderId]
+             WHERE idpedido = $3`,
+            [ipiTax, desconto, orderId]
         );
 
         const total = totalResult.rows[0]?.total || 0;
@@ -418,6 +421,27 @@ app.post('/add-to-order-admin', async (req, res) => {
         );
         const newItemId = newItemResult.rows[0].id;
 
+
+
+
+        const ipiTaxResult = await pool.query(
+            'SELECT ipi_tax, desconto FROM pedidos WHERE id = $1', 
+            [orderId]
+        );
+        
+        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
+        console.log('IpiTax:', ipiTax);
+
+        const desconto = descontoResult.rows[0]?.desconto || 0;
+        console.log('Desconto:', desconto);
+
+        const totalResult = await pool.query(
+            `SELECT SUM(((quantidade * preco) + (quantidade * preco * $1 * ipi)*(1-$2)) AS total 
+             FROM pedidoitens 
+             WHERE idpedido = $3`,
+            [ipiTax, desconto, orderId]
+        );
+/*
         const ipiTaxResult = await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1', 
             [orderId]
@@ -432,7 +456,7 @@ app.post('/add-to-order-admin', async (req, res) => {
              WHERE idpedido = $2`,
             [ipiTax, orderId]
         );
-
+*/
         const total = totalResult.rows[0]?.total || 0;
         console.log('Calculated total:', total);
 
