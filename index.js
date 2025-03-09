@@ -1580,6 +1580,55 @@ app.patch("/finishOrder", async (req, res) => {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+app.post("/update-desc", async (req, res) => {
+    
+        const { orderId, discount } = req.body;
+
+        console.log("Received Data:", req.body); // Log the received request data
+
+        if (!orderId || discount === undefined) {
+            return res.status(400).json({ error: "Missing orderId or newIPI" });
+        }
+
+
+    try {
+        const updateQuery = `
+            UPDATE pedidos 
+            SET desconto = $1
+            WHERE id = $2;
+        `;
+
+        const result = await pool.query(updateQuery, [discount, orderId]);
+
+
+
+
+        
+
+        console.log("Query executed, rowCount:", result.rowCount);
+
+        // Check if the order was updated
+        if (result.rowCount === 0) {
+            return res.status(404).send({ error: "Order not found." });
+        }
+
+       // console.log('DESCONTO:', discountValue);
+        res.status(200).send({ message: "Notes and discount updated successfully!" });
+        console.log("RESPOSTA:", req.body);
+
+
+    } catch (error) {
+        console.error("Error updating notes and discount:", error);
+        res.status(500).send({ error: "Failed to update order." });
+            }
+});
+
+
+///////////////////////////////////////////////////////
+
+
 app.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
