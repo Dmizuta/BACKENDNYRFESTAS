@@ -1092,7 +1092,40 @@ app.post("/submit-order", async (req, res) => {
 
 
 
+  app.patch("/save-notes", async (req, res) => {
+    const { orderId, observation, discount } = req.body; // Get discount from request
 
+    console.log("Received request data:", { orderId, observation, discount });
+
+    // Convert discount to a float to ensure correct SQL insertion
+    //const discountValue = parseFloat(discount);
+    //console.log("Converted discount:", discountValue, "Type:", typeof discountValue);
+
+    try {
+        const updateQuery = `
+            UPDATE pedidos 
+            SET observacoes = $1, desconto = $2
+            WHERE id = $3;
+        `;
+
+        const result = await pool.query(updateQuery, [observation, discount, orderId]);
+
+        console.log("Query executed, rowCount:", result.rowCount);
+
+        // Check if the order was updated
+        if (result.rowCount === 0) {
+            return res.status(404).send({ error: "Order not found." });
+        }
+
+       // console.log('DESCONTO:', discountValue);
+        res.status(200).send({ message: "Notes and discount updated successfully!" });
+
+    } catch (error) {
+        console.error("Error updating notes and discount:", error);
+        res.status(500).send({ error: "Failed to update order." });
+    }
+});
+/*
 
   app.patch("/save-notes", async (req, res) => {
     const { orderId, observation } = req.body;
@@ -1117,7 +1150,7 @@ app.post("/submit-order", async (req, res) => {
     }
 });
 
-
+*/
 
 
 
