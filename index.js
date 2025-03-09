@@ -279,10 +279,6 @@ app.post('/add-to-order', async (req, res) => {
                 orderId = existingOrder.id;
 
 
-
-
-
-
                 const duplicateCheck = await pool.query(
                     'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
                     [orderId, codproduto]
@@ -313,25 +309,9 @@ app.post('/add-to-order', async (req, res) => {
             );
             
 
-/*
-            // Step 2: If no draft order exists, create a new one
-            const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
-                [username, razaosocial, representante, cnpj]
-            );*/
-
-
-
-
-
             const newOrder = newOrderResult.rows[0];
             orderId = newOrder.id;
         }
-
-
-
-
-
 
         const newItemResult = await pool.query(
             'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
@@ -340,21 +320,18 @@ app.post('/add-to-order', async (req, res) => {
         const newItemId = newItemResult.rows[0].id;
 
         const ipiTaxResult = await pool.query(
-            'SELECT ipi_tax, desconto FROM pedidos WHERE id = $1', 
+            'SELECT ipi_tax FROM pedidos WHERE id = $1', 
             [orderId]
         );
         
         const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
         console.log('IpiTax:', ipiTax);
 
-        const desconto = descontoResult.rows[0]?.desconto || 0;
-        console.log('Desconto:', desconto);
-
         const totalResult = await pool.query(
-            `SELECT SUM(((quantidade * preco) + (quantidade * preco * $1 * ipi)*(1-$2)) AS total 
+            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
              FROM pedidoitens 
-             WHERE idpedido = $3`,
-            [ipiTax, desconto, orderId]
+             WHERE idpedido = $2`,
+            [ipiTax, orderId]
         );
 
         const total = totalResult.rows[0]?.total || 0;
@@ -421,27 +398,6 @@ app.post('/add-to-order-admin', async (req, res) => {
         );
         const newItemId = newItemResult.rows[0].id;
 
-
-
-
-        const ipiTaxResult = await pool.query(
-            'SELECT ipi_tax, desconto FROM pedidos WHERE id = $1', 
-            [orderId]
-        );
-        
-        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
-        console.log('IpiTax:', ipiTax);
-
-        const desconto = descontoResult.rows[0]?.desconto || 0;
-        console.log('Desconto:', desconto);
-
-        const totalResult = await pool.query(
-            `SELECT SUM(((quantidade * preco) + (quantidade * preco * $1 * ipi)*(1-$2)) AS total 
-             FROM pedidoitens 
-             WHERE idpedido = $3`,
-            [ipiTax, desconto, orderId]
-        );
-/*
         const ipiTaxResult = await pool.query(
             'SELECT ipi_tax FROM pedidos WHERE id = $1', 
             [orderId]
@@ -456,7 +412,7 @@ app.post('/add-to-order-admin', async (req, res) => {
              WHERE idpedido = $2`,
             [ipiTax, orderId]
         );
-*/
+
         const total = totalResult.rows[0]?.total || 0;
         console.log('Calculated total:', total);
 
