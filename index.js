@@ -25,6 +25,7 @@ const pool = new Pool({
     },
 });
 
+
 // Test database connection and fetch data from the 'products' table
 app.get('/test-db-connection', async (req, res) => {
     try {
