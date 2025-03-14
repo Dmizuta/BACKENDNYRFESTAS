@@ -701,7 +701,7 @@ SELECT
 });
 
 
-
+/*
 // Create or update cadastro (user)
 app.post('/cadastro', async (req, res) => {
     const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
@@ -756,7 +756,7 @@ async function upsertCadastro(data) {
 
     return { message: 'CADASTRO CRIADO COM SUCESSO!', cadastro: insertResult.rows[0] };
 }
-
+*/
 
 app.post('/cadastrorep', async (req, res) => {
     const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
