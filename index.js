@@ -1503,7 +1503,7 @@ app.post('/getUsernameByOrderId', async (req, res) => {
 
 
 
-app.patch("/revertOrder", async (req, res) => {
+app.patch("/revertOrderadmin", async (req, res) => {
     const { orderId } = req.body;
 
     if (!orderId) {
