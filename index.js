@@ -556,7 +556,83 @@ app.get('/cadastropage', async (req, res) => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    app.get('/ordersrep', async (req, res) => {
+app.get('/ordersrep', async (req, res) => {
+    const { username } = req.query;
+
+    // Verifica se o username foi fornecido
+    if (!username) {
+        return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
+    }
+
+    try {
+        // Passo 1: Obtém a chave da tabela registro
+        const chaveResult = await pool.query(
+            'SELECT chave FROM registro WHERE username = $1',
+            [username]
+        );
+
+        // Verifica se a chave foi encontrada e se não é NULL, 0 ou vazia
+        const chave = chaveResult.rows.length > 0 ? chaveResult.rows[0].chave : null;
+
+        if (chave === null || chave === 0 || chave === '') {
+            // Se a chave for inválida, busca apenas os pedidos do usuário logado
+            const ordersResult = await pool.query(
+                `SELECT id, razaosocial, data, total, status, representante 
+                FROM pedidos 
+                WHERE username = $1`,
+                [username]
+            );
+
+            // Retorna os resultados dos pedidos encontrados
+            return res.json(ordersResult.rows);
+        }
+
+        console.log("CHAVE:", chave);
+
+        // Passo 2: Obtém o grupo (grupo) da tabela registro usando a chave
+        const grupoResult = await pool.query(
+            'SELECT grupo FROM registro WHERE chave = $1',
+            [chave]
+        );
+
+        // Verifica se o grupo foi encontrado
+        if (grupoResult.rows.length === 0) {
+            // Se o grupo não for encontrado, busca apenas os pedidos do usuário logado
+            const ordersResult = await pool.query(
+                `SELECT id, razaosocial, data, total, status, representante 
+                FROM pedidos 
+                WHERE username = $1`,
+                [username]
+            );
+
+            // Retorna os resultados dos pedidos encontrados
+            return res.json(ordersResult.rows);
+        }
+
+        const grupo = grupoResult.rows[0].grupo;
+        console.log("GRUPO:", grupo);
+
+        // Passo 3: Obtém os pedidos para todos os usuários do mesmo grupo e do usuário logado
+        const ordersResult = await pool.query(
+            `WITH user_list AS (
+                SELECT username FROM registro WHERE grupo = $1
+            )
+            SELECT id, razaosocial, data, total, status, representante 
+            FROM pedidos 
+            WHERE username IN (SELECT username FROM user_list) OR username = $2`,
+            [grupo, username] // Inclui o username do usuário logado
+        );
+
+        // Retorna os resultados dos pedidos encontrados
+        res.json(ordersResult.rows);
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
+    }
+});
+
+
+/*    app.get('/ordersrep', async (req, res) => {
         const { username } = req.query;
 
         if (!username) {
@@ -606,8 +682,7 @@ app.get('/cadastropage', async (req, res) => {
             console.error('Error fetching orders:', error);
             res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
         }
-    });
-
+    });*/
 
 
 
