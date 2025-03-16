@@ -1410,7 +1410,7 @@ app.delete('/delete-product', async (req, res) => {
         // Query para deletar o item da tabela pedidoitens
         const result = await pool.query(
             'DELETE FROM pedidoitens WHERE idpedido = $1 AND id = $2',
-            [orderId, productId]
+            [orderId, productId]    
         );
 
         // Verifica se alguma linha foi afetada
