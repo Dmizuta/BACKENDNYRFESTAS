@@ -1388,6 +1388,20 @@ app.delete('/delete-order', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Endpoint para deletar um item do pedido
 app.delete('/delete-product', async (req, res) => {
     const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
@@ -1404,16 +1418,25 @@ app.delete('/delete-product', async (req, res) => {
             return res.status(404).json({ message: 'Item não encontrado' });
         }
 
+
         // Step 1: Fetch the current IPI tax from the 'pedidos' table
-        const ipiQuery = 'SELECT ipi_tax FROM pedidos WHERE id = $1'; // Assuming 'ipi_tax' is the field holding the IPI rate
-        const ipiResult = await pool.query(ipiQuery, [orderId]);
+        const dataQuery = 'SELECT desconto, ipi_tax, status FROM pedidos WHERE id = $1'; // Assuming 'ipi_tax' is the field holding the IPI rate
+        const dataResult = await pool.query(dataQuery, [orderId]);
 
-        // Check if IPI value is available
-        if (ipiResult.rows.length === 0) {
-            return res.status(404).json({ message: 'IPI não encontrado para o pedido' });
+        const { desconto, status, ipi_tax } = dataResult.rows[0];
+        const descResult = parseFloat(desconto);
+        const ipiTax = dataResult.rows[0].ipi_tax;
+        
+
+      
+        if (status !== 0) {
+            return res.status(403).json({
+                error: "O Pedido não pode ser alterado.",
+                currentStatus: status
+            });
         }
-
-        const ipiTax = ipiResult.rows[0].ipi_tax; // Get the IPI value
+        
+         // Get the IPI value
 
         // Step 2: Calculate the total price for the order with the fetched IPI
         const totalResult = await pool.query(
@@ -1421,13 +1444,22 @@ app.delete('/delete-product', async (req, res) => {
             [ipiTax, orderId]  // Use the fetched IPI value
         );
 
-        const total = totalResult.rows[0].total;
-        console.log('Novo total calculado:', total); // Log do novo total
 
-        // Step 3: Atualiza o total na tabela pedidos
-        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, orderId]);
+        const newTotal = totalResult.rows[0].total;
 
-        return res.status(200).json({ message: 'Item deletado com sucesso', newTotal: total });
+        const finalTotal = newTotal * (1-descResult);
+
+        // Step 4: Update the total field in the pedidos table
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [finalTotal, orderId]);
+
+
+
+        
+        console.log('Novo total calculado:', finalTotal); // Log do novo total
+
+        
+
+        return res.status(200).json({ message: 'Item deletado com sucesso' });
 
     } catch (error) {
         console.error('Erro ao deletar item:', error);
@@ -1436,7 +1468,7 @@ app.delete('/delete-product', async (req, res) => {
 });
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Endpoint para buscar os itens do pedido
 app.get('/modalproducts/:id', async (req, res) => {
