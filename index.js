@@ -1424,7 +1424,11 @@ app.delete('/delete-product', async (req, res) => {
         const dataResult = await pool.query(dataQuery, [orderId]);
 
         const { desconto, status, ipi_tax } = dataResult.rows[0];
-        const descResult = parseFloat(desconto);
+
+
+        const descResult = isNaN(parseFloat(desconto)) || desconto === null || desconto === "" ? 0 : parseFloat(desconto);
+
+
         const ipiTax = dataResult.rows[0].ipi_tax;
         
 
@@ -1447,7 +1451,20 @@ app.delete('/delete-product', async (req, res) => {
 
         const newTotal = totalResult.rows[0].total;
 
+
+console.log('TOTAL ANTES DO DESCONTO', newTotal);
+
+const continha = newTotal + 100;
+
+console.log('CONTINHA:', continha);
+
+
         const finalTotal = newTotal * (1-descResult);
+
+        console.log('DESCONTO:', descResult );
+
+console.log("TOTAL COM DESCONTO:", finalTotal);
+
 
         // Step 4: Update the total field in the pedidos table
         await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [finalTotal, orderId]);
@@ -2038,7 +2055,7 @@ app.post("/update-desc", async (req, res) => {
     }
 
 
-    if (status !== 0) {
+    if (status === 2 || status ===3) {
         return res.status(403).json({
             error: "O Pedido não pode ser alterado.",
             currentStatus: status
@@ -2055,6 +2072,8 @@ try {
 
     const result = await pool.query(updateQuery, [discount, orderId]);
     console.log('DESCONTO:', discount);
+
+    
 
     // Check if the order was updated
     if (result.rowCount === 0) {
@@ -2178,7 +2197,11 @@ app.post("/update-ipi", async (req, res) => {
         const statusQuery = `SELECT desconto, status FROM pedidos WHERE id = $1`;
         const statusDescResult = await pool.query(statusQuery, [orderId]);
         const { desconto, status } = statusDescResult.rows[0]; // Extract values correctly
-        const descResult = parseFloat(desconto);
+
+
+
+        const descResult = isNaN(parseFloat(desconto)) || desconto === null || desconto === "" ? 0 : parseFloat(desconto);
+        //const descResult = parseFloat(desconto);
      
         console.log("Status Query Result:", status); // Log the result of the status query
 
@@ -2190,7 +2213,7 @@ app.post("/update-ipi", async (req, res) => {
 
         console.log("Current Order Status:", status); // Log the status value
 
-        if (status !== 0) {
+        if (status == 2 || status == 3) {
             return res.status(403).json({
                 error: "O Pedido não pode ser alterado.",
                 currentStatus: status
@@ -2227,9 +2250,6 @@ app.post("/update-ipi", async (req, res) => {
             res.json({ message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` });
             const responseMessage = { message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` };
             
-console.log("Response Sent:", responseMessage); 
-res.json(responseMessage);
-
 
     } catch (error) {
         console.error("Error updating IPI:", error);
