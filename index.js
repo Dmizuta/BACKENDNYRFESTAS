@@ -302,12 +302,15 @@ app.post('/add-to-order', async (req, res) => {
             }
         } else {
 
-
-
             const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), $5, $6) RETURNING id',
-                [username, razaosocial, representante, cnpj, 0, 0] // Provide values for total and status
-            );
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, desconto, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj]
+
+            /*const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, ,desconto, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), $5, $6, $7) RETURNING id',
+                [username, razaosocial, representante, cnpj, 0, 0, 0] // Provide values for total and status
+            */
+           );
             
 
             const newOrder = newOrderResult.rows[0];
@@ -387,7 +390,7 @@ app.post('/add-to-order-admin', async (req, res) => {
             }
         } else {
             const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, desconto, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0, 0) RETURNING id',
                 [username, razaosocial, representante, cnpj]
             );
             orderId = newOrderResult.rows[0].id;
