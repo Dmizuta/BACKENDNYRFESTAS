@@ -1559,7 +1559,8 @@ app.patch('/editproduct/:productId', async (req, res) => {
  const {ipi_tax, desconto, status } = dataResult.rows[0]; // Extract values correctly
  //const ipiResult = dataQuery ? dataQuery.ipi_tax : 0; // Default to 0 if not found
  
- const descResult = parseFloat(desconto);
+ //const descResult = parseFloat(desconto);
+ const descResult = isNaN(parseFloat(desconto)) || desconto === null || desconto === "" ? 0 : parseFloat(desconto);
 
  console.log('IPI:', ipi_tax);
  console.log('DESCONTO:', descResult);
