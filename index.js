@@ -1436,7 +1436,7 @@ app.delete('/delete-product', async (req, res) => {
         
 
       
-        if (status !== 0) {
+        if (status == 2 || status == 3) {
             return res.status(403).json({
                 error: "O Pedido não pode ser alterado.",
                 currentStatus: status
