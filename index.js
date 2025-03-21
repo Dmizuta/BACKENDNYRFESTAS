@@ -1289,11 +1289,9 @@ app.post("/submit-order", async (req, res) => {
   app.patch("/save-notes", async (req, res) => {
     const { orderId, observation, discount } = req.body; // Get discount from request
 
-    console.log("Received request data:", { orderId, observation, discount });
+    console.log("Received request data:", { orderId, observation });
 
-    // Convert discount to a float to ensure correct SQL insertion
-    //const discountValue = parseFloat(discount);
-    //console.log("Converted discount:", discountValue, "Type:", typeof discountValue);
+  
 
     try {
         const updateQuery = `
@@ -1302,7 +1300,7 @@ app.post("/submit-order", async (req, res) => {
             WHERE id = $2;
         `;
 
-        const result = await pool.query(updateQuery, [observation, discount, orderId]);
+        const result = await pool.query(updateQuery, [observation, orderId]);
 
         console.log("Query executed, rowCount:", result.rowCount);
 
