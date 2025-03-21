@@ -1298,8 +1298,8 @@ app.post("/submit-order", async (req, res) => {
     try {
         const updateQuery = `
             UPDATE pedidos 
-            SET observacoes = $1, desconto = $2
-            WHERE id = $3;
+            SET observacoes = $1
+            WHERE id = $2;
         `;
 
         const result = await pool.query(updateQuery, [observation, discount, orderId]);
