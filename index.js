@@ -2377,7 +2377,107 @@ app.get('/productsExcel', async (req, res) => {
         });
     }
 });
+/////////////////////////////////////////////////////////////////////////////
 
+app.post('/duplicate-order', async (req, res) => {
+    const { username, newCustomerId, currentOrderId } = req.body;
+
+    try {
+        // 1. Fetch customer data
+        const { rows: customerRows } = await pool.query('SELECT * FROM cadastro WHERE id = $1', [newCustomerId]);
+        if (customerRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Cliente não encontrado.' });
+        }
+
+        const customerData = customerRows[0];
+
+        // 2. Fetch order information
+        const { rows: resultinfo } = await pool.query(
+            'SELECT razaosocial, representante, cnpj, total FROM pedidos WHERE id = $1', 
+            [currentOrderId]
+        );
+
+        if (resultinfo.length === 0) {
+            return res.status(404).json({ success: false, message: 'Nenhum pedido encontrado para o usuário.' });
+        }
+
+        const currentInfo = resultinfo[0];
+
+        // 3. Create a new order using new customer data
+        const { rows: newOrderRows } = await pool.query(
+            'INSERT INTO pedidos (username, razaosocial, representante, cnpj, total, data, desconto, status) VALUES ($1, $2, $3, $4, $5, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 1) RETURNING id',
+            [username, customerData.razaosocial, customerData.representante, customerData.cnpj, currentInfo.total] // Use os dados do novo cliente
+        );
+
+        const newOrderId = newOrderRows[0].id;
+
+        // 4. Duplicate order items
+        await pool.query(
+            `INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal)
+             SELECT $1, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal
+             FROM pedidoitens WHERE idpedido = $2;`,
+            [newOrderId, currentOrderId]
+        );
+
+        res.json({ success: true, message: `Novo pedido ${newOrderId} criado com itens do pedido ${currentOrderId}.` });
+    } catch (error) {
+        console.error('Erro ao duplicar pedido:', error);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+    }
+});
+
+
+/*
+app.post('/duplicate-order', async (req, res) => {
+    const { username, newCustomerId, currentOrderId } = req.body;
+
+    try {
+        // 1. Fetch customer data
+        const { rows: customerRows } = await pool.query('SELECT * FROM cadastro WHERE id = $1', [newCustomerId]);
+        if (customerRows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Cliente não encontrado.' });
+        }
+
+        const customerData = customerRows[0];
+
+        // 2. Fetch order information
+        const { rows: resultinfo } = await pool.query(
+            'SELECT razaosocial, representante, cnpj FROM pedidos WHERE id = $1 AND status = 0', 
+            [currentOrderId]
+        );
+
+        if (resultinfo.length === 0) {
+            return res.status(404).json({ success: false, message: 'Nenhum pedido encontrado para o usuário.' });
+        }
+
+        const { razaosocial, representante, cnpj } = resultinfo[0];
+
+        // 3. Create a new order
+        const { rows: newOrderRows } = await pool.query(
+            'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, desconto, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0, 0) RETURNING id',
+            [username, razaosocial, representante, cnpj]
+        );
+
+        const newOrderId = newOrderRows[0].id;
+
+        // 4. Duplicate order items
+        await pool.query(
+            `INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal)
+             SELECT $1, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal
+             FROM pedidoitens WHERE idpedido = $2;`,
+            [newOrderId, currentOrderId]
+        );
+
+        res.json({ success: true, message: `Novo pedido ${newOrderId} criado com itens do pedido ${currentOrderId}.` });
+    } catch (error) {
+        console.error('Erro ao duplicar pedido:', error);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+    }
+});
+
+
+*/
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // Start the server on port 80
