@@ -257,10 +257,108 @@ app.get('/get-user-info', async (req, res) => {
     }
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+app.post('/add-to-order', async (req, res) => {
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
 
+    try {
+        // Step 1: Check if there's an open draft order for the given razaosocial
+        const result = await pool.query(
+            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
+            [username]
+        );
+        const existingOrder = result.rows[0];
 
+        let orderId;
 
+        if (existingOrder) {
+            if (existingOrder.razaosocial === razaosocial) {
+                // If razaosocial matches, add the product to the existing order
+                orderId = existingOrder.id;
+
+                const duplicateCheck = await pool.query(
+                    'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
+                    [orderId, codproduto]
+                );
+
+                if (duplicateCheck.rows.length > 0) {
+                    // If product already exists, return an error message
+                    return res.status(400).send({ 
+                        error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
+                    });
+                }
+
+            } else {
+                // If razaosocial doesn't match, show an error message asking to save the order
+                return res.status(400).send({ 
+                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< E TENTE NOVAMENTE.`
+                });
+            }
+        } else {
+            // Fetch the idcadastro from the cadastro table based on razaosocial
+            const clienteResult = await pool.query(
+                'SELECT id FROM cadastro WHERE razaosocial = $1', 
+                [razaosocial]
+            );
+            const cliente = clienteResult.rows[0];
+
+            if (!cliente) {
+                return res.status(400).send({ 
+                    error: `Cliente com razão social >>>${razaosocial}<<< não encontrado.` 
+                });
+            }
+
+            // Insert a new order and include the idcadastro in pedidos
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, idcadastro, data, total, desconto, status) VALUES ($1, $2, $3, $4, $5, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj, cliente.id]
+            );
+            const newOrder = newOrderResult.rows[0];
+            orderId = newOrder.id;
+        }
+
+        // Add the product to the order
+        const newItemResult = await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [orderId, codproduto, descricao, quantidade, preco, ipi]
+        );
+        const newItemId = newItemResult.rows[0].id;
+
+        // Get ipi_tax from pedidos table
+        const ipiTaxResult = await pool.query(
+            'SELECT ipi_tax FROM pedidos WHERE id = $1', 
+            [orderId]
+        );
+        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
+        console.log('IpiTax:', ipiTax);
+
+        // Calculate the total value of the order
+        const totalResult = await pool.query(
+            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
+             FROM pedidoitens 
+             WHERE idpedido = $2`,
+            [ipiTax, orderId]
+        );
+
+        const total = totalResult.rows[0]?.total || 0;
+        console.log('Calculated total:', total);
+
+        // Update the order with the calculated total
+        const updateResult = await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [total, orderId]
+        );
+
+        console.log('Update result:', updateResult);
+        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
+    }
+});
+
+/*
 app.post('/add-to-order', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
 
@@ -306,10 +404,7 @@ app.post('/add-to-order', async (req, res) => {
                 'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, desconto, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0, 0) RETURNING id',
                 [username, razaosocial, representante, cnpj]
 
-            /*const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, ,desconto, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), $5, $6, $7) RETURNING id',
-                [username, razaosocial, representante, cnpj, 0, 0, 0] // Provide values for total and status
-            */
+           
            );
             
 
@@ -354,10 +449,117 @@ app.post('/add-to-order', async (req, res) => {
         res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
     }
 });
-
+*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
+app.post('/add-to-order-admin', async (req, res) => {
+    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
+
+    try {
+        // Check if there's an existing order for the user with status 0 (draft)
+        const result = await pool.query(
+            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
+            [username]
+        );
+        const existingOrder = result.rows[0];
+        let orderId;
+
+        // If an existing order is found
+        if (existingOrder) {
+            if (existingOrder.razaosocial === razaosocial) {
+                orderId = existingOrder.id;
+
+                const duplicateCheck = await pool.query(
+                    'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
+                    [orderId, codproduto]
+                );
+
+                if (duplicateCheck.rows.length > 0) {
+                    return res.status(400).send({ 
+                        error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.` 
+                    });
+                }
+            } else {
+                return res.status(400).send({ 
+                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< E TENTE NOVAMENTE.` 
+                });
+            }
+        } else {
+            // Fetch the idcadastro from the cadastro table based on razaosocial
+            const clienteResult = await pool.query(
+                'SELECT id FROM cadastro WHERE razaosocial = $1', 
+                [razaosocial]
+            );
+            const cliente = clienteResult.rows[0];
+
+            if (!cliente) {
+                return res.status(400).send({ 
+                    error: `Cliente com razão social >>>${razaosocial}<<< não encontrado.` 
+                });
+            }
+
+
+
+
+            // Insert a new order and include the idcadastro in pedidos
+            const newOrderResult = await pool.query(
+                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, idcadastro, data, total, desconto, status) VALUES ($1, $2, $3, $4, $5, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0, 0) RETURNING id',
+                [username, razaosocial, representante, cnpj, cliente.id]
+            );
+            orderId = newOrderResult.rows[0].id;
+        }
+
+        // Add the product to the order
+        const newItemResult = await pool.query(
+            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [orderId, codproduto, descricao, quantidade, preco, ipi]
+        );
+        const newItemId = newItemResult.rows[0].id;
+
+        // Calculate the total value
+        const dataResult = await pool.query(
+            'SELECT ipi_tax, desconto FROM pedidos WHERE id = $1', 
+            [orderId]
+        );
+
+        const { desconto, ipi_tax } = dataResult.rows[0]; // Extract values correctly
+        const descResult = parseFloat(desconto);
+        const ipiResult = parseFloat(ipi_tax);
+
+        console.log('DESCONTO:', descResult);
+        console.log('IpiTax:', ipiResult);
+
+        const totalResult = await pool.query(
+            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
+             FROM pedidoitens 
+             WHERE idpedido = $2`,
+            [ipiResult, orderId]
+        );
+
+        const total = totalResult.rows[0]?.total || 0;
+        console.log('Calculated total:', total);
+
+        const totalFinal = total * (1 - descResult);
+
+        // Update the order total
+        const updateResult = await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [totalFinal, orderId]
+        );
+
+        console.log('Update result:', updateResult);
+        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
+    } catch (error) {
+        console.error('Error adding to order:', error);
+        res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
+    }
+});
+
+
+/*
 app.post('/add-to-order-admin', async (req, res) => {
     const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
 
@@ -442,7 +644,7 @@ app.post('/add-to-order-admin', async (req, res) => {
         console.error('Error adding to order:', error);
         res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
     }
-});
+});*/
 
 /*
 app.post('/add-to-order-admin', async (req, res) => {
@@ -1216,7 +1418,50 @@ app.get('/allcustomers', async (req, res) => {
 
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+// Endpoint to fetch order details with products and customer email
+app.get('/order-details/:id', async (req, res) => {
+    const orderId = req.params.id;
+    try {
+        // Fetch order details
+        const orderQuery = 'SELECT * FROM pedidos WHERE id = $1';
+        const orderResult = await pool.query(orderQuery, [orderId]);
+
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ message: 'PEDIDO NÃO ENCONTRADO.' });
+        }
+
+        const order = orderResult.rows[0];
+
+        // Fetch email associated with the customer
+        const emailQuery = 'SELECT email FROM cadastro WHERE id = $1';
+        const emailResult = await pool.query(emailQuery, [order.idcadastro]);
+
+        // Check if email was found
+        const email = emailResult.rows.length > 0 ? emailResult.rows[0].email : null;
+
+        // Fetch products associated with the order
+        const productsQuery = 'SELECT * FROM pedidoitens WHERE idpedido = $1 ORDER BY id';
+        const productsResult = await pool.query(productsQuery, [orderId]);
+
+        // Combine order details with products and email
+        const orderDetails = {
+            ...order,
+            email: email, // Add email to the order details
+            products: productsResult.rows
+        };
+
+        console.log('ORDER DETAILS:', orderDetails);
+        res.json(orderDetails);
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
+    }
+});
+
+/*
 
 // Endpoint to fetch order details with products
 app.get('/order-details/:id', async (req, res) => {
@@ -1231,6 +1476,10 @@ app.get('/order-details/:id', async (req, res) => {
         }
 
         const order = orderResult.rows[0];
+        //const idCustomer = order.idcadastro;
+
+        const emailQuery = 'SELECT email FROM cadastro WHERE id = $1';
+        const emailResult = await pool.query(productsQuery, [order.idcadastro]);
 
         // Fetch products associated with the order
         const productsQuery = 'SELECT * FROM pedidoitens WHERE idpedido = $1 ORDER BY id';
@@ -1241,17 +1490,17 @@ app.get('/order-details/:id', async (req, res) => {
             ...order,
             products: productsResult.rows
         };
-
+console.log('ORDER DETAILS:', orderDetails);
         res.json(orderDetails);
     } catch (error) {
         console.error('Error fetching order details:', error);
         res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
     }
 });
+*/
 
-
-
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
 
 
 
