@@ -865,8 +865,10 @@ app.get('/allcustomers', async (req, res) => {
 
 
 
+
+/*
 // Endpoint to fetch order details with products and customer email
-app.get('/order-details/:id', async (req, res) => {
+app.get('/order-detailX/:id', async (req, res) => {
     const orderId = req.params.id;
     try {
         // Fetch order details
@@ -912,9 +914,9 @@ app.get('/order-details/:id', async (req, res) => {
 });
 
 
+*/
 
 
-/*
 // Endpoint to fetch order details with products and customer email
 app.get('/order-details/:id', async (req, res) => {
     const orderId = req.params.id;
@@ -954,7 +956,7 @@ app.get('/order-details/:id', async (req, res) => {
         res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
     }
 });
-*/
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
