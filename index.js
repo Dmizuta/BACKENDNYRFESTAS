@@ -2188,6 +2188,30 @@ app.post('/duplicate-order', async (req, res) => {
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+// API endpoint to update stock
+app.post("/update-stock", async (req, res) => {
+    const { productCode, estoque } = req.body;
+
+    try {
+        const query = "UPDATE produtos SET estoque = $1 WHERE codproduto = $2";
+        await pool.query(query, [estoque, productCode]);
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({ success: false, message: "Erro no banco de dados" });
+    }
+});
+
+// Start server (adjust port if needed)
+app.listen(3000, () => {
+    console.log("Server running on port 3000");
+});
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Start the server on port 80
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
