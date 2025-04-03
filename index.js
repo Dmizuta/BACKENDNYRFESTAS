@@ -2203,10 +2203,7 @@ app.post("/update-stock", async (req, res) => {
     }
 });
 
-// Start server (adjust port if needed)
-app.listen(3000, () => {
-    console.log("Server running on port 3000");
-});
+
 
 
 
