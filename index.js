@@ -2190,7 +2190,7 @@ app.post('/duplicate-order', async (req, res) => {
 
 
 // API endpoint to update stock
-app.post("/update-stock", async (req, res) => {
+app.post('/update-stock', async (req, res) => {
     const { productCode, estoque } = req.body;
 
     try {
