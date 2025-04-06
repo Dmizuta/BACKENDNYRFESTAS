@@ -917,6 +917,67 @@ app.get('/order-detailX/:id', async (req, res) => {
 */
 
 
+
+
+// Endpoint to fetch order details with products and customer email
+app.get('/order-details/:id', async (req, res) => {
+    const orderId = req.params.id;
+    try {
+        // Fetch order details
+        const orderQuery = 'SELECT * FROM pedidos WHERE id = $1';
+        const orderResult = await pool.query(orderQuery, [orderId]);
+
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ message: 'PEDIDO NÃO ENCONTRADO.' });
+        }
+
+        const order = orderResult.rows[0];
+
+        // Fetch email associated with the customer
+        const emailQuery = 'SELECT email FROM cadastro WHERE id = $1';
+        const emailResult = await pool.query(emailQuery, [order.idcadastro]);
+
+        const email = emailResult.rows.length > 0 ? emailResult.rows[0].email : null;
+
+        // Better version of the product query
+        const productsQuery = `
+SELECT pi.*, p.imagem, p.descricao
+FROM (
+    SELECT DISTINCT ON (codproduto) codproduto, quantidade, preco, ipi, id
+    FROM pedidoitens
+    WHERE idpedido = $1
+    ORDER BY codproduto, id
+) AS pi
+LEFT JOIN (
+    SELECT DISTINCT ON (codproduto) *
+    FROM produtos
+    ORDER BY codproduto, idprod
+) AS p ON p.codproduto = pi.codproduto
+ORDER BY pi.id;
+
+
+        `;
+
+        const productsResult = await pool.query(productsQuery, [orderId]);
+
+        const orderDetails = {
+            ...order,
+            email: email,
+            products: productsResult.rows
+        };
+
+        console.log('ORDER DETAILS:', orderDetails);
+        res.json(orderDetails);
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
+    }
+});
+
+
+
+
+/*
 // Endpoint to fetch order details with products and customer email
 app.get('/order-details/:id', async (req, res) => {
     const orderId = req.params.id;
@@ -956,7 +1017,7 @@ app.get('/order-details/:id', async (req, res) => {
         res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
     }
 });
-
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
