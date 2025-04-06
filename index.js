@@ -91,7 +91,7 @@ app.get('/product-buy/:id', async (req, res) => {
     const productCode = req.params.id;
     try {
         const result = await pool.query(
-            'SELECT idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada, ipi, estoque FROM produtos WHERE codproduto = $1',
+            'SELECT imagem, idprod, descricao, cxfechada, precofechada, precofrac, cxfracionada, ipi, estoque FROM produtos WHERE codproduto = $1',
             [productCode]
         );
 
@@ -559,252 +559,6 @@ app.post('/add-to-order-admin', async (req, res) => {
 });
 
 
-/*
-app.post('/add-to-order-admin', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
-
-    try {
-        const result = await pool.query(
-            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
-            [username]
-        );
-        const existingOrder = result.rows[0];
-        let orderId;
-
-        if (existingOrder) {
-            if (existingOrder.razaosocial === razaosocial) {
-                orderId = existingOrder.id;
-
-                const duplicateCheck = await pool.query(
-                    'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
-                    [orderId, codproduto]
-                );
-
-                if (duplicateCheck.rows.length > 0) {
-                    return res.status(400).send({ 
-                        error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
-                    });
-                }
-            } else {
-                return res.status(400).send({ 
-                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< E TENTE NOVAMENTE.`
-                });
-            }
-        } else {
-            const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, desconto, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0, 0) RETURNING id',
-                [username, razaosocial, representante, cnpj]
-            );
-            orderId = newOrderResult.rows[0].id;
-        }
-
-        const newItemResult = await pool.query(
-            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-            [orderId, codproduto, descricao, quantidade, preco, ipi]
-        );
-        const newItemId = newItemResult.rows[0].id;
-
-        const dataResult = await pool.query(
-            'SELECT ipi_tax, desconto FROM pedidos WHERE id = $1', 
-            [orderId]
-        );
-
-        
-
-        const { desconto, ipi_tax } = dataResult.rows[0]; // Extract values correctly
-
-        const descResult = parseFloat(desconto);
-        const ipiResult = parseFloat(ipi_tax);
-
-
-        console.log('DESCONTO:', descResult);
-        console.log('IpiTax:', ipiResult);
-
-        const totalResult = await pool.query(
-            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
-             FROM pedidoitens 
-             WHERE idpedido = $2`,
-            [ipiResult, orderId]
-        );
-
-        const total = totalResult.rows[0]?.total || 0;
-        console.log('Calculated total:', total);
-
-        const totalFinal = total * (1-descResult);
-
-        const updateResult = await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [totalFinal, orderId]
-        );
-
-      
-        console.log('Update result:', updateResult);
-        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
-    } catch (error) {
-        console.error('Error adding to order:', error);
-        res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
-    }
-});*/
-
-/*
-app.post('/add-to-order-admin', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
-
-    try {
-        const result = await pool.query(
-            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
-            [username]
-        );
-        const existingOrder = result.rows[0];
-        let orderId;
-
-        if (existingOrder) {
-            if (existingOrder.razaosocial === razaosocial) {
-                orderId = existingOrder.id;
-
-                const duplicateCheck = await pool.query(
-                    'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
-                    [orderId, codproduto]
-                );
-
-                if (duplicateCheck.rows.length > 0) {
-                    return res.status(400).send({ 
-                        error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
-                    });
-                }
-            } else {
-                return res.status(400).send({ 
-                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< E TENTE NOVAMENTE.`
-                });
-            }
-        } else {
-            const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
-                [username, razaosocial, representante, cnpj]
-            );
-            orderId = newOrderResult.rows[0].id;
-        }
-
-        const newItemResult = await pool.query(
-            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-            [orderId, codproduto, descricao, quantidade, preco, ipi]
-        );
-        const newItemId = newItemResult.rows[0].id;
-
-        const ipiTaxResult = await pool.query(
-            'SELECT ipi_tax FROM pedidos WHERE id = $1', 
-            [orderId]
-        );
-        
-        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
-        console.log('IpiTax:', ipiTax);
-
-        const totalResult = await pool.query(
-            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
-             FROM pedidoitens 
-             WHERE idpedido = $2`,
-            [ipiTax, orderId]
-        );
-
-        const total = totalResult.rows[0]?.total || 0;
-        console.log('Calculated total:', total);
-
-        const updateResult = await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [total, orderId]
-        );
-
-       
-        console.log('Update result:', updateResult);
-        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
-    } catch (error) {
-        console.error('Error adding to order:', error);
-        res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
-    }
-});
-
-    */
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-app.post('/add-to-order-admin', async (req, res) => {
-    const { username, razaosocial, codproduto, descricao, quantidade, preco, representante, cnpj, ipi } = req.body;
-
-    try {
-        const result = await pool.query(
-            'SELECT id, razaosocial FROM pedidos WHERE username = $1 AND status = 0', 
-            [username]
-        );
-        const existingOrder = result.rows[0];
-        let orderId;
-
-        if (existingOrder) {
-            if (existingOrder.razaosocial === razaosocial) {
-                orderId = existingOrder.id;
-
-                const duplicateCheck = await pool.query(
-                    'SELECT * FROM pedidoitens WHERE idpedido = $1 AND codproduto = $2', 
-                    [orderId, codproduto]
-                );
-
-                if (duplicateCheck.rows.length > 0) {
-                    return res.status(400).send({ 
-                        error: `O PRODUTO >>>${codproduto}<<< JÁ FOI ADICIONADO A ESTE PEDIDO.`
-                    });
-                }
-            } else {
-                return res.status(400).send({ 
-                    error: `FINALIZE O PEDIDO DO USUÁRIO >>>${existingOrder.razaosocial}<<< E TENTE NOVAMENTE.`
-                });
-            }
-        } else {
-            const newOrderResult = await pool.query(
-                'INSERT INTO pedidos (username, razaosocial, representante, cnpj, data, total, status) VALUES ($1, $2, $3, $4, TO_TIMESTAMP(EXTRACT(EPOCH FROM NOW())), 0, 0) RETURNING id',
-                [username, razaosocial, representante, cnpj]
-            );
-            orderId = newOrderResult.rows[0].id;
-        }
-
-        const newItemResult = await pool.query(
-            'INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-            [orderId, codproduto, descricao, quantidade, preco, ipi]
-        );
-        const newItemId = newItemResult.rows[0].id;
-
-        const ipiTaxResult = await pool.query(
-            'SELECT ipi_tax FROM pedidos WHERE id = $1', 
-            [orderId]
-        );
-        
-        const ipiTax = ipiTaxResult.rows[0]?.ipi_tax || 0;
-        console.log('IpiTax:', ipiTax);
-
-        const totalResult = await pool.query(
-            `SELECT SUM((quantidade * preco) + (quantidade * preco * $1 * ipi)) AS total 
-             FROM pedidoitens 
-             WHERE idpedido = $2`,
-            [ipiTax, orderId]
-        );
-
-        const total = totalResult.rows[0]?.total || 0;
-        console.log('Calculated total:', total);
-
-        const updateResult = await pool.query(
-            'UPDATE pedidos SET total = $1 WHERE id = $2',
-            [total, orderId]
-        );
-
-      
-        console.log('Update result:', updateResult);
-        res.status(200).send({ message: 'PRODUTO ADICIONADO COM SUCESSO!', orderId });
-    } catch (error) {
-        console.error('Error adding to order:', error);
-        res.status(500).send({ error: 'FALHA AO ADICIONAR O PRODUTO.' });
-    }
-});
-
-    */
-    
-
 /// GET route: Fetch user data by username
 app.get('/cadastropage', async (req, res) => {
     const username = req.query.username;  // Fetch username from the query string
@@ -899,193 +653,6 @@ app.get('/ordersrep', async (req, res) => {
         res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
     }
 });
-/*
-app.get('/ordersrep', async (req, res) => {
-    const { username } = req.query;
-
-    // Verifica se o username foi fornecido
-    if (!username) {
-        return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
-    }
-
-    try {
-        // Passo 1: Obtém a chave da tabela registro
-        const chaveResult = await pool.query(
-            'SELECT chave FROM registro WHERE username = $1',
-            [username]
-        );
-
-        // Verifica se a chave foi encontrada e se não é NULL, 0 ou vazia
-        const chave = chaveResult.rows.length > 0 ? chaveResult.rows[0].chave : null;
-
-        if (chave === null || chave === 0 || chave === '') {
-            // Se a chave for inválida, busca apenas os pedidos do usuário logado
-            const ordersResult = await pool.query(
-                `SELECT id, razaosocial, data, total, status, representante 
-                FROM pedidos 
-                WHERE username = $1`,
-                [username]
-            );
-
-            // Retorna os resultados dos pedidos encontrados
-            return res.json(ordersResult.rows);
-        }
-
-        console.log("CHAVE:", chave);
-
-        const grupo = chaveResult.rows[0].chave;
-        console.log("GRUPO:", grupo);
-
-        // Passo 3: Obtém os pedidos para todos os usuários do mesmo grupo e do usuário logado
-        const ordersResult = await pool.query(
-            `WITH user_list AS (
-                SELECT username FROM registro WHERE grupo = $1
-            )
-            SELECT id, razaosocial, data, total, status, representante 
-            FROM pedidos 
-            WHERE username IN (SELECT username FROM user_list) OR username = $2`,
-            [grupo, username] // Inclui o username do usuário logado
-        );
-
-        // Retorna os resultados dos pedidos encontrados
-        res.json(ordersResult.rows);
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
-    }
-});
-*/
-
-/*
-app.get('/ordersrep', async (req, res) => {
-    const { username } = req.query;
-
-    // Verifica se o username foi fornecido
-    if (!username) {
-        return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
-    }
-
-    try {
-        // Passo 1: Obtém a chave da tabela registro
-        const chaveResult = await pool.query(
-            'SELECT chave FROM registro WHERE username = $1',
-            [username]
-        );
-
-        // Verifica se a chave foi encontrada e se não é NULL, 0 ou vazia
-        const chave = chaveResult.rows.length > 0 ? chaveResult.rows[0].chave : null;
-
-        if (chave === null || chave === 0 || chave === '') {
-            // Se a chave for inválida, busca apenas os pedidos do usuário logado
-            const ordersResult = await pool.query(
-                `SELECT id, razaosocial, data, total, status, representante 
-                FROM pedidos 
-                WHERE username = $1`,
-                [username]
-            );
-
-            // Retorna os resultados dos pedidos encontrados
-            return res.json(ordersResult.rows);
-        }
-
-        console.log("CHAVE:", chave);
-
-        // Passo 2: Obtém o grupo (grupo) da tabela registro usando a chave
-        const grupoResult = await pool.query(
-            'SELECT grupo FROM registro WHERE chave = $1',
-            [chave]
-        );
-
-        // Verifica se o grupo foi encontrado
-        if (grupoResult.rows.length === 0) {
-            // Se o grupo não for encontrado, busca apenas os pedidos do usuário logado
-            const ordersResult = await pool.query(
-                `SELECT id, razaosocial, data, total, status, representante 
-                FROM pedidos 
-                WHERE username = $1`,
-                [username]
-            );
-
-            // Retorna os resultados dos pedidos encontrados
-            return res.json(ordersResult.rows);
-        }
-
-        const grupo = grupoResult.rows[0].grupo;
-        console.log("GRUPO:", grupo);
-
-        // Passo 3: Obtém os pedidos para todos os usuários do mesmo grupo e do usuário logado
-        const ordersResult = await pool.query(
-            `WITH user_list AS (
-                SELECT username FROM registro WHERE grupo = $1
-            )
-            SELECT id, razaosocial, data, total, status, representante 
-            FROM pedidos 
-            WHERE username IN (SELECT username FROM user_list) OR username = $2`,
-            [grupo, username] // Inclui o username do usuário logado
-        );
-
-        // Retorna os resultados dos pedidos encontrados
-        res.json(ordersResult.rows);
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
-    }
-});
-*/
-
-/*    app.get('/ordersrep', async (req, res) => {
-        const { username } = req.query;
-
-        if (!username) {
-            return res.status(400).json({ message: 'NECESSÁRIO USUÁRIO.' });
-        }
-
-        try {
-            // Step 1: Get the representante name from registro table
-            const representanteResult = await pool.query(
-                'SELECT representante FROM registro WHERE username = $1',
-                [username]
-            );
-
-            if (representanteResult.rows.length === 0) {
-                return res.status(404).json({ message: 'USUÁRIO NÃO ENCONTRADO.' });
-            }
-
-            let representante = representanteResult.rows[0].representante;
-
-
-            console.log("REPRESENTANTE 01:", representante);
-
-
-
-
-    const ordersResult = await pool.query(
-        `SELECT id, razaosocial, data, total, status, representante 
-        FROM pedidos 
-
-  WHERE username = $1 
-       OR TRIM(REGEXP_REPLACE(representante, '\\(.*?\\)', '', 'g')) = $2 OR representante = $2
-     ORDER BY id DESC`,
-    [username, representante]
-
-
-      
-    );
-
-    console.log("RES:", ordersResult.rows[1]);
-
-
-
-
-
-            res.json(ordersResult.rows);
-        } catch (error) {
-            console.error('Error fetching orders:', error);
-            res.status(500).json({ message: 'FALHA AO BUSCAR DADOS.' });
-        }
-    });*/
-
-
 
 
 // Endpoint to fetch orders for a specific username
@@ -1155,107 +722,6 @@ app.get('/orders-admin', async (req, res) => {
 });
 
 
-/*
-// Endpoint to fetch orders for a specific username
-app.get('/orders-admin', async (req, res) => {
-
-
-
-
-    try {
-
-        const result = await pool.query(`
-
-
-
-SELECT 
-                pedidos.id, 
-                pedidos.username,          
-                pedidos.representante,    -- Now directly from the pedidos table
-                pedidos.razaosocial, 
-                pedidos.data, 
-                pedidos.total, 
-                pedidos.status
-            FROM 
-                pedidos
-            ORDER BY pedidos.status ASC, pedidos.id DESC;  -- Keep the order by ID
-
-
-           
-        `);
-
-        
-        if (result.rows.length === 0) {
-            return res.json([]);  // Return an empty array if no orders found
-        }
-
-        // Send the orders directly as an array
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ message: 'FALHA AO BUSCAR DADOS DOS PEDIDOS.' });
-    }
-});
-*/
-
-////////////////////////////////////////////////////////////////////////////////////////////
-
-/*
-// Create or update cadastro (user)
-app.post('/cadastro', async (req, res) => {
-    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
-
-    try {
-        // Directly attempt to update the cadastro; if no rows are affected, insert a new one
-        const cadastro = await upsertCadastro({
-            representante,
-            razaosocial,
-            cnpj,
-            endereco,
-            telefone,
-            email,
-            username
-        });
-
-        // Send the successful response with the customerId
-        res.status(200).json({
-            message: cadastro.message,    // Success message
-            customerId: cadastro.cadastro.id // Send the customerId back to frontend
-        });
-    } catch (error) {
-        console.error('Error in /cadastro:', error);
-        res.status(500).json({ error: 'Failed to process cadastro.' });
-    }
-});
-
-async function upsertCadastro(data) {
-    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = data;
-
-    // Attempt to update the existing cadastro
-    const result = await pool.query(
-        `UPDATE cadastro 
-         SET representante = $1, razaosocial = $2, cnpj = $3, endereco = $4, telefone = $5, email = $6 
-         WHERE username = $7 
-         RETURNING *`,
-        [representante, razaosocial, cnpj, endereco, telefone, email, username]
-    );
-
-    if (result.rows.length > 0) {
-        // If the update was successful, return the updated row
-        return { message: 'CADASTRO ATUALIZADO COM SUCESSO!', cadastro: result.rows[0] };
-    }
-
-    // If no rows were updated, insert a new cadastro
-    const insertResult = await pool.query(
-        `INSERT INTO cadastro (representante, razaosocial, cnpj, endereco, telefone, email, username)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING *`,
-        [representante, razaosocial, cnpj, endereco, telefone, email, username]
-    );
-
-    return { message: 'CADASTRO CRIADO COM SUCESSO!', cadastro: insertResult.rows[0] };
-}
-*/
 
 app.post('/cadastrorep', async (req, res) => {
     const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
@@ -1264,12 +730,7 @@ app.post('/cadastrorep', async (req, res) => {
     if (!representante || !razaosocial || !cnpj || !endereco || !telefone || !email || !username) {
         return res.status(400).json({ success: false, error: 'Todos os campos são obrigatórios.' });
     }
-/*
-    // Basic CNPJ validation (14 numeric digits)
-    if (!/^\d{14}$/.test(cnpj)) {
-        return res.status(400).json({ success: false, error: 'CNPJ inválido.' });
-    }
-*/
+
     try {
         // Insert data into the database
         const result = await pool.query(
@@ -1291,25 +752,7 @@ app.post('/cadastrorep', async (req, res) => {
         res.status(500).json({ success: false, error: 'Erro interno do servidor. Tente novamente mais tarde.' });
     }
 });
-/*
-//create cadastro (representante)
-app.post('/cadastrorep', async (req, res) => {
-    const { representante, razaosocial, cnpj, endereco, telefone, email, username } = req.body;
 
-    try {
-        // Validate the data (e.g., check if CNPJ is valid)
-        const result = await pool.query(
-            'INSERT INTO cadastro (representante, razaosocial, cnpj ,endereco ,telefone, email, username) VALUES ($1, $2, $3, $4, $5, $6)',
-            [representante, razaosocial, cnpj, endereco, telefone, email, username]
-        );
-
-        res.json({ success: true, message: 'CADASTRO CRIADO COM SUCESSO!' });
-    } catch (error) {
-        res.status(500).json({ success: false, error: 'VERIFIQUE OS CAMPOS E TENTE NOVAMENTE.' });
-    }
-});
-
-*/
 
 //update cadastro (representante)
 app.put('/updatecadastro/:id', async (req, res) => {
@@ -1421,6 +864,59 @@ app.get('/allcustomers', async (req, res) => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
+/*
+// Endpoint to fetch order details with products and customer email
+app.get('/order-detailX/:id', async (req, res) => {
+    const orderId = req.params.id;
+    try {
+        // Fetch order details
+        const orderQuery = 'SELECT * FROM pedidos WHERE id = $1';
+        const orderResult = await pool.query(orderQuery, [orderId]);
+
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ message: 'PEDIDO NÃO ENCONTRADO.' });
+        }
+
+        const order = orderResult.rows[0];
+
+        // Fetch email associated with the customer
+        const emailQuery = 'SELECT email FROM cadastro WHERE id = $1';
+        const emailResult = await pool.query(emailQuery, [order.idcadastro]);
+
+        // Check if email was found
+        const email = emailResult.rows.length > 0 ? emailResult.rows[0].email : null;
+
+        // Fetch products associated with the order, including the image link
+        const productsQuery = `
+            SELECT pi.*, p.imagem 
+            FROM pedidoitens pi
+            JOIN produtos p ON pi.codproduto = p.codproduto
+            WHERE pi.idpedido = $1
+            ORDER BY pi.id
+        `;
+        const productsResult = await pool.query(productsQuery, [orderId]);
+
+        // Combine order details with products and email
+        const orderDetails = {
+            ...order,
+            email: email, // Add email to the order details
+            products: productsResult.rows // Now includes image_link for each product
+        };
+
+        console.log('ORDER DETAILS:', orderDetails);
+        res.json(orderDetails);
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
+    }
+});
+
+
+*/
+
+
 // Endpoint to fetch order details with products and customer email
 app.get('/order-details/:id', async (req, res) => {
     const orderId = req.params.id;
@@ -1461,43 +957,6 @@ app.get('/order-details/:id', async (req, res) => {
     }
 });
 
-/*
-
-// Endpoint to fetch order details with products
-app.get('/order-details/:id', async (req, res) => {
-    const orderId = req.params.id;
-    try {
-        // Fetch order details
-        const orderQuery = 'SELECT * FROM pedidos WHERE id = $1';
-        const orderResult = await pool.query(orderQuery, [orderId]);
-
-        if (orderResult.rows.length === 0) {
-            return res.status(404).json({ message: 'PEDIDO NÃO ENCONTRADO.' });
-        }
-
-        const order = orderResult.rows[0];
-        //const idCustomer = order.idcadastro;
-
-        const emailQuery = 'SELECT email FROM cadastro WHERE id = $1';
-        const emailResult = await pool.query(productsQuery, [order.idcadastro]);
-
-        // Fetch products associated with the order
-        const productsQuery = 'SELECT * FROM pedidoitens WHERE idpedido = $1 ORDER BY id';
-        const productsResult = await pool.query(productsQuery, [orderId]);
-
-        // Combine order details with products
-        const orderDetails = {
-            ...order,
-            products: productsResult.rows
-        };
-console.log('ORDER DETAILS:', orderDetails);
-        res.json(orderDetails);
-    } catch (error) {
-        console.error('Error fetching order details:', error);
-        res.status(500).json({ message: 'FALHA NA BUSCA DOS DETALHES DOS PEDIDOS.' });
-    }
-});
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
@@ -2728,6 +2187,27 @@ app.post('/duplicate-order', async (req, res) => {
 */
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
+// API endpoint to update stock
+app.post('/update-stock', async (req, res) => {
+    const { productCode, estoque } = req.body;
+
+    try {
+        const query = "UPDATE produtos SET estoque = $1 WHERE codproduto = $2";
+        await pool.query(query, [estoque, productCode]);
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({ success: false, message: "Erro no banco de dados" });
+    }
+});
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Start the server on port 80
 app.listen(80, () => {
