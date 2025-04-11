@@ -2263,7 +2263,29 @@ app.post('/update-stock', async (req, res) => {
         res.status(500).json({ success: false, message: "Erro no banco de dados" });
     }
 });
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+// GET /api/pedidostatus/:id
+app.get('/pedidostatus/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      const result = await pool.query(
+        'SELECT pedidostatus FROM pedidostatus WHERE pedidoweb = $1',
+        [id] 
+      );
+      console.log('PEDIDO STATUS',result);
+      if (result.rows.length > 0) {
+        res.json({ status: result.rows[0].pedidostatus });
+      } else {
+        res.json({ status: 'Status não disponível' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Erro ao buscar status do pedido');
+    }
+  });
+  
 
 
 
