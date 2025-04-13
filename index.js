@@ -2292,7 +2292,7 @@ app.get('/pedidostatus/:id', async (req, res) => {
 
 
 // Configurando upload
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Endpoint para upload de arquivo XLSX
 app.post('/upload', upload.single('file'), async (req, res) => {
