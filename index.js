@@ -2298,7 +2298,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
     const filePath = req.file.path;
-    const workbook = xlsx.readFile(filePath);
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
 
