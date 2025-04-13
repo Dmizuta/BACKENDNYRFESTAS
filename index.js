@@ -1,7 +1,9 @@
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
-
+const multer = require('multer');
+const xlsx = require('xlsx');
+const fs = require('fs');
 
 
 const { Pool } = require('pg'); // PostgreSQL client for database connection
@@ -2286,7 +2288,73 @@ app.get('/pedidostatus/:id', async (req, res) => {
     }
   });
   
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+// Configurando upload
+const upload = multer({ dest: 'uploads/' });
+
+// Endpoint para upload de arquivo XLSX
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    const filePath = req.file.path;
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+
+    const data = xlsx.utils.sheet_to_json(sheet);
+console.log('DATA',data);
+   
+    
+
+    for (const row of data) {
+      const pedidoSistema = row['Pedido']?.toString().split(' ')[0].trim();
+      const pedidoWeb = row['Seu Pedido']?.toString().trim();
+      const status = row['Status']?.toString().trim();
+      console.log('PEDIDO',pedidoSistema);
+      console.log('PEDIDO WEB',pedidoWeb);  
+        console.log('STATUS',status);
+
+     
+  if (pedidoSistema && pedidoWeb && status) {
+    // Verifica se o pedidoweb já existe
+    const existing = await pool.query(
+      'SELECT pedidosistema, pedidostatus FROM pedidostatus WHERE pedidoweb = $1',
+      [pedidoWeb]
+    );
+
+    if (existing.rows.length === 0) {
+      // Não existe, insere novo
+      await pool.query(
+        'INSERT INTO pedidostatus (pedidosistema, pedidoweb, pedidostatus) VALUES ($1, $2, $3)',
+        [pedidoSistema, pedidoWeb, status]
+      );
+    } else {
+      const existingRow = existing.rows[0];
+      // Verifica se o conteúdo é diferente
+      if (
+        existingRow.pedidostatus !== status
+      ) {
+        // Atualiza os dados
+        await pool.query(
+          'UPDATE pedidostatus SET pedidosistema = $1, pedidostatus = $2 WHERE pedidoweb = $3',
+          [pedidoSistema, status, pedidoWeb]
+        );
+      }
+      // Se for igual, não faz nada
+    }
+  }
+}
+
+    // Remove o arquivo temporário
+    fs.unlinkSync(filePath);
+
+    res.status(200).json({ message: 'Arquivo processado com sucesso.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao processar o arquivo.' });
+  }
+});
 
 
 
