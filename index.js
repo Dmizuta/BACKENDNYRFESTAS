@@ -14,6 +14,23 @@ app.use(express.json());
 app.use(cors()); // Allows any origin to access the API
 
 
+const allowedOrigins = [
+  'https://www.nyrfestas.com.br',
+  'https://nyrfestas.vercel.app'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
+
+
+
   
 
 const JWT_SECRET = process.env.JWT_SECRET; // Secret key for JWT
