@@ -14,22 +14,7 @@ app.use(express.json());
 app.use(cors()); // Allows any origin to access the API
 
 
-/*
-const allowedOrigins = [
-  'https://www.nyrfestas.com.br',
-  'https://nyrfestas.vercel.app'
-];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
-}));
-*/
 
   
 
@@ -2542,6 +2527,99 @@ app.get('/pedidostatus/:id', async (req, res) => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
+
+
+
+
+
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    console.log('Starting file upload processing...');
+    
+    // Read Excel file from buffer
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(sheet);
+    console.log('Rows to process:', data.length);
+
+    // Limit file size to prevent timeouts
+    if (data.length > 5000) {
+      console.log('File too large:', data.length);
+      return res.status(400).json({ error: 'Arquivo muito grande. Máximo 5000 linhas.' });
+    }
+
+    const inserts = [];
+    const updates = [];
+
+    // Process rows
+    for (const row of data) {
+      const pedidoSistema = row['Pedido']?.toString().split(' ')[0]?.trim();
+      const pedidoWeb = row['Seu Pedido']?.toString().trim();
+      const status = row['Status']?.toString().trim();
+
+      if (pedidoSistema && pedidoWeb && status) {
+        console.log(`Processing row: ${pedidoWeb}`);
+        const existing = await pool.query(
+          'SELECT pedidosistema, pedidostatus FROM pedidostatus WHERE pedidoweb = $1',
+          [pedidoWeb]
+        );
+
+        if (existing.rows.length === 0) {
+          inserts.push([pedidoSistema, pedidoWeb, status]);
+        } else if (existing.rows[0].pedidostatus !== status) {
+          updates.push([pedidoSistema, status, pedidoWeb]);
+        }
+      }
+    }
+
+    // Batch insert
+    if (inserts.length > 0) {
+      console.log('Inserting', inserts.length, 'rows');
+      await pool.query(
+        `INSERT INTO pedidostatus (pedidosistema, pedidoweb, pedidostatus) VALUES ${inserts
+          .map((_, i) => `($${3 * i + 1}, $${3 * i + 2}, $${3 * i + 3})`)
+          .join(',')}`,
+        inserts.flat()
+      );
+    }
+
+    // Batch update
+    if (updates.length > 0) {
+      console.log('Updating', updates.length, 'rows');
+      for (const update of updates) {
+        await pool.query(
+          'UPDATE pedidostatus SET pedidosistema = $1, pedidostatus = $2 WHERE pedidoweb = $3',
+          update
+        );
+      }
+    }
+
+    console.log('Upload completed successfully');
+    res.status(200).json({ message: 'Arquivo processado com sucesso.' });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Erro ao processar o arquivo.', details: error.message });
+  }
+});
+
+// Test endpoint for debugging
+app.get('/test-upload', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    console.log('Test endpoint hit');
+    res.status(200).json({ time: result.rows[0].now, message: 'Backend and DB working' });
+  } catch (error) {
+    console.error('Test error:', error);
+    res.status(500).json({ error: 'Test failed', details: error.message });
+  }
+});
+
+module.exports = app; // For Vercel serverless
+/*
 // Configurando upload
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -2607,7 +2685,7 @@ console.log('DATA',data);
   }
 });
 
-
+*/
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
