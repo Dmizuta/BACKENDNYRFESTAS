@@ -1,3 +1,6 @@
+
+
+
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
@@ -2529,11 +2532,8 @@ app.get('/pedidostatus/:id', async (req, res) => {
 
 
 
-/*
-
 
 const upload = multer({ storage: multer.memoryStorage() });
-
 
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
@@ -2547,9 +2547,9 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     console.log('Rows to process:', data.length);
 
     // Limit file size to prevent timeouts
-    if (data.length > 5000) {
+    if (data.length > 1000) {
       console.log('File too large:', data.length);
-      return res.status(400).json({ error: 'Arquivo muito grande. Máximo 5000 linhas.' });
+      return res.status(400).json({ error: 'Arquivo muito grande. Máximo 1000 linhas.' });
     }
 
     const inserts = [];
@@ -2563,10 +2563,12 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
       if (pedidoSistema && pedidoWeb && status) {
         console.log(`Processing row: ${pedidoWeb}`);
+        const start = Date.now();
         const existing = await pool.query(
           'SELECT pedidosistema, pedidostatus FROM pedidostatus WHERE pedidoweb = $1',
           [pedidoWeb]
         );
+        console.log(`SELECT query took ${Date.now() - start}ms`);
 
         if (existing.rows.length === 0) {
           inserts.push([pedidoSistema, pedidoWeb, status]);
@@ -2579,23 +2581,27 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     // Batch insert
     if (inserts.length > 0) {
       console.log('Inserting', inserts.length, 'rows');
+      const start = Date.now();
       await pool.query(
         `INSERT INTO pedidostatus (pedidosistema, pedidoweb, pedidostatus) VALUES ${inserts
           .map((_, i) => `($${3 * i + 1}, $${3 * i + 2}, $${3 * i + 3})`)
           .join(',')}`,
         inserts.flat()
       );
+      console.log(`INSERT query took ${Date.now() - start}ms`);
     }
 
     // Batch update
     if (updates.length > 0) {
       console.log('Updating', updates.length, 'rows');
+      const start = Date.now();
       for (const update of updates) {
         await pool.query(
           'UPDATE pedidostatus SET pedidosistema = $1, pedidostatus = $2 WHERE pedidoweb = $3',
           update
         );
       }
+      console.log(`UPDATE queries took ${Date.now() - start}ms`);
     }
 
     console.log('Upload completed successfully');
@@ -2606,8 +2612,26 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-*/
+// Test endpoint
+app.get('/test-upload', async (req, res) => {
+  try {
+    const start = Date.now();
+    const result = await pool.query('SELECT NOW()');
+    console.log('Test endpoint hit, query took', Date.now() - start, 'ms');
+    res.status(200).json({ time: result.rows[0].now, message: 'Backend and DB working' });
+  } catch (error) {
+    console.error('Test error:', error);
+    res.status(500).json({ error: 'Test failed', details: error.message });
+  }
+});
 
+module.exports = app;
+
+
+
+
+
+/*
 
 // Configurando upload
 const upload = multer({ storage: multer.memoryStorage() });
@@ -2673,7 +2697,7 @@ console.log('DATA',data);
     res.status(500).json({ error: 'Erro ao processar o arquivo.' });
   }
 });
-
+*/
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
