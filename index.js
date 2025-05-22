@@ -2606,19 +2606,8 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// Test endpoint for debugging
-app.get('/test-upload', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT NOW()');
-    console.log('Test endpoint hit');
-    res.status(200).json({ time: result.rows[0].now, message: 'Backend and DB working' });
-  } catch (error) {
-    console.error('Test error:', error);
-    res.status(500).json({ error: 'Test failed', details: error.message });
-  }
-});
 
-module.exports = app; // For Vercel serverless
+
 /*
 // Configurando upload
 const upload = multer({ storage: multer.memoryStorage() });
