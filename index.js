@@ -2532,7 +2532,7 @@ app.get('/pedidostatus/:id', async (req, res) => {
 
 
 
-
+const upload = multer({ storage: multer.memoryStorage() });
 
 
 app.post('/upload', upload.single('file'), async (req, res) => {
