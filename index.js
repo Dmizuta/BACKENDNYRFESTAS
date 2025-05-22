@@ -1,7 +1,7 @@
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
-//const multer = require('multer');
+const multer = require('multer');
 const xlsx = require('xlsx');
 const fs = require('fs');
 
@@ -2529,7 +2529,7 @@ app.get('/pedidostatus/:id', async (req, res) => {
 
 
 
-
+/*
 
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -2606,9 +2606,9 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+*/
 
 
-/*
 // Configurando upload
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -2674,7 +2674,7 @@ console.log('DATA',data);
   }
 });
 
-*/
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
