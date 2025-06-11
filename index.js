@@ -1,7 +1,12 @@
+
+
+
 const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
-
+const multer = require('multer');
+const xlsx = require('xlsx');
+const fs = require('fs');
 
 
 const { Pool } = require('pg'); // PostgreSQL client for database connection
@@ -10,6 +15,8 @@ const jwt = require('jsonwebtoken'); // JWT for user authentication
 const app = express();
 app.use(express.json());
 app.use(cors()); // Allows any origin to access the API
+
+
 
 
   
@@ -1257,6 +1264,94 @@ console.log("TOTAL COM DESCONTO:", finalTotal);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
+
+// Endpoint para deletar um item do pedido
+app.delete('/delete-product-admin', async (req, res) => {
+    const { orderId, productId } = req.body; // Lê os dados do corpo da requisição
+
+    try {
+        // Query para deletar o item da tabela pedidoitens
+        const result = await pool.query(
+            'DELETE FROM pedidoitens WHERE idpedido = $1 AND id = $2',
+            [orderId, productId]    
+        );
+
+        // Verifica se alguma linha foi afetada
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Item não encontrado' });
+        }
+
+
+        // Step 1: Fetch the current IPI tax from the 'pedidos' table
+        const dataQuery = 'SELECT desconto, ipi_tax, status FROM pedidos WHERE id = $1'; // Assuming 'ipi_tax' is the field holding the IPI rate
+        const dataResult = await pool.query(dataQuery, [orderId]);
+
+        const { desconto, status, ipi_tax } = dataResult.rows[0];
+
+
+        const descResult = isNaN(parseFloat(desconto)) || desconto === null || desconto === "" ? 0 : parseFloat(desconto);
+
+
+        const ipiTax = dataResult.rows[0].ipi_tax;
+        
+
+      
+        /*if (status == 2 || status == 3) {
+            return res.status(403).json({
+                error: "O Pedido não pode ser alterado.",
+                currentStatus: status
+            });
+        }*/
+        
+         // Get the IPI value
+
+        // Step 2: Calculate the total price for the order with the fetched IPI
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [ipiTax, orderId]  // Use the fetched IPI value
+        );
+
+
+        const newTotal = totalResult.rows[0].total;
+
+
+console.log('TOTAL ANTES DO DESCONTO', newTotal);
+
+const continha = newTotal + 100;
+
+console.log('CONTINHA:', continha);
+
+
+        const finalTotal = newTotal * (1-descResult);
+
+        console.log('DESCONTO:', descResult );
+
+console.log("TOTAL COM DESCONTO:", finalTotal);
+
+
+        // Step 4: Update the total field in the pedidos table
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [finalTotal, orderId]);
+
+
+
+        
+        console.log('Novo total calculado:', finalTotal); // Log do novo total
+
+        
+
+        return res.status(200).json({ message: 'Item deletado com sucesso' });
+
+    } catch (error) {
+        console.error('Erro ao deletar item:', error);
+        return res.status(500).json({ message: 'Erro ao deletar item' });
+    }
+});
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Endpoint para buscar os itens do pedido
 app.get('/modalproducts/:id', async (req, res) => {
     const orderId = req.params.id;
@@ -1405,8 +1500,12 @@ return res.status(200).json({
         return res.status(500).json({ message: 'Internal server error' });
     }
 });
-/*
-app.patch('/editproduct/:productId', async (req, res) => {
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+app.patch('/editproduct-admin/:productId', async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
 
@@ -1445,34 +1544,78 @@ app.patch('/editproduct/:productId', async (req, res) => {
             [chosenPrice, productId]
         );
                
-        // Step 3: Get the ipi_tax from the pedidos table
-        const pedidoData = (await pool.query(
-            'SELECT ipi_tax FROM pedidos WHERE id = $1',
-            [idpedido]
-        )).rows[0];
+
+
+
+
+
+
+ // Step 1: Check if order is in "open" state
+ const dataQuery = `SELECT ipi_tax, desconto, status FROM pedidos WHERE id = $1`;
+ const dataResult = await pool.query(dataQuery, [idpedido]);
+ 
+ const {ipi_tax, desconto, status } = dataResult.rows[0]; // Extract values correctly
+ //const ipiResult = dataQuery ? dataQuery.ipi_tax : 0; // Default to 0 if not found
+ 
+ //const descResult = parseFloat(desconto);
+ const descResult = isNaN(parseFloat(desconto)) || desconto === null || desconto === "" ? 0 : parseFloat(desconto);
+
+ console.log('IPI:', ipi_tax);
+ console.log('DESCONTO:', descResult);
+
+ 
+
+ if (status.length === 0 || status === undefined) {
+    return res.status(403).json({
+        error: "Order status not found. Cannot update IPI."
+    });
+}
+
+
+
+/*
+if (status == 2 || status == 3) {
+    return res.status(403).json({
+        error: "O Pedido não pode ser alterado.",
+        currentStatus: status
+    });
+}*/
+
+
 
       
-        const ipiTax = pedidoData ? pedidoData.ipi_tax : 0; // Default to 0 if not found
+       
 
 
 
         // Step 4: Calculate the new total for the order with updated IPI
         const totalResult = await pool.query(
             'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
-            [ipiTax, idpedido ]  // Use the updated ipi_tax value
+            [ipi_tax, idpedido ]  // Use the updated ipi_tax value
         );
 
         const total = totalResult.rows[0].total;
 
+        console.log('TOTAL:',total);
+
+
+
+const totalFinal = total * (1 - descResult);
+
+
         // Step 5: Update the total in pedidos table
-        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [total, idpedido]);
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [totalFinal, idpedido]);
+
+
+console.log('TOTAL FINAL:',totalFinal);
+
 
         // Step 6: Send response with updated product details and total
 
 return res.status(200).json({
     message: 'Quantity updated successfully',
     updatedProduct: { 
-        ipiTax, 
+        ipi_tax, 
         idpedido, 
         quantity, 
         ipi, 
@@ -1490,8 +1633,10 @@ return res.status(200).json({
         return res.status(500).json({ message: 'Internal server error' });
     }
 });
-*/
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 app.post('/displayName', (req, res) => {
     const { customerId } = req.body;
@@ -1800,8 +1945,7 @@ app.patch("/finishOrder", async (req, res) => {
 
 
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 app.post("/update-desc", async (req, res) => {
     
@@ -1886,74 +2030,92 @@ console.log("Total updated successfully for orderId:", orderId);
 });
 
 
-/*
-app.post("/update-desc", async (req, res) => {
-    
-        const { orderId, discount } = req.body;
-
-        console.log("Received Data:", req.body); // Log the received request data
-
-        if (!orderId || discount === undefined) {
-            return res.status(400).json({ error: "Missing orderId or newIPI" });
-        }
-
-
-        const statusQuery = `SELECT status FROM pedidos WHERE id = $1`;
-        const statusResult = await pool.query(statusQuery, [orderId]);
-
-        console.log("Status Query Result:", statusResult.rows); // Log the result of the status query
-
-        if (statusResult.rows.length === 0 || statusResult.rows[0].status === undefined) {
-            return res.status(403).json({
-                error: "Order status not found."
-            });
-        }
-
-        console.log("Current Order Status:", statusResult.rows[0].status); // Log the status value
-
-        if (statusResult.rows[0].status !== 0) {
-            return res.status(403).json({
-                error: "O Pedido não pode ser alterado.",
-                currentStatus: statusResult.rows[0].status
-            });
-        }
-
-
-    try {
-        const updateQuery = `
-            UPDATE pedidos 
-            SET desconto = $1
-            WHERE id = $2;
-        `;
-
-        const result = await pool.query(updateQuery, [discount, orderId]);
-
-
-
-
-
-
-        console.log("Query executed, rowCount:", result.rowCount);
-
-        // Check if the order was updated
-        if (result.rowCount === 0) {
-            return res.status(404).send({ error: "Order not found." });
-        }
-
-       // console.log('DESCONTO:', discountValue);
-        res.status(200).send({ message: "Notes and discount updated successfully!" });
-        console.log("RESPOSTA:", req.body);
-
-
-    } catch (error) {
-        console.error("Error updating notes and discount:", error);
-        res.status(500).send({ error: "Failed to update order." });
-            }
-});
-
-*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+app.post("/update-desc-admin", async (req, res) => {
+    
+    const { orderId, discount } = req.body;
+
+    console.log("Received Data:", req.body); // Log the received request data
+
+    if (!orderId || discount === undefined) {
+        return res.status(400).json({ error: "Missing orderId or newIPI" });
+    }
+
+
+    // Step 1: Check if order is in "open" state
+    const statusQuery = `SELECT ipi_tax, status FROM pedidos WHERE id = $1`;
+    const statusDescResult = await pool.query(statusQuery, [orderId]);
+    const { ipi_tax, status } = statusDescResult.rows[0]; // Extract values correctly
+    const ipiResult = parseFloat(ipi_tax);
+ 
+    console.log("QUERY RESULT:", ipi_tax, status); // Log the result of the status query
+
+    if (status.length === 0 || status === undefined) {
+        return res.status(403).json({
+            error: "Order status not found. Cannot update IPI."
+        });
+    }
+
+
+    /*if (status === 2 || status ===3) {
+        return res.status(403).json({
+            error: "O Pedido não pode ser alterado.",
+            currentStatus: status
+        });
+    }*/
+
+
+try {
+    const updateQuery = `
+        UPDATE pedidos 
+        SET desconto = $1
+        WHERE id = $2;
+    `;
+
+    const result = await pool.query(updateQuery, [discount, orderId]);
+    console.log('DESCONTO:', discount);
+
+    
+
+    // Check if the order was updated
+    if (result.rowCount === 0) {
+        return res.status(404).send({ error: "Order not found." });
+    }
+
+// Step 3: Calculate the new total for the order with updated IPI
+const totalResult = await pool.query(
+    'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+    [ipiResult, orderId]
+);
+
+console.log("Total calculation result:", totalResult.rows); // Log the result of total calculation
+
+const newTotal = totalResult.rows[0].total;
+
+const finalTotal = newTotal * (1 - discount);
+
+console.log('TOTAL CALCULATION + DESC:',finalTotal );
+
+// Step 4: Update the total field in the pedidos table
+await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [finalTotal, orderId]);
+
+console.log("Total updated successfully for orderId:", orderId);
+
+
+   // console.log('DESCONTO:', discountValue);
+    res.status(200).send({ message: "Notes and discount updated successfully!" });
+    console.log("RESPOSTA:", req.body);
+
+
+} catch (error) {
+    console.error("Error updating notes and discount:", error);
+    res.status(500).send({ error: "Failed to update order." });
+        }
+});
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 app.post("/update-ipi", async (req, res) => {
     try {
         const { orderId, newIPI } = req.body;
@@ -2032,7 +2194,86 @@ app.post("/update-ipi", async (req, res) => {
 });
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////
 
+app.post("/update-ipi-admin", async (req, res) => {
+    try {
+        const { orderId, newIPI } = req.body;
+
+        console.log("Received Data:", req.body); // Log the received request data
+
+        if (!orderId || newIPI === undefined) {
+            return res.status(400).json({ error: "Missing orderId or newIPI" });
+        }
+
+        // Log before proceeding with the status query
+        console.log("Checking status for orderId:", orderId);
+
+        // Step 1: Check if order is in "open" state
+        const statusQuery = `SELECT desconto, status FROM pedidos WHERE id = $1`;
+        const statusDescResult = await pool.query(statusQuery, [orderId]);
+        const { desconto, status } = statusDescResult.rows[0]; // Extract values correctly
+
+
+
+        const descResult = isNaN(parseFloat(desconto)) || desconto === null || desconto === "" ? 0 : parseFloat(desconto);
+        //const descResult = parseFloat(desconto);
+     
+        console.log("Status Query Result:", status); // Log the result of the status query
+
+        if (status.length === 0 || status === undefined) {
+            return res.status(403).json({
+                error: "Order status not found. Cannot update IPI."
+            });
+        }
+
+        console.log("Current Order Status:", status); // Log the status value
+
+       /* if (status == 2 || status == 3) {
+            return res.status(403).json({
+                error: "O Pedido não pode ser alterado.",
+                currentStatus: status
+            });
+        }*/
+
+        // Log the values before updating IPI and calculating the total
+        console.log("Order is in open state. Updating IPI to:", newIPI);
+
+        // Step 2: Update the ipi_tax in pedidos table
+        const updateIpiQuery = `UPDATE pedidos SET ipi_tax = $1 WHERE id = $2`;
+        await pool.query(updateIpiQuery, [newIPI, orderId]);
+
+        console.log("IPI updated successfully for orderId:", orderId);
+
+        // Step 3: Calculate the new total for the order with updated IPI
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [newIPI, orderId]
+        );
+
+        console.log("Total calculation result:", totalResult.rows); // Log the result of total calculation
+
+        const newTotal = totalResult.rows[0].total;
+
+        const finalTotal = newTotal * (1-descResult);
+
+        // Step 4: Update the total field in the pedidos table
+        await pool.query('UPDATE pedidos SET total = $1 WHERE id = $2', [finalTotal, orderId]);
+
+        console.log("Total updated successfully for orderId:", orderId);
+
+            // Final response
+            res.json({ message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` });
+            const responseMessage = { message: `IPI updated to ${newIPI * 100}% and total updated to ${newTotal}` };
+            
+
+    } catch (error) {
+        console.error("Error updating IPI:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 /*
 app.post("/update-ipi", async (req, res) => {
     try {
@@ -2263,9 +2504,200 @@ app.post('/update-stock', async (req, res) => {
         res.status(500).json({ success: false, message: "Erro no banco de dados" });
     }
 });
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// GET /api/pedidostatus/:id
+app.get('/pedidostatus/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      const result = await pool.query(
+        'SELECT pedidostatus FROM pedidostatus WHERE pedidoweb = $1',
+        [id] 
+      );
+      console.log('PEDIDO STATUS',result);
+      if (result.rows.length > 0) {
+        res.json({ status: result.rows[0].pedidostatus });
+      } else {
+        res.json({ status: 'Status não disponível' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Erro ao buscar status do pedido');
+    }
+  });
+  
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
+
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    console.log('Starting file upload processing...');
+    
+    // Read Excel file from buffer
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(sheet);
+    console.log('Rows to process:', data.length);
+
+    // Limit file size to prevent timeouts
+    if (data.length > 1000) {
+      console.log('File too large:', data.length);
+      return res.status(400).json({ error: 'Arquivo muito grande. Máximo 1000 linhas.' });
+    }
+
+    const inserts = [];
+    const updates = [];
+
+    // Process rows
+    for (const row of data) {
+      const pedidoSistema = row['Pedido']?.toString().split(' ')[0]?.trim();
+      const pedidoWeb = row['Seu Pedido']?.toString().trim();
+      const status = row['Status']?.toString().trim();
+
+      if (pedidoSistema && pedidoWeb && status) {
+        console.log(`Processing row: ${pedidoWeb}`);
+        const start = Date.now();
+        const existing = await pool.query(
+          'SELECT pedidosistema, pedidostatus FROM pedidostatus WHERE pedidoweb = $1',
+          [pedidoWeb]
+        );
+        console.log(`SELECT query took ${Date.now() - start}ms`);
+
+        if (existing.rows.length === 0) {
+          inserts.push([pedidoSistema, pedidoWeb, status]);
+        } else if (existing.rows[0].pedidostatus !== status) {
+          updates.push([pedidoSistema, status, pedidoWeb]);
+        }
+      }
+    }
+
+    // Batch insert
+    if (inserts.length > 0) {
+      console.log('Inserting', inserts.length, 'rows');
+      const start = Date.now();
+      await pool.query(
+        `INSERT INTO pedidostatus (pedidosistema, pedidoweb, pedidostatus) VALUES ${inserts
+          .map((_, i) => `($${3 * i + 1}, $${3 * i + 2}, $${3 * i + 3})`)
+          .join(',')}`,
+        inserts.flat()
+      );
+      console.log(`INSERT query took ${Date.now() - start}ms`);
+    }
+
+    // Batch update
+    if (updates.length > 0) {
+      console.log('Updating', updates.length, 'rows');
+      const start = Date.now();
+      for (const update of updates) {
+        await pool.query(
+          'UPDATE pedidostatus SET pedidosistema = $1, pedidostatus = $2 WHERE pedidoweb = $3',
+          update
+        );
+      }
+      console.log(`UPDATE queries took ${Date.now() - start}ms`);
+    }
+
+    console.log('Upload completed successfully');
+    res.status(200).json({ message: 'Arquivo processado com sucesso.' });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Erro ao processar o arquivo.', details: error.message });
+  }
+});
+
+// Test endpoint
+app.get('/test-upload', async (req, res) => {
+  try {
+    const start = Date.now();
+    const result = await pool.query('SELECT NOW()');
+    console.log('Test endpoint hit, query took', Date.now() - start, 'ms');
+    res.status(200).json({ time: result.rows[0].now, message: 'Backend and DB working' });
+  } catch (error) {
+    console.error('Test error:', error);
+    res.status(500).json({ error: 'Test failed', details: error.message });
+  }
+});
+
+module.exports = app;
+
+
+
+
+
+/*
+
+// Configurando upload
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Endpoint para upload de arquivo XLSX
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    const filePath = req.file.path;
+    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+
+    const data = xlsx.utils.sheet_to_json(sheet);
+console.log('DATA',data);
+   
+    
+
+    for (const row of data) {
+      const pedidoSistema = row['Pedido']?.toString().split(' ')[0].trim();
+      const pedidoWeb = row['Seu Pedido']?.toString().trim();
+      const status = row['Status']?.toString().trim();
+      console.log('PEDIDO',pedidoSistema);
+      console.log('PEDIDO WEB',pedidoWeb);  
+        console.log('STATUS',status);
+
+     
+  if (pedidoSistema && pedidoWeb && status) {
+    // Verifica se o pedidoweb já existe
+    const existing = await pool.query(
+      'SELECT pedidosistema, pedidostatus FROM pedidostatus WHERE pedidoweb = $1',
+      [pedidoWeb]
+    );
+
+    if (existing.rows.length === 0) {
+      // Não existe, insere novo
+      await pool.query(
+        'INSERT INTO pedidostatus (pedidosistema, pedidoweb, pedidostatus) VALUES ($1, $2, $3)',
+        [pedidoSistema, pedidoWeb, status]
+      );
+    } else {
+      const existingRow = existing.rows[0];
+      // Verifica se o conteúdo é diferente
+      if (
+        existingRow.pedidostatus !== status
+      ) {
+        // Atualiza os dados
+        await pool.query(
+          'UPDATE pedidostatus SET pedidosistema = $1, pedidostatus = $2 WHERE pedidoweb = $3',
+          [pedidoSistema, status, pedidoWeb]
+        );
+      }
+      // Se for igual, não faz nada
+    }
+  }
+}
+
+    // Remove o arquivo temporário
+    fs.unlinkSync(filePath);
+
+    res.status(200).json({ message: 'Arquivo processado com sucesso.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao processar o arquivo.' });
+  }
+});
+*/
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
