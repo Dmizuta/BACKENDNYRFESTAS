@@ -1055,10 +1055,130 @@ app.post("/submit-order", async (req, res) => {
     }
   });
   
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.patch("/save-notes", async (req, res) => {
+  const { orderId, observation, role } = req.body;
+
+  console.log("Received request data:", { orderId, observation, role });
+
+  if (!role || !orderId) {
+    return res.status(400).send({ error: "Missing role or order ID." });
+  }
+
+  try {
+    // Step 1: Get the current status of the order
+    const statusQuery = `SELECT status FROM pedidos WHERE id = $1;`;
+    const statusResult = await pool.query(statusQuery, [orderId]);
+
+    if (statusResult.rowCount === 0) {
+      return res.status(404).send({ error: "Order not found." });
+    }
+
+    const status = statusResult.rows[0].status;
+
+    console.log("Order status:", status);
+
+    // Step 2: Apply your logic
+    const statusAbertoOuOrcamento = status === 0 || status === 1; // "Aberto" or "Orçamento"
+    const statusFechadoOuProcessado = status === 2 || status === 3; // "Fechado" or "Processado"
+
+    if (statusAbertoOuOrcamento) {
+      // ✅ Anyone can edit
+      console.log("Allowed: Open or quote status");
+    } else if (statusFechadoOuProcessado && role !== "ADMIN") {
+      // ❌ Only admin can edit
+      return res.status(403).send({
+        error: "Only admins can update notes when the order is closed or processed."
+      });
+    }
+
+    // Step 3: Update the observation
+    const updateQuery = `
+      UPDATE pedidos 
+      SET observacoes = $1
+      WHERE id = $2;
+    `;
+
+    const updateResult = await pool.query(updateQuery, [observation, orderId]);
+
+    if (updateResult.rowCount === 0) {
+      return res.status(404).send({ error: "Failed to update notes. Order may not exist." });
+    }
+
+    res.status(200).send({ message: "Notes updated successfully!" });
+
+  } catch (error) {
+    console.error("Error updating notes:", error);
+    res.status(500).send({ error: "Internal server error while updating notes." });
+  }
+});
+
+/*
+app.patch("/save-notes", async (req, res) => {
+  const { orderId, observation, role } = req.body;
+  const userRole = role;
+
+  console.log("Received request data:", { orderId, observation, role: userRole });
+
+  try {
+    // Step 1: Get current status of the order
+    const statusQuery = `
+      SELECT status FROM pedidos WHERE id = $1;
+    `;
+    const statusResult = await pool.query(statusQuery, [orderId]);
+
+    console.log("Current status result:", statusResult.rows);
+
+    if (statusResult.rowCount === 0) {
+      return res.status(404).send({ error: "Order not found." });
+    }
+
+    const currentStatus = statusResult.rows[0].status;
+
+    // Step 2: Validate permissions based on status and role
+    const openStatuses = [0, 1];
+    const restrictedStatuses = [2, 3];
+
+    if (openStatuses.includes(currentStatus)) {
+      // All roles allowed
+      console.log("Open status — allowing note update.");
+    } else if (restrictedStatuses.includes(currentStatus)) {
+      if (userRole !== "admin") {
+        return res.status(403).send({
+          error: `Access denied. Only admins can modify notes when order is '${currentStatus}'.`
+        });
+      }
+    } else {
+      return res.status(400).send({ error: "Invalid order status." });
+    }
+
+    //Step 3: Update notes
+    const updateQuery = `
+      UPDATE pedidos 
+      SET observacoes = $1
+      WHERE id = $2;
+    `;
+
+    const updateResult = await pool.query(updateQuery, [observation, orderId]);
+
+    if (updateResult.rowCount === 0) {
+      return res.status(404).send({ error: "Failed to update notes. Order may not exist." });
+    }
+
+    res.status(200).send({ message: "Notes updated successfully!" });
+
+  } catch (error) {
+    console.error("Error updating notes:", error);
+    res.status(500).send({ error: "Internal server error while updating notes." });
+  }
+});
+
+*/
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
+/*
 
 
 
@@ -1093,32 +1213,8 @@ app.post("/submit-order", async (req, res) => {
         res.status(500).send({ error: "Failed to update order." });
     }
 });
-
-/*
-  app.patch("/save-notes", async (req, res) => {
-    const { orderId, observation } = req.body;
-
-    try {
-        const updateQuery = `
-            UPDATE pedidos 
-            SET observacoes = $1
-            WHERE id = $2;
-        `;
-        const result = await pool.query(updateQuery, [observation, orderId]);
-
-        // Check if the order was updated
-        if (result.rowCount === 0) {
-            return res.status(404).send({ error: "Order not found." });
-        }
-
-        res.status(200).send({ message: "Notes updated successfully!" });
-    } catch (error) {
-        console.error("Error updating notes:", error);
-        res.status(500).send({ error: "Failed to update notes." });
-    }
-});
 */
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
