@@ -2797,6 +2797,80 @@ console.log('DATA',data);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+app.patch('/editprice-admin/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { price } = req.body;
+
+    if (!price || isNaN(price) || price <= 0) {
+        return res.status(400).json({ message: 'Preço inválido.' });
+    }
+
+    try {
+        // 1. Atualiza o preço manualmente no pedidoitens
+        const updateResult = await pool.query(
+            'UPDATE pedidoitens SET preco = $1 WHERE id = $2',
+            [price, productId]
+        );
+
+        if (updateResult.rowCount === 0) {
+            return res.status(404).json({ message: 'Produto não encontrado.' });
+        }
+
+        // 2. Busca dados auxiliares: idpedido, ipi, quantidade
+        const itemData = (await pool.query(
+            'SELECT idpedido, ipi, quantidade FROM pedidoitens WHERE id = $1',
+            [productId]
+        )).rows[0];
+
+        const { idpedido, ipi, quantidade } = itemData;
+
+        // 3. Busca ipi_tax e desconto do pedido
+        const pedidoData = (await pool.query(
+            'SELECT ipi_tax, desconto FROM pedidos WHERE id = $1',
+            [idpedido]
+        )).rows[0];
+
+        const ipi_tax = pedidoData.ipi_tax || 0;
+        const desconto = parseFloat(pedidoData.desconto) || 0;
+
+        // 4. Calcula novo total considerando IPI
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [ipi_tax, idpedido]
+        );
+
+        const total = totalResult.rows[0].total;
+        const totalFinal = total * (1 - desconto);
+
+        // 5. Atualiza total do pedido
+        await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [totalFinal, idpedido]
+        );
+
+        // 6. Retorna resposta com os dados atualizados
+        return res.status(200).json({
+            message: 'Preço atualizado com sucesso.',
+            updatedProduct: {
+                price,
+                quantity: quantidade,
+                ipi,
+                ipiTax: ipi_tax,
+                total,
+                totalFinal
+            }
+        });
+
+    } catch (error) {
+        console.error('Erro ao atualizar o preço:', error);
+        return res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 // Start the server on port 80
 app.listen(80, () => {
