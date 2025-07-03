@@ -2518,12 +2518,12 @@ app.post('/duplicate-order', async (req, res) => {
         const newOrderId = newOrderRows[0].id;
 
         // 4. Duplicate order items
-        await pool.query(
-            `INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal)
-             SELECT $1, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal
-             FROM pedidoitens WHERE idpedido = $2;`,
-            [newOrderId, currentOrderId]
-        );
+await pool.query(
+    `INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal)
+     SELECT $1, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal
+     FROM pedidoitens WHERE idpedido = $2 ORDER BY id`,
+    [newOrderId, currentOrderId]
+);
 
         res.json({ success: true, message: `Novo pedido ${newOrderId} criado com itens do pedido ${currentOrderId}.` });
     } catch (error) {
