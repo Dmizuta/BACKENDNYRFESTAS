@@ -2876,3 +2876,13 @@ app.patch('/editprice-admin/:productId', async (req, res) => {
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
 });
+
+
+
+
+
+
+app.get('/ping', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://www.nyrfestas.com.br');
+  res.send('pong');
+});
