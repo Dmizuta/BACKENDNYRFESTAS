@@ -1055,10 +1055,130 @@ app.post("/submit-order", async (req, res) => {
     }
   });
   
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.patch("/save-notes", async (req, res) => {
+  const { orderId, observation, role } = req.body;
+
+  console.log("Received request data:", { orderId, observation, role });
+
+  if (!role || !orderId) {
+    return res.status(400).send({ error: "Missing role or order ID." });
+  }
+
+  try {
+    // Step 1: Get the current status of the order
+    const statusQuery = `SELECT status FROM pedidos WHERE id = $1;`;
+    const statusResult = await pool.query(statusQuery, [orderId]);
+
+    if (statusResult.rowCount === 0) {
+      return res.status(404).send({ error: "Order not found." });
+    }
+
+    const status = statusResult.rows[0].status;
+
+    console.log("Order status:", status);
+
+    // Step 2: Apply your logic
+    const statusAbertoOuOrcamento = status === 0 || status === 1; // "Aberto" or "Orçamento"
+    const statusFechadoOuProcessado = status === 2 || status === 3; // "Fechado" or "Processado"
+
+    if (statusAbertoOuOrcamento) {
+      // ✅ Anyone can edit
+      console.log("Allowed: Open or quote status");
+    } else if (statusFechadoOuProcessado && role !== "ADMIN") {
+      // ❌ Only admin can edit
+      return res.status(403).send({
+        error: "Only admins can update notes when the order is closed or processed."
+      });
+    }
+
+    // Step 3: Update the observation
+    const updateQuery = `
+      UPDATE pedidos 
+      SET observacoes = $1
+      WHERE id = $2;
+    `;
+
+    const updateResult = await pool.query(updateQuery, [observation, orderId]);
+
+    if (updateResult.rowCount === 0) {
+      return res.status(404).send({ error: "Failed to update notes. Order may not exist." });
+    }
+
+    res.status(200).send({ message: "Notes updated successfully!" });
+
+  } catch (error) {
+    console.error("Error updating notes:", error);
+    res.status(500).send({ error: "Internal server error while updating notes." });
+  }
+});
+
+/*
+app.patch("/save-notes", async (req, res) => {
+  const { orderId, observation, role } = req.body;
+  const userRole = role;
+
+  console.log("Received request data:", { orderId, observation, role: userRole });
+
+  try {
+    // Step 1: Get current status of the order
+    const statusQuery = `
+      SELECT status FROM pedidos WHERE id = $1;
+    `;
+    const statusResult = await pool.query(statusQuery, [orderId]);
+
+    console.log("Current status result:", statusResult.rows);
+
+    if (statusResult.rowCount === 0) {
+      return res.status(404).send({ error: "Order not found." });
+    }
+
+    const currentStatus = statusResult.rows[0].status;
+
+    // Step 2: Validate permissions based on status and role
+    const openStatuses = [0, 1];
+    const restrictedStatuses = [2, 3];
+
+    if (openStatuses.includes(currentStatus)) {
+      // All roles allowed
+      console.log("Open status — allowing note update.");
+    } else if (restrictedStatuses.includes(currentStatus)) {
+      if (userRole !== "admin") {
+        return res.status(403).send({
+          error: `Access denied. Only admins can modify notes when order is '${currentStatus}'.`
+        });
+      }
+    } else {
+      return res.status(400).send({ error: "Invalid order status." });
+    }
+
+    //Step 3: Update notes
+    const updateQuery = `
+      UPDATE pedidos 
+      SET observacoes = $1
+      WHERE id = $2;
+    `;
+
+    const updateResult = await pool.query(updateQuery, [observation, orderId]);
+
+    if (updateResult.rowCount === 0) {
+      return res.status(404).send({ error: "Failed to update notes. Order may not exist." });
+    }
+
+    res.status(200).send({ message: "Notes updated successfully!" });
+
+  } catch (error) {
+    console.error("Error updating notes:", error);
+    res.status(500).send({ error: "Internal server error while updating notes." });
+  }
+});
+
+*/
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-
+/*
 
 
 
@@ -1093,32 +1213,8 @@ app.post("/submit-order", async (req, res) => {
         res.status(500).send({ error: "Failed to update order." });
     }
 });
-
-/*
-  app.patch("/save-notes", async (req, res) => {
-    const { orderId, observation } = req.body;
-
-    try {
-        const updateQuery = `
-            UPDATE pedidos 
-            SET observacoes = $1
-            WHERE id = $2;
-        `;
-        const result = await pool.query(updateQuery, [observation, orderId]);
-
-        // Check if the order was updated
-        if (result.rowCount === 0) {
-            return res.status(404).send({ error: "Order not found." });
-        }
-
-        res.status(200).send({ message: "Notes updated successfully!" });
-    } catch (error) {
-        console.error("Error updating notes:", error);
-        res.status(500).send({ error: "Failed to update notes." });
-    }
-});
 */
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -2422,12 +2518,12 @@ app.post('/duplicate-order', async (req, res) => {
         const newOrderId = newOrderRows[0].id;
 
         // 4. Duplicate order items
-        await pool.query(
-            `INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal)
-             SELECT $1, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal
-             FROM pedidoitens WHERE idpedido = $2;`,
-            [newOrderId, currentOrderId]
-        );
+await pool.query(
+    `INSERT INTO pedidoitens (idpedido, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal)
+     SELECT $1, codproduto, descricao, quantidade, preco, ipi, ipivalue, subtotal
+     FROM pedidoitens WHERE idpedido = $2 ORDER BY id`,
+    [newOrderId, currentOrderId]
+);
 
         res.json({ success: true, message: `Novo pedido ${newOrderId} criado com itens do pedido ${currentOrderId}.` });
     } catch (error) {
@@ -2701,8 +2797,92 @@ console.log('DATA',data);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+app.patch('/editprice-admin/:productId', async (req, res) => {
+    const { productId } = req.params;
+    const { price } = req.body;
+
+    if (!price || isNaN(price) || price <= 0) {
+        return res.status(400).json({ message: 'Preço inválido.' });
+    }
+
+    try {
+        // 1. Atualiza o preço manualmente no pedidoitens
+        const updateResult = await pool.query(
+            'UPDATE pedidoitens SET preco = $1 WHERE id = $2',
+            [price, productId]
+        );
+
+        if (updateResult.rowCount === 0) {
+            return res.status(404).json({ message: 'Produto não encontrado.' });
+        }
+
+        // 2. Busca dados auxiliares: idpedido, ipi, quantidade
+        const itemData = (await pool.query(
+            'SELECT idpedido, ipi, quantidade FROM pedidoitens WHERE id = $1',
+            [productId]
+        )).rows[0];
+
+        const { idpedido, ipi, quantidade } = itemData;
+
+        // 3. Busca ipi_tax e desconto do pedido
+        const pedidoData = (await pool.query(
+            'SELECT ipi_tax, desconto FROM pedidos WHERE id = $1',
+            [idpedido]
+        )).rows[0];
+
+        const ipi_tax = pedidoData.ipi_tax || 0;
+        const desconto = parseFloat(pedidoData.desconto) || 0;
+
+        // 4. Calcula novo total considerando IPI
+        const totalResult = await pool.query(
+            'SELECT COALESCE(SUM(quantidade * preco * (1 + ipi * $1)), 0) AS total FROM pedidoitens WHERE idpedido = $2',
+            [ipi_tax, idpedido]
+        );
+
+        const total = totalResult.rows[0].total;
+        const totalFinal = total * (1 - desconto);
+
+        // 5. Atualiza total do pedido
+        await pool.query(
+            'UPDATE pedidos SET total = $1 WHERE id = $2',
+            [totalFinal, idpedido]
+        );
+
+        // 6. Retorna resposta com os dados atualizados
+        return res.status(200).json({
+            message: 'Preço atualizado com sucesso.',
+            updatedProduct: {
+                price,
+                quantity: quantidade,
+                ipi,
+                ipiTax: ipi_tax,
+                total,
+                totalFinal
+            }
+        });
+
+    } catch (error) {
+        console.error('Erro ao atualizar o preço:', error);
+        return res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 // Start the server on port 80
 app.listen(80, () => {
     console.log('Servidor rodando na porta 80');
+});
+
+
+
+
+
+
+app.get('/ping', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://www.nyrfestas.com.br');
+  res.send('pong');
 });
