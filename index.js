@@ -2878,7 +2878,7 @@ app.listen(80, () => {
 });
 
 
-
+console.log(process.env.DATABASE_URL);
 
 
 
