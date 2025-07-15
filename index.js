@@ -14,12 +14,12 @@ const jwt = require('jsonwebtoken'); // JWT for user authentication
 
 const app = express();
 app.use(express.json());
-//app.use(cors()); // Allows any origin to access the API
+app.use(cors()); // Allows any origin to access the API
 
-app.use(cors({
+/*app.use(cors({
   origin: ['https://www.nyrfestas.com.br', 'https://nyrfestas.vercel.app', 'https://dmizuta.github.io']
 }));
-
+*/
 
   
 
